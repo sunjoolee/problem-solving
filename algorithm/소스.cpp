@@ -1,34 +1,58 @@
 #include <iostream>
-#include <bitset>
+#include <utility>
+#include <vector>
+#include <algorithm>
 using namespace std;
 
 //64 bit (0 ~ 18,446,744,073,709,551,615)
 typedef unsigned long long ull;
 
+//input
+
 int n;
-int a[41] = { 0 };
-unsigned sum;	
-unsigned sumFromStart[41] = { 0 };
+unsigned sum;
+
+vector<pair<int, int>> a;
+//pair.first = value
+//pair.second = bit number
+
+//sort in descending order
+
+bool compare(pair<int, int> a, pair<int, int> b) {
+	return a.first > b.first;
+}
+
+//bitmask
 
 ull msg = 0;
 
+inline void  setMsgAtBit(int bitNo) {
+	msg |= (1LL << bitNo);
+}
+inline void eraseMsgAtBit(int bitNo) {
+	msg &= ~(1LL << bitNo);
+}
+
+//pruning
+
+ull sumFromStart[41] = { 0 };
+
 void calcSumFromStart() {
-	for (int i = 1; i <= n; ++i) {
-		for (int j = i; j <= n; ++j) {
-			sumFromStart[i] += a[j];
-			if (sumFromStart[i] >= sum) break;
-			if (sumFromStart[i] > 2000000000) break;
-		}
-	}
+	for (int i = 1; i < n; ++i)
+		sumFromStart[i] = sumFromStart[i-1] - a[i-1].second;
 	return;
 }
 
 bool promising(int start, unsigned nowSum) {
-	unsigned maxSum = nowSum + sumFromStart[start];
+	ull maxSum = nowSum + sumFromStart[start];
 
-	if (maxSum >= sum) return true;
-	else return false;
+	if (maxSum >= sum) 
+		return true;
+	else 
+		return false;
 }
+
+//decrypt
 
 bool decrypt(int start, unsigned nowSum) {
 	//base case 
@@ -36,7 +60,8 @@ bool decrypt(int start, unsigned nowSum) {
 		return false;
 	if (sum == nowSum) {
 		//set msg[start + 1] ~ msg[n] to 0
-		msg &= ((1LL << (start + 1)) - 1);
+		for (int i = start + 1; i < n; ++i)
+			eraseMsgAtBit(a[i].second);
 		return true;
 	}
 
@@ -45,14 +70,14 @@ bool decrypt(int start, unsigned nowSum) {
 		return false;
 
 	//recursive call
-	if (decrypt(start + 1, nowSum + a[start])) {
+	if (decrypt(start + 1, nowSum + a[start].first)) {
 		//msg[start] = 1
-		msg |= (1LL << start);
+		setMsgAtBit(a[start].second);
 		return true;
 	}
 	else if (decrypt(start + 1, nowSum)) {
-		//msg[start] =0
-		msg &= ~(1LL << start);
+		//msg[start] = 0
+		eraseMsgAtBit(a[start].second);
 		return true;
 	}
 	return false;
@@ -65,16 +90,22 @@ int main() {
 
 	//input
 	cin >> n;
-	for (int i = 1; i <= n; ++i)
-		cin >> a[i];
+	for (int i = 0; i < n; ++i) {
+		int value;
+		cin >> value;
+		a.push_back(make_pair(value, i));
+
+		sumFromStart[0] += a[i].first;
+	}
 	cin >> sum;
 	
+	sort(a.begin(),a.end(), compare);
 	calcSumFromStart();
-	decrypt(1, 0);
+	decrypt(0, 0);
 
 	//output
-	for (int i = 1; i <= n; ++i){
-		if(msg & (1 << i)) cout << "1";
+	for (int i = 0; i < n; ++i){
+		if(msg & (1LL << i)) cout << "1";
 		else cout << "0";
 	}
 
