@@ -8,21 +8,26 @@ typedef unsigned long long ull;
 int n;
 int a[41] = { 0 };
 unsigned sum;	
+unsigned sumFromStart[41] = { 0 };
 
-//비트마스크 기법 이용
-//오른쪽에서 i번째 비트 = msg[i]
 ull msg = 0;
 
-bool promising(int start, unsigned nowSum) {
-	unsigned maxSum = nowSum;
-	
-	for (int i = start; i <= n; ++i) {
-		maxSum += a[i];
-		if (maxSum >= sum)
-			return true;
+void calcSumFromStart() {
+	for (int i = 1; i <= n; ++i) {
+		for (int j = i; j <= n; ++j) {
+			sumFromStart[i] += a[j];
+			if (sumFromStart[i] >= sum) break;
+			if (sumFromStart[i] > 2000000000) break;
+		}
 	}
+	return;
+}
 
-	return false;
+bool promising(int start, unsigned nowSum) {
+	unsigned maxSum = nowSum + sumFromStart[start];
+
+	if (maxSum >= sum) return true;
+	else return false;
 }
 
 bool decrypt(int start, unsigned nowSum) {
@@ -30,7 +35,7 @@ bool decrypt(int start, unsigned nowSum) {
 	if (sum < nowSum)
 		return false;
 	if (sum == nowSum) {
-		//msg[start + 1] ~ msg[n] 0으로 set
+		//set msg[start + 1] ~ msg[n] to 0
 		msg &= ((1LL << (start + 1)) - 1);
 		return true;
 	}
@@ -58,13 +63,16 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
+	//input
 	cin >> n;
 	for (int i = 1; i <= n; ++i)
 		cin >> a[i];
 	cin >> sum;
-
+	
+	calcSumFromStart();
 	decrypt(1, 0);
 
+	//output
 	for (int i = 1; i <= n; ++i){
 		if(msg & (1 << i)) cout << "1";
 		else cout << "0";
