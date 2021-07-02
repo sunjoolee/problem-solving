@@ -66,8 +66,8 @@ int main() {
 	decrypt(1, 0);
 
 	for (int i = 1; i <= n; ++i){
-		msg /= 2;
-		cout << msg % 2;
+		if(msg & (1 << i)) cout << "1";
+		else cout << "0";
 	}
 
 	return 0;
