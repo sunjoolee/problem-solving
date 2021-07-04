@@ -3,16 +3,16 @@
 #include <algorithm>
 using namespace std;
 
+const int MIN = -1001;
+
 int N, S, M;
 int V[100];
 int cache[1000][100];
 
 int getMaxVolume(int nowVolume, int i) {
-	//base case
-	if (nowVolume > M || nowVolume < 0) return -1;
+	if (nowVolume > M || nowVolume < 0) return MIN;
 	if (i == N) return nowVolume;
 
-	//메모이제이션
 	int& ret = cache[nowVolume][i];
 	if (ret != -1) return ret;
 
@@ -31,6 +31,9 @@ int main() {
 	for (int i = 0; i < N; ++i)
 		cin >> V[i];
 
-	cout << getMaxVolume(S, 0);
+	int maxV = getMaxVolume(S, 0);
+	if (maxV == MIN) cout << -1;
+	else cout << maxV;
+
 	return 0;
 }
