@@ -3,37 +3,40 @@
 #include <algorithm>
 using namespace std;
 
-const int MIN = -1001;
+typedef unsigned long long ull;
 
-int N, S, M;
-int V[100];
-int cache[1000][100];
+int N; 
+int num[100];
+ull cache[100][1000];
 
-int getMaxVolume(int nowVolume, int i) {
-	if (nowVolume > M || nowVolume < 0) return MIN;
-	if (i == N) return nowVolume;
+ull getCnt(int i, int val) {
+	if (val < 0 || val > 20) 
+		return 0;
+	if (i == N - 1) {
+		if (val == num[N - 1]) return 1;
+		else return 0;
+	}
 
-	int& ret = cache[nowVolume][i];
+	ull& ret = cache[i][val];
 	if (ret != -1) return ret;
 
-	return ret = max(getMaxVolume(nowVolume + V[i], i+1), getMaxVolume(nowVolume - V[i], i + 1));
+	return ret = getCnt(i + 1, val + num[i]) + getCnt(i + 1, val - num[i]);
 }
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	for(int i = 0; i<1000; ++i)
+	for (int i = 0; i < 100; ++i)
 		memset(cache[i], -1, sizeof(cache[i]));
-	
-	cin >> N >> S >> M;
-	for (int i = 0; i < N; ++i)
-		cin >> V[i];
 
-	int maxV = getMaxVolume(S, 0);
-	if (maxV == MIN) cout << -1;
-	else cout << maxV;
+	cin >> N;
+	for (int i = 0; i < N; ++i)
+		cin >> num[i];
+
+	cout << getCnt(0, 0);
 
 	return 0;
 }
