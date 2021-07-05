@@ -1,7 +1,8 @@
 #include<iostream>
+#include <utility>
 #include<queue>
 
-#define MAX 2000
+const int MAX = 2000;
 using namespace std;
 
 int S;
