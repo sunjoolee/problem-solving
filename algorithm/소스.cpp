@@ -1,52 +1,66 @@
-#include <iostream>
-#include <cstring>
-#include <algorithm>
+#include<iostream>
+#include<queue>
+
+#define MAX 2000
 using namespace std;
 
-const int MAX = 2000;
-
 int S;
-int cache[2000][2000];
 
-int getTime(int sum, int clipBoard) {
-	//base case
-	if (sum == S) return 0;
-	if (sum > 2 * S) return MAX;
+//Visit[screen][clipBoard]
+bool Visit[MAX][MAX];
 
-	//메모이제이션
-	int& ret = cache[sum][clipBoard];
-	if (ret != -1) return ret;
+int BFS(){
+	//queue of pair<pair<screen, clipBoard>, time>
+	queue<pair<pair<int, int>, int> > Q;
 
-	int min = MAX;
-	//복사 연산
-	if (sum < S && sum != clipBoard) {
-		int copy = getTime(sum, sum);
-		if (min > copy) min = copy;
+	Q.push(make_pair(make_pair(1, 0), 0));
+	Visit[1][0] = true;    
+
+	while (Q.empty() == 0)
+	{
+		int screen = Q.front().first.first;
+		int clipBoard = Q.front().first.second;
+		int time = Q.front().second;
+		Q.pop();
+
+		//base case
+		if (screen == S) return time;
+
+		//copy
+		if (screen > 0 && screen < MAX) {
+			if (Visit[screen][screen] == false) {
+				Visit[screen][screen] = true;
+				Q.push(make_pair(make_pair(screen, screen), time + 1));
+			}
+		}
+		//paste
+		if (clipBoard > 0 && screen + clipBoard < MAX){
+			if (Visit[screen + clipBoard][clipBoard] == false){
+				Visit[screen + clipBoard][clipBoard] = true;
+				Q.push(make_pair(make_pair(screen + clipBoard, clipBoard), time + 1));
+			}
+		}
+		//sub
+		if (screen > 0 && screen < MAX) {
+			if (Visit[screen - 1][clipBoard] == false){
+				Visit[screen - 1][clipBoard] = true;
+				Q.push(make_pair(make_pair(screen - 1, clipBoard), time + 1));
+			}
+		}
 	}
-	//붙여넣기 연산
-	if (sum < S && clipBoard != 0) {
-		int paste = getTime(sum + clipBoard, clipBoard);
-		if (min > paste) min = paste;
-	}
-	//하나 빼기 연산
-	if (sum > S) {
-		int sub = getTime(sum - 1, clipBoard);
-		if (min > sub) min = sub;
-	}
-
-	return ret = min + 1;
 }
 
 
-int main() {
-	ios_base::sync_with_stdio(false);
+int main(){
+	ios::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	for (int i = 0; i < 2000; ++i)
-		memset(cache[i], -1, sizeof(cache[i]));
-
 	cin >> S;
-	cout << getTime(1, 0);
+
+	int R = BFS();
+	cout << R;
+
 	return 0;
 }
+
