@@ -36,7 +36,7 @@ int main() {
 	for (int i = 0; i < N; ++i)
 		cin >> num[i];
 
-	cout << getCnt(0, 0);
+	cout << getCnt(1, num[0]);
 
 	return 0;
 }
