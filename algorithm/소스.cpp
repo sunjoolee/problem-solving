@@ -1,13 +1,12 @@
 #include <iostream>
 #include <cstring>
-#include <climits>
 #include <algorithm>
 using namespace std;
 
 const int MAX = 2000;
 
 int S;
-int cache[2000][1000];
+int cache[2000][2000];
 
 int getTime(int sum, int clipBoard) {
 	//base case
@@ -20,7 +19,7 @@ int getTime(int sum, int clipBoard) {
 
 	int min = MAX;
 	//복사 연산
-	if (sum != clipBoard) {
+	if (sum < S && sum != clipBoard) {
 		int copy = getTime(sum, sum);
 		if (min > copy) min = copy;
 	}
