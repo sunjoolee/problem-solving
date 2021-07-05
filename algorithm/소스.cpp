@@ -1,42 +1,40 @@
 #include <iostream>
-#include <cstring>
 #include <algorithm>
 using namespace std;
 
-typedef unsigned long long ull;
+int N;
+//index 1~N
+int requiredJob[101]; 
+int requiredTime[101]; 
+int jobFinishedTime[101] = { 0 };
 
-int N; 
-int num[100];
-ull cache[100][1000];
+int getTotalTime() {
+	int ret = 0;
 
-ull getCnt(int i, int val) {
-	if (val < 0 || val > 20) 
-		return 0;
-	if (i == N - 1) {
-		if (val == num[N - 1]) return 1;
-		else return 0;
+	for (int i = 1; i <= N; ++i) {
+		jobFinishedTime[i] = jobFinishedTime[requiredJob[i]] + requiredTime[i];
+		ret = max(ret, jobFinishedTime[i]);
 	}
 
-	ull& ret = cache[i][val];
-	if (ret != -1) return ret;
-
-	return ret = getCnt(i + 1, val + num[i]) + getCnt(i + 1, val - num[i]);
+	return ret;
 }
-
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	for (int i = 0; i < 100; ++i)
-		memset(cache[i], -1, sizeof(cache[i]));
-
 	cin >> N;
-	for (int i = 0; i < N; ++i)
-		cin >> num[i];
 
-	cout << getCnt(1, num[0]);
+	for (int i = 1; i <= N; ++i) {
+		cin >> requiredTime[i];
 
+		int n;
+		cin >> n;
+		for (int j = 1; j <= n; ++j)
+			cin >> requiredJob[i];
+	}
+	
+	cout << getTotalTime();
 	return 0;
 }
