@@ -4,18 +4,20 @@
 
 using namespace std;
 
-int N;
-int cache[101][10];
+int N =1;
+int cache[101][10][1024];
 
-int getCnt(int len, int num) {
+int getCnt(int len, int num, int bitmask) {
 	//base case
 	if (num < 0 || num > 9) return 0;
-	if (len == N) return 1;
+	if (len == N)
+		if(bitmask == 1023) return 1;
+		else return 0;
 
-	int&ret = cache[len][num];
+	int&ret = cache[len][num][bitmask];
 	if (ret != -1) return ret;
 
-	return ret = (getCnt(len + 1, num + 1) + getCnt(len + 1, num - 1)) % 1000000000;
+	return ret = (getCnt(len + 1, num + 1, bitmask | (1 << (num+1))) + getCnt(len + 1, num - 1, bitmask | (1 << (num - 1)))) % 1000000000;
 }
 
 int main(void){
@@ -26,11 +28,12 @@ int main(void){
 	memset(cache, -1, sizeof(cache));
 
 	cin >> N;
-	
+
 	int cnt = 0;
 	for (int num = 1; num <= 9; num++)
-		cnt  = (cnt + getCnt(1, num)) % 1000000000;
+		cnt = (cnt + getCnt(1, num, 1 << num)) % 1000000000;
 
 	cout << cnt;
+	
 	return 0;
 }
