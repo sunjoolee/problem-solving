@@ -1,27 +1,36 @@
-#include<iostream>
-#include<cstring>
+#include <iostream>
 #include <algorithm>
+#include <cstring>
 
 using namespace std;
 
-const int MOD = 1000000007;
+const int MAX = 101;
+
 int N;
-int cache[101][10][3][3];
+long long cache[MAX];
 
-int getCnt(int len, int num, int add, int sub) {
-	//base case
-	if (add >= 3 || sub >= 3) return 0;
-	if (num < 0 || num > 9) return 0;
-	if (len == N) return 1;
+long long getScreen(int time) {
 
-	int&ret = cache[len][num][add][sub];
-	if (ret != -1) return ret;
+	long long &res = cache[time];
+	if (res != -1) return res;
 
-	return ret = (getCnt(len + 1, num + 1, add + 1, 0) + getCnt(len + 1, num - 1, 0, sub + 1)) % MOD;
+	//1초전 상태에 A 하나 추가
+	res = 1 + getScreen(time - 1);
+
+	if (time >= 3) {
+		//(time- 2 - i)초 상태에 CtrlA + CtrlC + Σ(CtrlV)
+		for (int i = 1; time - 2 - i >= 0; ++i) {
+			res = max(res, getScreen(time - 2 - i) * (i + 1));
+		}
+	}
+	return res;
 }
 
-int main(void) {
-	ios::sync_with_stdio(false);
+
+
+int main() {
+
+	ios_base::sync_with_stdio(0);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
@@ -29,12 +38,7 @@ int main(void) {
 
 	cin >> N;
 
-	int cnt = 0;
-
-	//변형 계단 수는 0으로 시작할 수 있음
-	for (int num = 0; num <= 9; num++)
-		cnt = (cnt + getCnt(1, num, 0, 0)) % MOD;
-
-	cout << cnt;
+	cache[0] = 0;
+	cout << getScreen(N);
 	return 0;
 }
