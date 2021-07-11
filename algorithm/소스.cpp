@@ -1,67 +1,85 @@
 #include <iostream>
-#include <vector>
-#include <queue>
+#include <cstring>
+#include <math.h>
+#include <algorithm>
 using namespace std;
 
-const int MAXN = 101;
+const int MAXN = 100000;
+int cache[MAXN][2];
+int isPrime[MAXN];
 
-int n;
-int inDegree[MAXN] = { 0 };
-int time[MAXN] = { 0 };
-vector<int> child[MAXN];
+void setIsPrime(){
+	memset(isPrime, 1, sizeof(isPrime));
+	isPrime[0] = isPrime[1] = 0;
+	
+	for (int i = 2; i <= sqrt(MAXN); i++){
+		if (isPrime[i] == 0) continue;
 
-//dp[node]
-int dp[MAXN] = { 0 };
-
-int topologySort() {
-	//pair<node>
-	queue<int> q;
-
-	for (int i = 1; i <= n; ++i)
-		if (inDegree[i] == 0) {
-			dp[i] = time[i];
-			q.push(i);
-		}
-
-	for (int i = 1; i <= n; ++i ){
-		if (q.empty()) break;
-
-		int parent = q.front();
-		q.pop();
-
-		for (int i = 0; i < child[parent].size(); ++i) {
-			int childnode = child[parent][i];
-
-			dp[childnode] = max(dp[childnode], dp[parent] + time[childnode]);
-
-			if (--inDegree[childnode] == 0) {
-				q.push(childnode);
-			}
-		}
+		for (int j = i * i; j <= MAXN; j += i)
+			isPrime[j] = 0;
 	}
-
-	int res = 0;
-	for (int i = 1; i <= n; ++i)
-		res = max(res, dp[i]);
-
-	return res;
+	return;
 }
 
+//p가 이길 수 있으면 1, 지면 0 반환
+int canWin(int N, int p) {
+	if (N == 0 || N == 1) return 0;
 
-int main(){
+	int& ret = cache[N][p];
+	if (ret != -1) return ret;
 
-	cin >> n;
+	ret = 0; 
+	for (int i = 2; i <= N; ++i) {
+		if (isPrime[i])
+			if (!canWin(N - i, 0 + 1 - p)) {
+				ret = 1;
+				break;
+			}
+	}
+		
+	return ret;
+}
 
-	for (int i = 1; i <= n; ++i) {
-		cin >> time[i];
-		cin >> inDegree[i];
-		for (int j = 0; j < inDegree[i]; ++j) {
-			int parent;
-			cin >> parent;
-			child[parent].push_back(i);
+void getX(int A, int k) {
+
+	int bestX = 0;
+	int bestwin = 0;
+
+	for (int X = A + 1 - k; X >= 2; --X) {
+		
+		int win = 0;
+		for (int N = X; N <= X + k - 1; ++N) 
+			if (!canWin(N, 0))
+				++win;
+		
+		if (bestwin <= win ) {
+			bestwin = win;
+			bestX = X;
 		}
 	}
 
-	cout << topologySort();
+	cout << bestwin << " " << bestX << "\n";
+	return;
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	cout.tie(NULL);
+	
+	for (int i = 0; i < MAXN; ++i)
+		memset(cache[i], -1, sizeof(cache[i]));
+
+	setIsPrime();
+
+	int T;
+	cin >> T;
+	while (T--) {
+
+		int A, k;
+		cin >> A >> k;
+		getX(A, k);
+	}
+
 	return 0;
 }
