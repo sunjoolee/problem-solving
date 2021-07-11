@@ -5,14 +5,16 @@
 using namespace std;
 
 const int MAXN = 100000;
-int cache[MAXN][2];
+int cache[MAXN];
+int sum[MAXN];
 int isPrime[MAXN];
 
-void setIsPrime(){
+//에라토스테네스의 체
+void setIsPrime() {
 	memset(isPrime, 1, sizeof(isPrime));
 	isPrime[0] = isPrime[1] = 0;
-	
-	for (int i = 2; i <= sqrt(MAXN); i++){
+
+	for (int i = 2; i <= sqrt(MAXN); i++) {
 		if (isPrime[i] == 0) continue;
 
 		for (int j = i * i; j <= MAXN; j += i)
@@ -22,22 +24,33 @@ void setIsPrime(){
 }
 
 //p가 이길 수 있으면 1, 지면 0 반환
+//Alice 0, Bob 1
 int canWin(int N, int p) {
 	if (N == 0 || N == 1) return 0;
+	if (isPrime[N]) return 1;
 
-	int& ret = cache[N][p];
+	int& ret = cache[N];
 	if (ret != -1) return ret;
 
-	ret = 0; 
+	ret = 0;
 	for (int i = 2; i <= N; ++i) {
 		if (isPrime[i])
+			//상대방이 지는 경우에 p가 이길 수 있다
 			if (!canWin(N - i, 0 + 1 - p)) {
 				ret = 1;
 				break;
 			}
 	}
-		
 	return ret;
+}
+
+void getSum() {
+	memset(sum, 0, sizeof(sum));
+
+	for (int N = 2; N <= MAXN; ++N) 
+		sum[N] = sum[N - 1] + !canWin(N, 0);
+
+	return;
 }
 
 void getX(int A, int k) {
@@ -46,13 +59,9 @@ void getX(int A, int k) {
 	int bestwin = 0;
 
 	for (int X = A + 1 - k; X >= 2; --X) {
-		
-		int win = 0;
-		for (int N = X; N <= X + k - 1; ++N) 
-			if (!canWin(N, 0))
-				++win;
-		
-		if (bestwin <= win ) {
+		int win = sum[X + k - 1] - sum[X - 1];
+
+		if (bestwin <= win) {
 			bestwin = win;
 			bestX = X;
 		}
@@ -66,16 +75,15 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-	
-	for (int i = 0; i < MAXN; ++i)
-		memset(cache[i], -1, sizeof(cache[i]));
+
+	memset(cache, -1, sizeof(cache));
 
 	setIsPrime();
+	getSum();
 
 	int T;
 	cin >> T;
 	while (T--) {
-
 		int A, k;
 		cin >> A >> k;
 		getX(A, k);
