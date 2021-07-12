@@ -6,22 +6,25 @@ const int MAXN = 10000 + 1;
 
 int N;
 ul M;
-int A[MAXN];
-ul psum[MAXN];
+int A[MAXN] = { 0 };
 
-void getpsum() {
-	psum[0] = 0;
-	for (int i = 1; i <= N; ++i)
-		psum[i] = psum[i - 1] + A[i];
-	return;
-}
 
 ul getCnt() {
 	ul ret = 0;
-	for (int i = 1; i <= N; ++i)
-		for (int j = i; j <= N; ++j)
-			if (psum[j] - psum[i - 1] == M)
-				++ret;
+	int start = 0;
+	int end = 0;
+	ul psum = 0;
+
+	while (end <= N) {
+		if (psum >= M)
+			psum -= A[start++];
+		else if (psum < M)
+			psum += A[end++];
+
+		if (psum == M)
+			ret++;
+	}
+
 	return ret;
 }
 
@@ -31,10 +34,9 @@ int main() {
 	cout.tie(NULL);
 
 	cin >> N >> M;
-	for (int i = 1; i <= N; ++i)
+	for (int i = 0; i < N; ++i)
 		cin >> A[i];
 
-	getpsum();
 	cout << getCnt();
 	return 0;
 }
