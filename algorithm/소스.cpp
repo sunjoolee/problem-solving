@@ -1,75 +1,46 @@
 #include <iostream>
-#include <cstring>
-#include <utility>
-#include <algorithm>
 using namespace std;
 
-const int MAXNUM = 300001;
+typedef unsigned long int ul;
+const int MAXN = 100000 + 1;
 
-int R, C;
-int board[501][501];
-int result[501][501] = { 0 };
-pair<int, int> cache[501][501];
+int N;
+ul S;
+int num[MAXN];
+ul psum[MAXN];
 
-int rdir[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
-int cdir[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
-
-pair<int, int> getDest(int r, int c) {
-
-	pair<int, int>& ret = cache[r][c];
-	if (ret.first != -1) return ret;
-	
-	int minVal = MAXNUM;
-	int minr, minc;
-	for (int i = 0; i < 8; ++i) {
-		int candr = r + rdir[i];
-		int candc = c + cdir[i];
-		if (candr < 1 || candr > R) continue;
-		if (candc < 1 || candc > C) continue;
-
-		if (minVal > board[candr][candc]) {
-			minVal = board[candr][candc];
-			minr = candr;
-			minc = candc;
-		}
-	}
-
-	if (minVal > board[r][c]) {
-		ret.first = r;
-		ret.second = c;
-	}
-	else
-		ret = getDest(minr, minc);
-
-	return ret;
+void getpsum() {
+	psum[0] = num[0];
+	for (int i = 1; i < N; ++i)
+		psum[i] = psum[i - 1] + num[i];
+	return;
 }
+
+int getlen() {
+	if (psum[N-1] < S) return 0;
+
+	for (int len = 1; len <= N; ++len) {
+		//start = 0
+		if (psum[len - 1] > S) return len;
+		//start = 1 ~
+		for (int start = 1; start + len - 1 < N; ++start)
+			if (psum[start + len - 1] - psum[start-1] > S)
+				return len;
+	}
+
+}
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	for (int i = 0; i < 501; ++i)
-		for (int j = 0; j < 501; ++j)
-			cache[i][j].first = -1;
+	cin >> N >> S;
+	for (int i = 0; i < N; ++i)
+		cin >> num[i];
 
-	cin >> R >> C;
-	
-	for (int r = 1; r <= R; ++r)
-		for (int c = 1; c <= C; ++c)
-			cin >> board[r][c];
-
-	for (int r = 1; r <= R; ++r)
-		for (int c = 1; c <= C; ++c) {
-			pair<int, int> dest = getDest(r, c);
-			++result[dest.first][dest.second];
-		}
-
-	for (int r = 1; r <= R; ++r) {
-		for (int c = 1; c <= C; ++c)
-			cout << result[r][c] << " ";
-		cout << "\n";
-	}
-
+	getpsum();
+	cout << getlen();
 	return 0;
 }
