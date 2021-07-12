@@ -1,67 +1,75 @@
 #include <iostream>
-#include <vector>
-#include <queue>
+#include <cstring>
+#include <utility>
+#include <algorithm>
 using namespace std;
 
-const int MAXN = 101;
+const int MAXNUM = 300001;
 
-int n;
-int inDegree[MAXN] = { 0 };
-int time[MAXN] = { 0 };
-vector<int> child[MAXN];
+int R, C;
+int board[501][501];
+int result[501][501] = { 0 };
+pair<int, int> cache[501][501];
 
-//dp[node]
-int dp[MAXN] = { 0 };
+int rdir[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+int cdir[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
 
-int topologySort() {
-	//pair<node>
-	queue<int> q;
+pair<int, int> getDest(int r, int c) {
 
-	for (int i = 1; i <= n; ++i)
-		if (inDegree[i] == 0) {
-			dp[i] = time[i];
-			q.push(i);
-		}
+	pair<int, int>& ret = cache[r][c];
+	if (ret.first != -1) return ret;
+	
+	int minVal = MAXNUM;
+	int minr, minc;
+	for (int i = 0; i < 8; ++i) {
+		int candr = r + rdir[i];
+		int candc = c + cdir[i];
+		if (candr < 1 || candr > R) continue;
+		if (candc < 1 || candc > C) continue;
 
-	for (int i = 1; i <= n; ++i ){
-		if (q.empty()) break;
-
-		int parent = q.front();
-		q.pop();
-
-		for (int i = 0; i < child[parent].size(); ++i) {
-			int childnode = child[parent][i];
-
-			dp[childnode] = max(dp[childnode], dp[parent] + time[childnode]);
-
-			if (--inDegree[childnode] == 0) {
-				q.push(childnode);
-			}
+		if (minVal > board[candr][candc]) {
+			minVal = board[candr][candc];
+			minr = candr;
+			minc = candc;
 		}
 	}
 
-	int res = 0;
-	for (int i = 1; i <= n; ++i)
-		res = max(res, dp[i]);
+	if (minVal > board[r][c]) {
+		ret.first = r;
+		ret.second = c;
+	}
+	else
+		ret = getDest(minr, minc);
 
-	return res;
+	return ret;
 }
 
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	cout.tie(NULL);
 
-int main(){
+	for (int i = 0; i < 501; ++i)
+		for (int j = 0; j < 501; ++j)
+			cache[i][j].first = -1;
 
-	cin >> n;
+	cin >> R >> C;
+	
+	for (int r = 1; r <= R; ++r)
+		for (int c = 1; c <= C; ++c)
+			cin >> board[r][c];
 
-	for (int i = 1; i <= n; ++i) {
-		cin >> time[i];
-		cin >> inDegree[i];
-		for (int j = 0; j < inDegree[i]; ++j) {
-			int parent;
-			cin >> parent;
-			child[parent].push_back(i);
+	for (int r = 1; r <= R; ++r)
+		for (int c = 1; c <= C; ++c) {
+			pair<int, int> dest = getDest(r, c);
+			++result[dest.first][dest.second];
 		}
+
+	for (int r = 1; r <= R; ++r) {
+		for (int c = 1; c <= C; ++c)
+			cout << result[r][c] << " ";
+		cout << "\n";
 	}
 
-	cout << topologySort();
 	return 0;
 }
