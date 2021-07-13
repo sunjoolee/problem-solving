@@ -1,13 +1,16 @@
+
 #include <iostream>
 #include <cstring>
+#include <vector>
 #include <math.h>
 #include <algorithm>
 using namespace std;
 
 const int MAXN = 100000;
-int cache[MAXN];
-int sum[MAXN];
-int isPrime[MAXN];
+int cache[MAXN + 1];
+int sum[MAXN + 1];
+int isPrime[MAXN + 1];
+vector<int> prime;
 
 //에라토스테네스의 체
 void setIsPrime() {
@@ -23,6 +26,13 @@ void setIsPrime() {
 	return;
 }
 
+void getPrime() {
+	for (int i = 2; i <= MAXN; ++i)
+		if (isPrime[i]) 
+			prime.push_back(i);
+	return;
+}
+
 //현재 종이에 적힌 숫자가 N일 때 
 //현재 차례가 이길 수 있으면 1, 지면 0 반환
 int canWin(int N) {
@@ -33,13 +43,13 @@ int canWin(int N) {
 	if (ret != -1) return ret;
 
 	ret = 0;
-	for (int i = 2; i <= N; ++i) {
-		if (isPrime[i])
-			//다음 차례에서 지는 경우에 현재 차례에서 이길 수 있다
-			if (!canWin(N - i)) {
-				ret = 1;
-				break;
-			}
+	for (int i = 0; i < prime.size(); ++i) {
+		if (prime[i] > N) break;
+		//다음 차례에서 지는 경우에 현재 차례에서 이길 수 있다
+		if (!canWin(N - prime[i])) {
+			ret = 1;
+			break;
+		}
 	}
 	return ret;
 }
@@ -47,14 +57,13 @@ int canWin(int N) {
 void getSum() {
 	memset(sum, 0, sizeof(sum));
 
-	for (int N = 2; N <= MAXN; ++N) 
+	for (int N = 2; N <= MAXN; ++N)
 		sum[N] = sum[N - 1] + !canWin(N);
 
 	return;
 }
 
 void getX(int A, int k) {
-
 	int bestX = 0;
 	int bestwin = 0;
 
@@ -79,6 +88,7 @@ int main() {
 	memset(cache, -1, sizeof(cache));
 
 	setIsPrime();
+	getPrime();
 	getSum();
 
 	int T;
