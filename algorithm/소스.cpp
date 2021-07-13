@@ -1,31 +1,35 @@
 #include <iostream>
+#include <algorithm>
 using namespace std;
 
 typedef unsigned long int ul;
-const int MAXN = 10000 + 1;
+const int MAXN = 100000 + 1;
 
 int N;
-ul M;
-int A[MAXN] = { 0 };
+ul S;
+int num[MAXN];
 
+int getlen() {
+	//base case
+	if (S == 0) return 1;
 
-ul getCnt() {
-	ul ret = 0;
+	int minlen = MAXN;
 	int start = 0;
 	int end = 0;
 	ul psum = 0;
 
 	while (end <= N) {
-		if (psum >= M)
-			psum -= A[start++];
-		else if (psum < M)
-			psum += A[end++];
+		if (psum >= S) {
+			minlen = min(minlen, (end - 1) - start + 1);
+			psum -= num[start++];
+		}
+		else if (psum < S)
+			psum += num[end++];
 
-		if (psum == M)
-			ret++;
 	}
 
-	return ret;
+	if (minlen == MAXN) return 0;
+	else return minlen;
 }
 
 int main() {
@@ -33,10 +37,10 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> M;
+	cin >> N >> S;
 	for (int i = 0; i < N; ++i)
-		cin >> A[i];
+		cin >> num[i];
 
-	cout << getCnt();
+	cout << getlen();
 	return 0;
 }
