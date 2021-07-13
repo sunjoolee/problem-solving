@@ -1,35 +1,51 @@
 #include <iostream>
-#include <algorithm>
+#include <vector>
 using namespace std;
 
 typedef unsigned long int ul;
-const int MAXN = 100000 + 1;
+const ul MAXN = 4000000;
 
 int N;
-ul S;
-int num[MAXN];
+vector <int> prime;
+int isPrime[MAXN + 1];
 
-int getlen() {
-	//base case
-	if (S == 0) return 1;
+//에라토스테네스의 체
+void getPrime(int N) {
+	memset(isPrime, 1, sizeof(isPrime));
+	isPrime[0] = isPrime[1] = 0;
 
-	int minlen = MAXN;
+	for (int i = 2; i <= sqrt(N); i++) {
+		if (isPrime[i] == 0) continue;
+
+		prime.push_back(i);
+		for (int j = i * i; j <= N; j += i)
+			isPrime[j] = 0;
+	}
+
+	for (int i = sqrt(N)+1; i <= N; i++)
+		if (isPrime[i])
+			prime.push_back(i);
+	return;
+}
+
+int getCnt() {
+	int ret = 0;
 	int start = 0;
 	int end = 0;
 	ul psum = 0;
 
-	while (end <= N) {
-		if (psum >= S) {
-			minlen = min(minlen, (end - 1) - start + 1);
-			psum -= num[start++];
-		}
-		else if (psum < S)
-			psum += num[end++];
+	prime.push_back(0);
+	while (end < prime.size()) {
+		if (psum >= N)
+			psum -= prime[start++];
 
+		else if (psum < N)
+			psum += prime[end++];
+
+		if (psum == N)
+			ret++;
 	}
-
-	if (minlen == MAXN) return 0;
-	else return minlen;
+	return ret;
 }
 
 int main() {
@@ -37,10 +53,9 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> S;
-	for (int i = 0; i < N; ++i)
-		cin >> num[i];
+	cin >> N;
+	getPrime(N);
+	cout << getCnt();
 
-	cout << getlen();
 	return 0;
 }
