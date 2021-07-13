@@ -1,32 +1,42 @@
 #include <iostream>
-#include <map>
+#include <algorithm>
 using namespace std;
 
-const int MAXN = 40;
+//2^28 = 2^30 = (10^3)^3 = 10^9
+const int MAXN = 4000 ;
+const int MAXSIZE = 4000 * 4000;
 
-int n, s;
-long long cnt = 0;
-int num[MAXN + 1]; 
-map<int, int> mp;
+int n;
+long long a[MAXN + 1];
+long long b[MAXN + 1];
+long long c[MAXN + 1];
+long long d[MAXN + 1];
+long long sumAB[MAXSIZE + 1];
 
-void dfsLeft(int index, int sum) {
-	if (index == n/2) {
-		++mp[sum];
-		return;
-	}
-	dfsLeft(index + 1, sum);
-	dfsLeft(index + 1, sum + num[index]);
+void getSumAB() {
+	int idx = 0;
+	for(int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j) {
+			sumAB[idx] = a[i] + b[j];
+			++idx;
+		}
 	return;
 }
 
-void dfsRight(int index, int sum) {
-	if (index >= n) {
-		cnt += mp[s-sum];
-		return;
-	}
-	dfsRight(index + 1, sum);
-	dfsRight(index + 1, sum + num[index]);
-	return;
+long long getCnt() {
+	long long cnt = 0;
+	long long sumCD;
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j) {
+			sumCD = c[i] + d[j];
+
+			int lb = lower_bound(sumAB, sumAB + (n * n), -sumCD) - sumAB;
+			int ub = upper_bound(sumAB, sumAB + (n * n), -sumCD) - sumAB;
+
+			if (sumAB[lb] + sumCD == 0)
+				cnt += (ub - lb);
+		}
+	return cnt;
 }
 
 int main() {
@@ -34,14 +44,12 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n >> s;
+	cin >> n;
 	for (int i = 0; i < n; ++i)
-		cin >> num[i];
-
-	dfsLeft(0, 0);
-	dfsRight(n/2, 0);
-
-	if (s == 0) cnt--;
-	cout << cnt;
+		cin >> a[i] >> b[i] >> c[i] >> d[i];
+	
+	getSumAB();
+	sort(sumAB, sumAB + (n * n));
+	cout << getCnt();
 	return 0;
 }
