@@ -1,42 +1,42 @@
 #include <iostream>
-#include <cstring>
 #include <algorithm>
 using namespace std;
 
-const int MAXN = 201;
-const int IMPOSSIBLE = 2000000;
+//2^28 = 2^30 = (10^3)^3 = 10^9
+const int MAXN = 4000 ;
+const int MAXSIZE = 4000 * 4000;
 
-int n, k;
-int value[MAXN][2];
-int cache[3][MAXN][MAXN];
+int n;
+long long a[MAXN + 1];
+long long b[MAXN + 1];
+long long c[MAXN + 1];
+long long d[MAXN + 1];
+long long sumAB[MAXSIZE + 1];
 
-//prevState: À­ ÁÙÀÇ ¹æÀÇ »óÅÂ ±â·Ï
-//¿­¸² ¿­¸²: 0
-//´ÝÈû ¿­¸²: 1
-//¿­¸² ´ÝÈû: 2
-//´ÝÈû ´ÝÈûÀº ºÒ°¡´É
-int minClosedValue(int prevState, int line, int closed) {
-	if (closed == k) return 0;
-	if (line == n && closed < k) return IMPOSSIBLE;
+void getSumAB() {
+	int idx = 0;
+	for(int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j) {
+			sumAB[idx] = a[i] + b[j];
+			++idx;
+		}
+	return;
+}
 
-	int& ret = cache[prevState][line][closed];
-	if (ret != -1) return ret;
+long long getCnt() {
+	long long cnt = 0;
+	long long sumCD;
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j) {
+			sumCD = c[i] + d[j];
 
-	if (prevState == 0) {
-		ret = minClosedValue(0, line + 1, closed);
-		ret = min(ret, value[line][0] + minClosedValue(1, line + 1, closed + 1));
-		ret = min(ret, value[line][1] + minClosedValue(2, line + 1, closed + 1));
-	}
-	if (prevState == 1) {
-		ret = minClosedValue(0, line + 1, closed);
-		ret = min(ret, value[line][0] + minClosedValue(1, line + 1, closed + 1));
-	}
-	if (prevState == 2) {
-		ret = minClosedValue(0, line + 1, closed);
-		ret = min(ret, value[line][1] + minClosedValue(2, line + 1, closed + 1));
-	}
+			int lb = lower_bound(sumAB, sumAB + (n * n), -sumCD) - sumAB;
+			int ub = upper_bound(sumAB, sumAB + (n * n), -sumCD) - sumAB;
 
-	return ret;
+			if (sumAB[lb] + sumCD == 0)
+				cnt += (ub - lb);
+		}
+	return cnt;
 }
 
 int main() {
@@ -44,17 +44,12 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	memset(cache, -1, sizeof(cache));
-
-	cin >> n >> k;
-
-	int totalValue = 0;
+	cin >> n;
 	for (int i = 0; i < n; ++i)
-		for(int j = 0; j < 2; ++j){
-			cin >> value[i][j];
-			totalValue += value[i][j];
-		}
-
-	cout << totalValue - minClosedValue(0, 0, 0);
+		cin >> a[i] >> b[i] >> c[i] >> d[i];
+	
+	getSumAB();
+	sort(sumAB, sumAB + (n * n));
+	cout << getCnt();
 	return 0;
 }
