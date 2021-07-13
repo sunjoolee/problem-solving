@@ -3,25 +3,39 @@
 #include <algorithm>
 using namespace std;
 
-// M : 0, O : 1, L : 2, A : 3, ±×¿Ü ¾ËÆÄºª: 4
+const int MAXN = 201;
+const int IMPOSSIBLE = 2000000;
 
-int N;
-int grnd[501][501];
-int cache[501][501][5][5][5];
+int n, k;
+int value[MAXN][2];
+int cache[3][MAXN][MAXN];
 
-int cntMOLA(int r, int c, int prev3, int prev2, int prev1) {
-	if (r < 1 || r > N) return 0;
-	if (c < 1 || c > N) return 0;
+//prevState: À­ ÁÙÀÇ ¹æÀÇ »óÅÂ ±â·Ï
+//¿­¸² ¿­¸²: 0
+//´ÝÈû ¿­¸²: 1
+//¿­¸² ´ÝÈû: 2
+//´ÝÈû ´ÝÈûÀº ºÒ°¡´É
+int minClosedValue(int prevState, int line, int closed) {
+	if (closed == k) return 0;
+	if (line == n && closed < k) return IMPOSSIBLE;
 
-	int& ret = cache[r][c][prev3][prev2][prev1];
+	int& ret = cache[prevState][line][closed];
 	if (ret != -1) return ret;
 
-	ret = 0;
+	if (prevState == 0) {
+		ret = minClosedValue(0, line + 1, closed);
+		ret = min(ret, value[line][0] + minClosedValue(1, line + 1, closed + 1));
+		ret = min(ret, value[line][1] + minClosedValue(2, line + 1, closed + 1));
+	}
+	if (prevState == 1) {
+		ret = minClosedValue(0, line + 1, closed);
+		ret = min(ret, value[line][0] + minClosedValue(1, line + 1, closed + 1));
+	}
+	if (prevState == 2) {
+		ret = minClosedValue(0, line + 1, closed);
+		ret = min(ret, value[line][1] + minClosedValue(2, line + 1, closed + 1));
+	}
 
-	int now = grnd[r][c];
-	if (prev3 == 0 && prev2 == 1 && prev1 == 2 && now == 3) ++ret;
-
-	ret += max(cntMOLA(r, c + 1, prev2, prev1, now), cntMOLA(r + 1, c, prev2, prev1, now));
 	return ret;
 }
 
@@ -32,19 +46,15 @@ int main() {
 
 	memset(cache, -1, sizeof(cache));
 
-	cin >> N;
-	char input;
-	for (int i = 1; i <= N; ++i)
-		for (int j = 1; j <= N; ++j) {
-			cin >> input;
-			if (input == 'M') grnd[i][j] = 0;
-			else if (input == 'O') grnd[i][j] = 1;
-			else if (input == 'L') grnd[i][j] = 2;
-			else if (input == 'A') grnd[i][j] = 3;
-			else grnd[i][j] = 4;
+	cin >> n >> k;
+
+	int totalValue = 0;
+	for (int i = 0; i < n; ++i)
+		for(int j = 0; j < 2; ++j){
+			cin >> value[i][j];
+			totalValue += value[i][j];
 		}
 
-	cout << cntMOLA(1, 1, 4, 4, 4);
-
+	cout << totalValue - minClosedValue(0, 0, 0);
 	return 0;
 }
