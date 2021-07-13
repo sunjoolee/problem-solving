@@ -23,9 +23,9 @@ void setIsPrime() {
 	return;
 }
 
-//p가 이길 수 있으면 1, 지면 0 반환
-//Alice 0, Bob 1
-int canWin(int N, int p) {
+//현재 종이에 적힌 숫자가 N일 때 
+//현재 차례가 이길 수 있으면 1, 지면 0 반환
+int canWin(int N) {
 	if (N == 0 || N == 1) return 0;
 	if (isPrime[N]) return 1;
 
@@ -35,8 +35,8 @@ int canWin(int N, int p) {
 	ret = 0;
 	for (int i = 2; i <= N; ++i) {
 		if (isPrime[i])
-			//상대방이 지는 경우에 p가 이길 수 있다
-			if (!canWin(N - i, 0 + 1 - p)) {
+			//다음 차례에서 지는 경우에 현재 차례에서 이길 수 있다
+			if (!canWin(N - i)) {
 				ret = 1;
 				break;
 			}
@@ -48,7 +48,7 @@ void getSum() {
 	memset(sum, 0, sizeof(sum));
 
 	for (int N = 2; N <= MAXN; ++N) 
-		sum[N] = sum[N - 1] + !canWin(N, 0);
+		sum[N] = sum[N - 1] + !canWin(N);
 
 	return;
 }
