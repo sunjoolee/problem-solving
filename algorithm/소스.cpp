@@ -1,72 +1,63 @@
 #include <iostream>
 #include <cstring>
-#include <vector>
-#include <math.h>
+#include <string>
 #include <algorithm>
 using namespace std;
 
-const int MAXN = 100000;
-int canWin[MAXN + 1] = { 0 };
-int sum[MAXN + 1] = { 0 };
-int isPrime[MAXN + 1];
-vector<int> prime;
+const int MAXN = 1000;
+const int IMPOSSIBLE = 2000000;
+
+int N, M;
+string mp[MAXN + 5];
+int cache[MAXN + 5][MAXN + 5][2];
+
+int rdir[4] = { -1,0,0,1 };
+int cdir[4] = { 0,-1,1,0 };
+
+//state = 1: 벽을 한 번 부술 수 있는 상태
+//state = 0: 벽을 더이상 부술 수 없는 상태 
+int getMin(int r, int c, int state) {
+	if (r == N && c == M) return 1;
+
+	int& ret = cache[r][c][state];
+	if (ret != -1) return ret;
+
+	if (mp[r][c] == '1') {
+		if (state == 1) state = 0;
+		else return IMPOSSIBLE;
+	}
+
+	ret = IMPOSSIBLE;
+	for (int i = 0; i < 4; ++i) {
+		int nextr = r + rdir[i];
+		int nextc = c + cdir[i];
+
+		if (nextr < 1 || nextr > N) continue;
+		if (nextc < 1 || nextc > M) continue;
+
+		ret = min(ret, 1 + getMin(nextr, nextc, state));
+	}
+	return ret;
+}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	//에라토스테네스의 체
-	memset(isPrime, 1, sizeof(isPrime));
-	isPrime[0] = isPrime[1] = 0;
-	for (int i = 2; i <= sqrt(MAXN); i++) {
-		if (isPrime[i] == 0) continue;
+	memset(cache, -1, sizeof(cache));
 
-		for (int j = i * i; j <= MAXN; j += i)
-			isPrime[j] = 0;
+	cin >> N >> M;
+	string input;
+	for (int i = 1; i <= N; ++i) {
+		cin >> input;
+		mp[i] = "0" + input;
 	}
 
-	//소수 벡터에 저장
-	for (int i = 2; i <= MAXN; ++i)
-		if (isPrime[i])
-			prime.push_back(i);
+	int dist = getMin(1, 1, 1);
 
-	//종이에 적힌 수가 N일 때 이길 수 있는지 저장
-	int psize = prime.size();
-	for (int i = 0; i <= MAXN; i++) {
-		if (canWin[i])
-			continue;
-		for (int j = 0; j < psize; j++)
-		{
-			if (i + prime[j] > MAXN)
-				break;
-			canWin[i + prime[j]] = 1;
-		}
-	}
-
-	//승리하는 경우의 수 부분합 계산
-	for (int N = 2; N <= MAXN; ++N)
-		sum[N] = sum[N - 1] + !canWin[N];
-
-
-	int T;
-	cin >> T;
-	while (T--) {
-		int A, k;
-		cin >> A >> k;
-
-		int bestX = 0;
-		int bestwin = 0;
-
-		for (int X = A + 1 - k; X >= 2; --X) {
-			int win = sum[X + k - 1] - sum[X - 1];
-			if (bestwin <= win) {
-				bestwin = win;
-				bestX = X;
-			}
-		}
-		cout << bestwin << " " << bestX << "\n";
-	}
-
+	if (dist == IMPOSSIBLE) cout << -1;
+	else cout << dist;
 	return 0;
 }
+
