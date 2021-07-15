@@ -1,31 +1,36 @@
 #include <iostream>
-#include <queue>
 #include <cstring>
-#include <utility>
 #include <algorithm>
 using namespace std;
 
-typedef unsigned long long ull;
-const int MAXSIZE = 100;
+const int MAXN = 300;
+const int MAXM = 20;
 
-int n;
-//cache[r][c]: (r,c)의 좌표에서 시작하여 (n,n)까지 갈 수 있는 경우의 수
-ull cache[MAXSIZE + 1][MAXSIZE + 1];
-int mp[MAXSIZE + 1][MAXSIZE + 1];
+int n, m;
 
-ull dp(int r, int c) {
-	if (r == n && c == n) return 1;
+//[company][money]
+int profit[MAXM + 1][MAXN + 1];
+int cache[MAXM + 1][MAXN + 1];
+int bestChoice[MAXM + 1][MAXN + 1] = { 0 };
 
-	ull& ret = cache[r][c];
+int getMaxProfit(int company, int money) {
+	if (company > m || money == 0) return 0;
+
+	int& ret = cache[company][money];
 	if (ret != -1) return ret;
 
-	ret = 0;
-	//오른쪽으로 점프
-	if (c + mp[r][c] <= n)
-		ret += dp(r, c + mp[r][c]);
-	//아래로 점프
-	if (r + mp[r][c] <= n)
-		ret += dp(r + mp[r][c],c);
+	int choice = 0;
+	ret = getMaxProfit(company + 1, money);
+
+	for (int i = 1; i <= money; ++i) {
+		int cand = profit[company][i] + getMaxProfit(company + 1, money - i);
+		if (ret < cand) {
+			ret = cand;
+			choice = i;
+		}
+	}
+
+	bestChoice[company][money] = choice;
 	return ret;
 }
 
@@ -36,11 +41,21 @@ int main() {
 
 	memset(cache, -1, sizeof(cache));
 
-	cin >> n ;
-	for (int i = 1; i <= n; ++i)
-		for (int j = 1; j <= n; ++j)
-			cin >> mp[i][j];
+	cin >> n >> m;
+	for (int i = 1; i <= n; ++i) {
+		int money;
+		cin >> money;
+		for (int j = 1; j <= m; ++j)
+			cin >> profit[j][i];
+	}
 
-	cout << dp(1, 1);
+	cout << getMaxProfit(1, n) << "\n";
+
+	int sumOfChoice = 0;
+	for (int i = 1; i <= m; ++i) {
+		int choice = bestChoice[i][n - sumOfChoice];
+		cout << choice << " ";
+		sumOfChoice += choice;
+	}
 	return 0;
 }
