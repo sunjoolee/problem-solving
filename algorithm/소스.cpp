@@ -1,7 +1,29 @@
 #include <iostream>
-#include <vector>
-#include <string>
+#include <cstring>
+#include <algorithm>
 using namespace std;
+
+const int MAXN = 30;
+const int MAXW = 40000;
+
+//추
+int n;
+int marble;
+int w[MAXN + 1];
+int cache[MAXN][MAXW + 1];
+
+int possible(int index, int sum) {
+	if (sum == marble) return 1;
+	if (index == n) return 0;
+
+	int& ret = cache[index][sum];
+	if (ret != -1) return ret;
+
+	ret = possible(index + 1, sum);
+	ret = max(ret, possible(index + 1, sum + w[index]));
+	ret = max(ret, possible(index + 1, sum - w[index]));
+	return ret;
+}
 
 
 int main() {
@@ -9,37 +31,19 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-
-	int n, k;
-	cin >> n >> k;
-
-	//이름의 길이
-	vector <int> name;
-
-	string input;
+	cin >> n;
 	for (int i = 0; i < n; ++i) {
-		cin >> input;
-		name.push_back(input.size());
+		cin >> w[i];
 	}
-	
-	
-	long long cnt = 0;
-	for (int len = 2; len <= 20; ++len) {
-		//구간 내 이름의 길이가 len인 학생의 수
-		long long rangecnt = 0;
-		for (int i = 0; i < k; ++i)
-			if (name[i] == len) rangecnt++;
 
-		//슬라이딩 윈도우
-		for (int i = 0; i < n; ++i) {
-			if (i + k < n && name[i + k] == len) rangecnt++;
-			if (name[i] == len) {
-				rangecnt--;
-				cnt += rangecnt;
-			}
-		}
+	int k;
+	cin >> k;
+	while (k--) {
+		memset(cache, -1, sizeof(cache));
+		cin >> marble;
+		
+		if (possible(0, 0)) cout << "Y" << "\n";
+		else cout << "N" << "\n";
 	}
-	
-	cout << cnt;
 	return 0;
 }
