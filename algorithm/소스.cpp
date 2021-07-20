@@ -1,67 +1,10 @@
 #include <iostream>
 #include <string>
+#include <deque>
 using namespace std;
 
-struct Node {
-	char data;
-	Node* right, *left;
-};
-
-
-Node* head;
-Node* cursor;
-
-//head -> input -> cursor
-void createList(string input) {
-	head= new Node;
-	head->left = NULL;
-	head->right = NULL;
-
-	int len = input.size();
-	Node* prevNode = head;
-	for (int i = 0; i < len; ++i) {
-		Node* NewNode = new Node;
-		NewNode->data = input[i];
-
-		prevNode->right = NewNode;
-		NewNode->left = prevNode;
-		NewNode-> right = NULL;
-			
-		prevNode = NewNode;
-	}
-
-	cursor = new Node;
-	prevNode->right = cursor;
-	cursor->left = prevNode;
-	cursor->right = NULL;
-	return;
-}
-
-	
-void deleteNode() {
-	if (cursor->left == NULL) return;
-
-	Node* delNode = cursor->left;
-
-	cursor->left = delNode->left;
-	delNode->left->right = cursor;
-	free(delNode);
-
-	return;
-}
-
-
-void addNode(int x) {
-	Node* NewNode = new Node;
-	NewNode->data = x;
-
-	NewNode->left = cursor->left;
-	NewNode->right = cursor;
-	cursor->left = NewNode;
-
-	return;
-}
-
+deque <char> leftDQ;
+deque <char> rightDQ;
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -71,43 +14,48 @@ int main() {
 	string input;
 	cin >> input;
 
-	createList(input);
+	for (int i = 0; input[i] != NULL; ++i) {
+		leftDQ.push_back(input[i]);
+	}
 
 	int M;
 	cin >> M;
 	while (M--) {
-		char instruction;
+		char instruction, x;
 		cin >> instruction;
-
-		//커서 왼쪽으로 이동
+		
+		//커서 왼쪽으로
 		if (instruction == 'L') {
-			if (cursor->left == NULL) continue;
-			cursor = cursor->left;
-		}
+			if (leftDQ.empty()) continue;
 
-		//커서 오른쪽으로 이동
+			x = leftDQ.back();
+			leftDQ.pop_back();
+			rightDQ.push_front(x);
+		}
+		//커서 오른쪽으로
 		else if (instruction == 'D') {
-			if (cursor->right == NULL) continue;
-			cursor = cursor->right;
+			if (rightDQ.empty()) continue;
+
+			x = rightDQ.front();
+			rightDQ.pop_front();
+			leftDQ.push_back(x);
 		}
-
-		//커서 왼쪽에 노드 노드 삭제
-		else if (instruction == 'B')
-			deleteNode();
-
-		//커서 왼쪽에 노드 삽입
+		//커서 왼쪽 문자 삭제
+		else if (instruction == 'B') {
+			if (leftDQ.empty()) continue;
+			leftDQ.pop_back();
+		}
+		//커서 왼쪽 문자 추가
 		else if (instruction == 'P') {
-			char x;
 			cin >> x;
-			addNode(x);
-		}		
+			leftDQ.push_back(x);
+		}
 	}
 
-	Node* printNode = head ->right;
-	while (printNode != NULL) {
-		cout << printNode -> data;
-		printNode = printNode->right;
-	}
+	for (auto it = leftDQ.begin(); it != leftDQ.end(); ++it)
+		cout << *it;
+	for (auto it = rightDQ.begin(); it != rightDQ.end(); ++it)
+		cout << *it;
 
 	return 0;
 }
