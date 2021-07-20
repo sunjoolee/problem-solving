@@ -13,7 +13,7 @@ int main() {
 	int n, k;
 	cin >> n >> k;
 
-	//이름 길이
+	//이름의 길이
 	vector <int> name;
 
 	string input;
@@ -22,12 +22,23 @@ int main() {
 		name.push_back(input.size());
 	}
 	
-	//좋은 친구 쌍
-	int cnt = 0;
-	for (int i = 0; i < n; ++i)
-		for (int j = 1; j <= k && i + j < n; j++)
-			if (name[i] == name[i + j])
-				cnt++;
+	
+	long long cnt = 0;
+	for (int len = 2; len <= 20; ++len) {
+		//구간 내 이름의 길이가 len인 학생의 수
+		long long rangecnt = 0;
+		for (int i = 0; i < k; ++i)
+			if (name[i] == len) rangecnt++;
+
+		//슬라이딩 윈도우
+		for (int i = 0; i < n; ++i) {
+			if (i + k < n && name[i + k] == len) rangecnt++;
+			if (name[i] == len) {
+				rangecnt--;
+				cnt += rangecnt;
+			}
+		}
+	}
 	
 	cout << cnt;
 	return 0;
