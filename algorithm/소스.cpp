@@ -1,15 +1,25 @@
 #include <iostream>
-#include <string>
+#include <cstring>
+#include <math.h>
 #include <algorithm>
 using namespace std;
 
-bool compare(string a, string b) {
-	//길이 짧은 순으로 정렬
-	if (a.size() < b.size()) return true;
-	//길이 같다면 사전 순으로 정렬
-	else if (a.size() == b.size())
-		return a < b;
-	else return false;
+const int MAXN = 123456 * 2;
+
+//소수면 0, 소수가 아니면 1 저장
+int notPrime[MAXN + 1] = { 0 };
+
+//에라토스테네스의 체
+void eratos() {
+	notPrime[0] = notPrime[1] = 1;
+
+	for (int i = 2; i <= sqrt(MAXN); i++) {
+		if (notPrime[i] == 1) continue;
+
+		for (int j = i * i; j <= MAXN; j += i)
+			notPrime[j] = 1;
+	}
+	return;
 }
 
 int main() {
@@ -17,23 +27,18 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	string words[20001];
-	
+	eratos();
+
+	int psum[MAXN + 1] = { 0 };
+	for (int i = 1; i <= MAXN; ++i)
+		psum[i] = psum[i - 1] + !notPrime[i];
+
 	int n;
-	cin >> n;
-	for (int i = 0; i < n; ++i)
-		cin >> words[i];
+	while (true) {
+		cin >> n;
+		if (n == 0) break;
 
-	sort(words, words + n, compare);
-
-	for (int i = 0; i < n; ++i) {
-		cout << words[i]<<"\n";
-		//중복된 단어 제외 출력
-		while (i < n) {
-			if (words[i] == words[i + 1]) ++i;
-			else break;
-		}
+		cout << psum[2 * n] - psum[n] << "\n";
 	}
-
 	return 0;
 }
