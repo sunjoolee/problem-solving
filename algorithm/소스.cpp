@@ -1,61 +1,68 @@
 #include <iostream>
 #include <string>
-#include <deque>
+#include <vector>
+#include <algorithm>
 using namespace std;
 
-deque <char> leftDQ;
-deque <char> rightDQ;
+int n, m;
+string S, P;
+
+vector<int> getPartialMatch() {
+	
+	vector<int> pi(m,0);
+
+	//begin = 0이면 자기 자신을 찾아버리므로 begin = 1부터 시작
+	int begin = 1;
+	int matched = 0;
+
+	while (begin + matched < m) {
+		if (S[begin + matched] == P[matched]) {
+			++matched;
+			pi[begin + matched - 1] = matched;
+		}
+		else {
+			if (matched == 0) ++begin;
+			else {
+				begin += matched - pi[matched - 1];
+				matched = pi[matched - 1];
+			}
+		}
+	}
+	return pi;
+}
+
+int found() {
+	vector<int> pi = getPartialMatch();
+
+	int begin = 0, matched = 0;
+	while (begin <= n - m) {
+
+		if (matched < m && S[begin + matched] == P[matched]) {
+			++matched;
+			if (matched == m) return 1;
+		}
+		else {
+			if (matched == 0) ++begin;
+			else {
+				begin += matched - pi[matched - 1];
+				matched = pi[matched - 1];
+			}
+		}
+	}
+	return 0;
+}
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	string input;
-	cin >> input;
+	cin >> S >> P;
+	n = S.size();
+	m = P.size();
 
-	for (int i = 0; input[i] != NULL; ++i) {
-		leftDQ.push_back(input[i]);
-	}
-
-	int M;
-	cin >> M;
-	while (M--) {
-		char instruction, x;
-		cin >> instruction;
-		
-		//커서 왼쪽으로
-		if (instruction == 'L') {
-			if (leftDQ.empty()) continue;
-
-			x = leftDQ.back();
-			leftDQ.pop_back();
-			rightDQ.push_front(x);
-		}
-		//커서 오른쪽으로
-		else if (instruction == 'D') {
-			if (rightDQ.empty()) continue;
-
-			x = rightDQ.front();
-			rightDQ.pop_front();
-			leftDQ.push_back(x);
-		}
-		//커서 왼쪽 문자 삭제
-		else if (instruction == 'B') {
-			if (leftDQ.empty()) continue;
-			leftDQ.pop_back();
-		}
-		//커서 왼쪽 문자 추가
-		else if (instruction == 'P') {
-			cin >> x;
-			leftDQ.push_back(x);
-		}
-	}
-
-	for (auto it = leftDQ.begin(); it != leftDQ.end(); ++it)
-		cout << *it;
-	for (auto it = rightDQ.begin(); it != rightDQ.end(); ++it)
-		cout << *it;
+	cout << found();
 
 	return 0;
 }
