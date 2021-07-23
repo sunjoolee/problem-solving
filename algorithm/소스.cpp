@@ -8,15 +8,18 @@ int n, m;
 string S, P;
 
 vector<int> getPartialMatch() {
-	
-	vector<int> pi(m,0);
+
+	vector<int> pi(m, 0);
 
 	//begin = 0이면 자기 자신을 찾아버리므로 begin = 1부터 시작
 	int begin = 1;
 	int matched = 0;
 
 	while (begin + matched < m) {
-		if (S[begin + matched] == P[matched]) {
+		if (S[begin + matched] >= '0' && S[begin + matched] <= '9') {
+			++begin;
+		}
+		else if (S[begin + matched] == P[matched]) {
 			++matched;
 			pi[begin + matched - 1] = matched;
 		}
@@ -36,8 +39,10 @@ int found() {
 
 	int begin = 0, matched = 0;
 	while (begin <= n - m) {
-
-		if (matched < m && S[begin + matched] == P[matched]) {
+		if (S[begin + matched] >= '0' && S[begin + matched] <= '9') {
+			++begin;
+		}
+		else if (matched < m && S[begin + matched] == P[matched]) {
 			++matched;
 			if (matched == m) return 1;
 		}
