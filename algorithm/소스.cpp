@@ -1,15 +1,18 @@
 #include <iostream>
+#include <vector>
 #include <queue>
 #include <utility>
 #include <cstring>
+#include <string>
 #include <algorithm>
+
 using namespace std;
 
-const int MAXX = 500;
+const int MAXX = 25;
 
-int n,m;
+int n;
 
-int mp[MAXX + 1][MAXX + 1] = { 0 };
+string mp[MAXX + 1];
 int visited[MAXX + 1][MAXX + 1] = { 0 };
 
 int rdir[4] = {-1,0,0,1};
@@ -19,7 +22,7 @@ int bfs(int r, int c) {
 
 	queue<pair<int,int>> que;
 
-	int size = 1;
+	int size = 0;
 	que.push(make_pair(r,c));
 	
 	while (!que.empty()) {
@@ -37,9 +40,9 @@ int bfs(int r, int c) {
 			int nextc = curc + cdir[i];
 
 			if (nextr < 0 || nextr >= n) continue;
-			if (nextc < 0 || nextc >= m) continue;
+			if (nextc < 0 || nextc >= n) continue;
 
-			if (mp[nextr][nextc] == 1 && visited[nextr][nextc] == 0) {
+			if (mp[nextr][nextc] == '1' && visited[nextr][nextc] == 0) {
 				que.push(make_pair(nextr, nextc));
 			}
 		}
@@ -52,20 +55,24 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 	
-	cin >> n >> m;
+	cin >> n;
 	for (int i = 0; i < n; ++i)
-		for(int j = 0; j<m; ++j)
-			cin >> mp[i][j];
+		cin >> mp[i];
 
 	int cnt = 0;
-	int maxSize = 0;
+	vector<int> size;
 	for (int i = 0; i < n; ++i)
-		for (int j = 0; j < m; ++j)
-			if (mp[i][j] == 1 && visited[i][j] == 0) {
+		for (int j = 0; j < n; ++j)
+			if (mp[i][j] == '1' && visited[i][j] == 0) {
 				cnt++;
-				maxSize = max(maxSize, bfs(i, j));
+				size.push_back(bfs(i, j));
 			}
 
-	cout << cnt << "\n" << maxSize;
+	sort(size.begin(), size.end());
+
+	cout << cnt << "\n";
+	for (auto it = size.begin(); it != size.end(); ++it)
+		cout << *it << "\n";
+
 	return 0;
 }
