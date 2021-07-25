@@ -1,43 +1,37 @@
 #include <iostream>
 #include <queue>
 #include <utility>
-#include <string>
+#include <cstring>
 #include <algorithm>
 using namespace std;
 
-const int MAXX = 100;
+const int MAXX = 500;
 
 int n,m;
 
-//이동할 수 없는 칸 0
-//이동할 수 있는 칸 1
-//이미 방문한 칸 2
-string mp[MAXX+1];
+int mp[MAXX + 1][MAXX + 1] = { 0 };
+int visited[MAXX + 1][MAXX + 1] = { 0 };
 
 int rdir[4] = {-1,0,0,1};
 int cdir[4] = { 0,-1,1,0};
 
-int bfs() {
-	//<<r, c>, move>
-	queue<pair<pair<int,int>, int>> que;
+int bfs(int r, int c) {
 
-	que.push(make_pair(make_pair(0,0),1));
+	queue<pair<int,int>> que;
+
+	int size = 1;
+	que.push(make_pair(r,c));
 	
 	while (!que.empty()) {
-		pair<pair<int, int>, int> cur = que.front();
-		int curr = cur.first.first;
-		int curc = cur.first.second;
-		int move = cur.second;
+		pair<int, int> cur = que.front();
+		int curr = cur.first;
+		int curc = cur.second;
 		que.pop();
 
-		if (curr == (n-1) && curc == (m-1))
-			return move;
+		if (visited[curr][curc]) continue;
+		visited[curr][curc] = 1;
+		++size;
 
-		if (mp[curr][curc] != '1') 
-			continue;
-		//방문 표시
-		mp[curr][curc] = '2';
-		
 		for (int i = 0; i < 4; i++) {
 			int nextr = curr + rdir[i];
 			int nextc = curc + cdir[i];
@@ -45,11 +39,12 @@ int bfs() {
 			if (nextr < 0 || nextr >= n) continue;
 			if (nextc < 0 || nextc >= m) continue;
 
-			if (mp[nextr][nextc] == '1')
-				que.push(make_pair(make_pair(nextr, nextc), move + 1));
+			if (mp[nextr][nextc] == 1 && visited[nextr][nextc] == 0) {
+				que.push(make_pair(nextr, nextc));
+			}
 		}
 	}
-	
+	return size;
 }
 
 int main() {
@@ -59,8 +54,18 @@ int main() {
 	
 	cin >> n >> m;
 	for (int i = 0; i < n; ++i)
-		cin >> mp[i];
+		for(int j = 0; j<m; ++j)
+			cin >> mp[i][j];
 
-	cout << bfs();
+	int cnt = 0;
+	int maxSize = 0;
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < m; ++j)
+			if (mp[i][j] == 1 && visited[i][j] == 0) {
+				cnt++;
+				maxSize = max(maxSize, bfs(i, j));
+			}
+
+	cout << cnt << "\n" << maxSize;
 	return 0;
 }
