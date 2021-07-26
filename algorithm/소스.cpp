@@ -1,78 +1,51 @@
 #include <iostream>
 #include <vector>
-#include <queue>
 #include <utility>
-#include <cstring>
 #include <string>
+#include <math.h>
 #include <algorithm>
-
 using namespace std;
 
-const int MAXX = 25;
+string words[10];
 
-int n;
-
-string mp[MAXX + 1];
-int visited[MAXX + 1][MAXX + 1] = { 0 };
-
-int rdir[4] = {-1,0,0,1};
-int cdir[4] = { 0,-1,1,0};
-
-int bfs(int r, int c) {
-
-	queue<pair<int,int>> que;
-
-	int size = 0;
-	que.push(make_pair(r,c));
-	
-	while (!que.empty()) {
-		pair<int, int> cur = que.front();
-		int curr = cur.first;
-		int curc = cur.second;
-		que.pop();
-
-		if (visited[curr][curc]) continue;
-		visited[curr][curc] = 1;
-		++size;
-
-		for (int i = 0; i < 4; i++) {
-			int nextr = curr + rdir[i];
-			int nextc = curc + cdir[i];
-
-			if (nextr < 0 || nextr >= n) continue;
-			if (nextc < 0 || nextc >= n) continue;
-
-			if (mp[nextr][nextc] == '1' && visited[nextr][nextc] == 0) {
-				que.push(make_pair(nextr, nextc));
-			}
-		}
-	}
-	return size;
+bool compare(long long a, long long b) {
+	return a > b;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-	
+
+	string words[10];
+
+	//mult[알파벳 - 'A']: 알파벳에 곱해질 숫자
+	long long mult[27] = { 0 };
+
+	int n;
 	cin >> n;
-	for (int i = 0; i < n; ++i)
-		cin >> mp[i];
+	for (int i = 0; i < n; ++i) {
+		cin >> words[i];
 
-	int cnt = 0;
-	vector<int> size;
-	for (int i = 0; i < n; ++i)
-		for (int j = 0; j < n; ++j)
-			if (mp[i][j] == '1' && visited[i][j] == 0) {
-				cnt++;
-				size.push_back(bfs(i, j));
-			}
+		int digit = 0;
+		//string reverse iterator
+		for (auto it = words[i].rbegin(); it != words[i].rend(); ++it)
+			mult[*it - 'A'] += pow(10, digit++);
+	}
+	
+	//mult 내림차순 정렬
+	sort(mult, mult + 27, compare);
 
-	sort(size.begin(), size.end());
+	long long sum = 0;
+	int number = 9;
 
-	cout << cnt << "\n";
-	for (auto it = size.begin(); it != size.end(); ++it)
-		cout << *it << "\n";
+	for (int i = 0; i < 27; ++i) {
+		if (mult[i] == 0) break;
 
+		sum += number * mult[i];
+		--number;
+	}
+
+	cout << sum;
 	return 0;
 }
