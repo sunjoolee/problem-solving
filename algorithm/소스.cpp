@@ -1,32 +1,33 @@
 #include <iostream>
+#include <string>
 #include <vector>
-#include <algorithm>
 using namespace std;
-
-typedef int unsigned long long ull;
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	ull weight[1001];
+	string input;
+	cin >> input;
 
-	int n;
-	cin >> n;
-	for (int i = 0; i < n; ++i)
-		cin >> weight[i];
+	vector<char> v;
 
-	sort(weight, weight + n);
-
-	ull psum = 0;
-	for (int i = 0; i < n; ++i) {
-		if (weight[i] > psum + 1ull) {
-			cout << psum + 1ull;
-			return 0;
+	for (int i = 0; i < input.size(); ++i) {
+		v.push_back(input[i]);
+		if (v.size() >= 4) {
+			auto it = v.rbegin();
+			if (*it == 'P' && *(it + 1) == 'A' && *(it + 2) == 'P' && *(it + 3) == 'P') {
+				//P 하나만 남기고 pop
+				v.pop_back();
+				v.pop_back();
+				v.pop_back();
+			}
 		}
-		psum += weight[i];
 	}
+
+	if (v.size() == 1 && v.back() == 'P') cout << "PPAP";
+	else cout << "NP";
 
 	return 0;
 }
