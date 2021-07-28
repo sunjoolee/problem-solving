@@ -27,16 +27,25 @@ vector<int> getPartialMatch(const string& N) {
 	return pi;
 }
 
-int getLongestPatialMatch(const string& s) {
-	
-	int ret = 0;
+vector<int> kmpSearch(const string& H, const string& N) {
+	int n = H.size();
+	int m = N.size();
 
-	//s[i..]에 대해 부분 일치 테이블 계산
-	for (int i = 0; i < s.size(); ++i) {
-		vector<int> pi = getPartialMatch(s.substr(i));
+	vector<int> ret;
+	vector<int> pi = getPartialMatch(N);
 
-		for (int j = 0; j < pi.size(); ++j) {
-			ret = max(ret, pi[j]);
+	int begin = 0, matched = 0;
+	while (begin <= n - m) {
+		if (matched < m && H[begin + matched] == N[matched]) {
+			++matched;
+			if (matched == m) ret.push_back(begin);
+		}
+		else {
+			if (matched == 0) ++begin;
+			else {
+				begin += matched - pi[matched - 1];
+				matched = pi[matched - 1];
+			}
 		}
 	}
 	return ret;
@@ -47,9 +56,17 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	string s;
-	cin >> s;
-	cout << getLongestPatialMatch(s);
+	string T;
+	getline(cin, T);
+
+	string P;
+	getline(cin, P);
+
+	vector<int> kmp = kmpSearch(T, P);
+	
+	cout << kmp.size()<<"\n";
+	for (auto it = kmp.begin(); it != kmp.end(); ++it)
+		cout << *it + 1 << " ";
 
 	return 0;
 }
