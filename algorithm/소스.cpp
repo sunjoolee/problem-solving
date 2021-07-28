@@ -1,74 +1,59 @@
 #include <iostream>
-#include <vector>
 #include <string>
+#include <vector>
 #include <algorithm>
 using namespace std;
 
-
-struct Comparator {
-	const vector<int>& group;
-	int t;
-	Comparator(const vector<int>& _group, int _t) : group(_group), t(_t) {}
-
-	bool operator() (int a, int b) {
-		if (group[a] != group[b]) return group[a] < group[b];
-		return group[a + t] < group[b + t];
-	}
-};
-
-//s의 접미사 배열을 계산한다
-vector<int> getSuffixArray(const string& s) {
-	int n = s.size();
-
-	int t = 1;
-	vector<int> group(n + 1);
-	group[n] = -1;
-
-	for (int i = 0; i < n; ++i)
-		group[i] = s[i];
-
-	vector<int> perm(n);
-	for (int i = 0; i < n; ++i)
-		perm[i] = i;
-
-	while (t < n) {
-		Comparator compareUsing2T(group, t);
-		sort(perm.begin(), perm.end(), compareUsing2T);
-
-		t *= 2;
-		if (t >= n) break;
-
-		vector<int> newGroup(n + 1);
-		newGroup[n] = -1;
-
-		for (int i = 1; i < n; ++i) {
-			if (compareUsing2T(perm[i - 1], perm[i])) {
-				newGroup[perm[i]] = newGroup[perm[i - 1]] + 1;
-			}
-			else {
-				newGroup[perm[i]] = newGroup[perm[i - 1]];
-			}
-		}
-		group = newGroup;
-	}
-	return perm;
-}
+typedef unsigned long long ull;
 
 
-int main() {
+int main(){
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	string s;
-	cin >> s;
+	int n;
+	cin >> n;
 
-	vector<int> suffixArray = getSuffixArray(s);
+	vector<string> coin;
 
-	for (int i = 0; i < suffixArray.size(); ++i) {
-		cout << s.substr(suffixArray[i]) << "\n";
+	for (int i = 0; i < n; ++i) {
+		string input;
+		cin >> input;
+		coin.push_back(input);
+	}
+	
+	int minT = 401;
+
+	//모든 행에 대해서 뒤집을지 말지 결정
+	for (ull k = 0; k < (1 << n); ++k) {
+		//전체 동전 뒷면의 개수;
+		int totalT = 0;
+
+		for (int j = 0; j < n; ++j) {
+
+			//현재 열에서 동전 뒷면의 개수
+			int colT = 0;
+			for (int i = 0; i < n; ++i) {
+				char now;
+
+				//i번 째 행을 뒤집기로 결정된 경우
+				if ((1 << i) & k) {
+					if (coin[i][j] == 'T') now = 'H';
+					if (coin[i][j] == 'H') now = 'T';
+				}
+				else now = coin[i][j];
+
+				if (now == 'T') ++colT;
+			}
+			
+			//열을 뒤집는 경우와 뒤집지 않는 경우 중 동전 뒷면의 개수 적게 만드는 경우를 선택
+			totalT += min(n - colT, colT);
+		}
+
+		minT = min(minT, totalT);
 	}
 
-
+	cout << minT;
 	return 0;
 }
