@@ -1,72 +1,74 @@
 #include <iostream>
-#include <string>
 #include <vector>
+#include <string>
 #include <algorithm>
 using namespace std;
 
 
-vector<int> getPartialMatch(const string& N) {
-	int m = N.size();
-	vector<int> pi(m, 0);
+struct Comparator {
+	const vector<int>& group;
+	int t;
+	Comparator(const vector<int>& _group, int _t) : group(_group), t(_t) {}
 
-	int begin = 1;
-	int matched = 0;
-	while (begin + matched < m) {
-		if (N[matched] == N[begin + matched]) {
-			++matched;
-			pi[begin + matched - 1] = matched;
-		}
-		else {
-			if (matched == 0) ++begin;
+	bool operator() (int a, int b) {
+		if (group[a] != group[b]) return group[a] < group[b];
+		return group[a + t] < group[b + t];
+	}
+};
+
+//s의 접미사 배열을 계산한다
+vector<int> getSuffixArray(const string& s) {
+	int n = s.size();
+
+	int t = 1;
+	vector<int> group(n + 1);
+	group[n] = -1;
+
+	for (int i = 0; i < n; ++i)
+		group[i] = s[i];
+
+	vector<int> perm(n);
+	for (int i = 0; i < n; ++i)
+		perm[i] = i;
+
+	while (t < n) {
+		Comparator compareUsing2T(group, t);
+		sort(perm.begin(), perm.end(), compareUsing2T);
+
+		t *= 2;
+		if (t >= n) break;
+
+		vector<int> newGroup(n + 1);
+		newGroup[n] = -1;
+
+		for (int i = 1; i < n; ++i) {
+			if (compareUsing2T(perm[i - 1], perm[i])) {
+				newGroup[perm[i]] = newGroup[perm[i - 1]] + 1;
+			}
 			else {
-				begin += matched - pi[matched - 1];
-				matched = pi[matched - 1];
+				newGroup[perm[i]] = newGroup[perm[i - 1]];
 			}
 		}
+		group = newGroup;
 	}
-	return pi;
+	return perm;
 }
 
-vector<int> kmpSearch(const string& H, const string& N) {
-	int n = H.size();
-	int m = N.size();
-
-	vector<int> ret;
-	vector<int> pi = getPartialMatch(N);
-
-	int begin = 0, matched = 0;
-	while (begin <= n - m) {
-		if (matched < m && H[begin + matched] == N[matched]) {
-			++matched;
-			if (matched == m) ret.push_back(begin);
-		}
-		else {
-			if (matched == 0) ++begin;
-			else {
-				begin += matched - pi[matched - 1];
-				matched = pi[matched - 1];
-			}
-		}
-	}
-	return ret;
-}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	string T;
-	getline(cin, T);
+	string s;
+	cin >> s;
 
-	string P;
-	getline(cin, P);
+	vector<int> suffixArray = getSuffixArray(s);
 
-	vector<int> kmp = kmpSearch(T, P);
-	
-	cout << kmp.size()<<"\n";
-	for (auto it = kmp.begin(); it != kmp.end(); ++it)
-		cout << *it + 1 << " ";
+	for (int i = 0; i < suffixArray.size(); ++i) {
+		cout << s.substr(suffixArray[i]) << "\n";
+	}
+
 
 	return 0;
 }
