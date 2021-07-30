@@ -1,46 +1,29 @@
 #include <iostream>
-#include <string>
-#include <vector>
-#include <algorithm>
+#include <cstring>
 using namespace std;
 
-typedef long long ll;
+int R, C;
 
-int n;
+//빈 칸 0, 고양이 칸 1
+int mp[26][26];
+int cache[26][26];
 
-//<접두사도 되고 접미사도 되는 문자열의 최대 길이, 나타나는 횟수>
-pair<int, int> getPartialMatch(const vector<ll>& N) {
-	vector<int> pi(n, 0);
+int validPath(int r, int c) {
+	//base case
+	//(R,C)에 도착한 경우 경로 하나 발견
+	if (r == R && c == C) return 1;
+	//범위 밖으로 간 경우 경로 X
+	if (r < 1 || r > R) return 0;
+	if (c < 1 || c > C) return 0;
+	//고양이가 있는 칸인 경우 경로 X
+	if (mp[r][c] == 1) return 0;
 
-	//최대 길이, 나타나는 횟수
-	int maxpi = 0;
-	int cnt = 0;
+	int& ret = cache[r][c];
+	if (ret != -1) return ret;
 
-	int begin = 1;
-	int matched = 0;
-	while (begin + matched < n) {
-		if (N[matched] == N[begin + matched]) {
-			++matched;
-			pi[begin + matched - 1] = matched;
-			
-			//최대 길이, 나타나는 횟수 갱신
-			if (matched > maxpi) {
-				maxpi = matched;
-				cnt = 1;
-			}
-			else if (matched == maxpi) {
-				++cnt;
-			}
-		}
-		else {
-			if (matched == 0) ++begin;
-			else {
-				begin += matched - pi[matched - 1];
-				matched = pi[matched - 1];
-			}
-		}
-	}
-	return make_pair(maxpi, cnt);
+	//오른쪽으로 이동하는 경로 + 아래로 이동하는 경로
+	ret = validPath(r + 1, c) + validPath(r, c + 1);
+	return ret;
 }
 
 int main() {
@@ -48,23 +31,19 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n;
+	memset(mp, 0, sizeof(mp));
+	memset(cache, -1, sizeof(cache));
 
-	vector<ll> num(n, 0);
-	for (int i = 0; i < n; ++i) {
-		ll input;
-		cin >> input;
-		num[n - 1 - i] = input;
+	cin >> R >> C;
+	int k;
+	cin >> k;
+	for (int i = 0; i < k; ++i) {
+		int r, c;
+		cin >> r >> c;
+		mp[r][c] = 1;
 	}
 
-	pair<ll, ll> res = getPartialMatch(num);
-
-	if (res.first == 0) {
-		cout << -1;
-		return 0;
-	}
-	else
-		cout << res.first << " " << res.second;
+	cout << validPath(1, 1);
 
 	return 0;
 }
