@@ -12,12 +12,10 @@ int n;
 //빈 칸 '.', 장애물 칸 '#'
 string mp[1001];
 
-//dp
-//(r,c)에서 출발하여(n-1, n-1)까지 갈 수 있는 경로의 수
+//dp - Right & Down
 ull cache[1001][1001];
 
-//Right & Down
-ull RDPath(int r, int c) {
+ull dp(int r, int c) {
 	//base case
 	//(R,C)에 도착한 경우 경로 하나 발견
 	if (r == n - 1 && c == n - 1) return 1;
@@ -32,20 +30,18 @@ ull RDPath(int r, int c) {
 	ull& ret = cache[r][c];
 	if (ret != -1) return ret;
 
-	ret = RDPath(r + 1, c) % MOD;
-	ret += RDPath(r, c + 1) % MOD;
+	ret = dp(r + 1, c) % MOD;
+	ret += dp(r, c + 1) % MOD;
 	return ret;
 }
 
 
-//bfs
+//bfs - Right & Left & Up & Down
 int dirr[4] = { 1,-1,0,0 };
 int dirc[4] = { 0,0,1,-1 };
 bool visited[1001][1001];
 
-//Right & Left & Up & Down
-bool RLUDPath() {
-
+bool bfs() {
 	queue<pair<int, int>> q;
 	q.push(make_pair(0, 0));
 
@@ -94,15 +90,14 @@ int main() {
 		cin >> mp[i];
 
 	//Right & Down 경로의 개수
-	ull RD = RDPath(0, 0);
-	if (RD != 0) {
-		cout << RD;
+	ull path = dp(0, 0);
+	if (path != 0) {
+		cout << path;
 		return 0;
 	}
 
 	//Right & Left & Up & Down 경로 존재
-	bool RLUD = RLUDPath();
-	if (RLUD) cout << "THE GAME IS A LIE";
+	if (bfs()) cout << "THE GAME IS A LIE";
 	else cout << "INCONCEIVABLE";
 
 	return 0;
