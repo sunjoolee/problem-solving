@@ -4,18 +4,18 @@
 #include <string>
 using namespace std;
 
-typedef unsigned long long int ull;
+typedef long long int ll;
 
-const ull MOD = 2147483648 - 1; //2^31 - 1
+const ll MOD = 2147483648 - 1; //2^31 - 1
 
 int n;
 //빈 칸 '.', 장애물 칸 '#'
 string mp[1001];
 
 //dp - Right & Down
-ull cache[1001][1001];
+ll cache[1001][1001];
 
-ull dp(int r, int c) {
+ll dp(int r, int c) {
 	//base case
 	//(R,C)에 도착한 경우 경로 하나 발견
 	if (r == n - 1 && c == n - 1) return 1;
@@ -27,11 +27,10 @@ ull dp(int r, int c) {
 	//장애물이 있는 칸인 경우 경로 X
 	if (mp[r][c] == '#') return 0;
 
-	ull& ret = cache[r][c];
+	ll& ret = cache[r][c];
 	if (ret != -1) return ret;
 
-	ret = dp(r + 1, c) % MOD;
-	ret += dp(r, c + 1) % MOD;
+	ret = (dp(r + 1, c) + dp(r, c + 1)) % MOD;
 	return ret;
 }
 
@@ -64,7 +63,6 @@ bool bfs() {
 
 			if (nextr < 0 || nextr > n - 1) continue;
 			if (nextc < 0 || nextc > n - 1) continue;
-			if (visited[nextr][nextc]) continue;
 			if (mp[nextr][nextc] == '#') continue;
 
 			q.push(make_pair(nextr, nextc));
@@ -90,7 +88,7 @@ int main() {
 		cin >> mp[i];
 
 	//Right & Down 경로의 개수
-	ull path = dp(0, 0);
+	ll path = dp(0, 0);
 	if (path != 0) {
 		cout << path;
 		return 0;
