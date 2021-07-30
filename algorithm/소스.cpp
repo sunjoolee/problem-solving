@@ -1,29 +1,81 @@
 #include <iostream>
 #include <cstring>
+#include <queue>
+#include <string>
 using namespace std;
 
-int R, C;
+typedef unsigned long long int ull;
 
-//빈 칸 0, 고양이 칸 1
-int mp[26][26];
-int cache[26][26];
+const ull MOD = 2147483648 - 1; //2^31 - 1
 
-int validPath(int r, int c) {
+int n;
+//빈 칸 '.', 장애물 칸 '#'
+string mp[1001];
+
+//dp
+//(r,c)에서 출발하여(n-1, n-1)까지 갈 수 있는 경로의 수
+ull cache[1001][1001];
+
+//Right & Down
+ull RDPath(int r, int c) {
 	//base case
 	//(R,C)에 도착한 경우 경로 하나 발견
-	if (r == R && c == C) return 1;
-	//범위 밖으로 간 경우 경로 X
-	if (r < 1 || r > R) return 0;
-	if (c < 1 || c > C) return 0;
-	//고양이가 있는 칸인 경우 경로 X
-	if (mp[r][c] == 1) return 0;
+	if (r == n - 1 && c == n - 1) return 1;
 
-	int& ret = cache[r][c];
+	//범위 밖으로 간 경우 경로 X
+	if (r < 0 || r > n-1) return 0;
+	if (c < 0 || c > n-1) return 0;
+
+	//장애물이 있는 칸인 경우 경로 X
+	if (mp[r][c] == '#') return 0;
+
+	ull& ret = cache[r][c];
 	if (ret != -1) return ret;
 
-	//오른쪽으로 이동하는 경로 + 아래로 이동하는 경로
-	ret = validPath(r + 1, c) + validPath(r, c + 1);
+	ret = RDPath(r + 1, c) % MOD;
+	ret += RDPath(r, c + 1) % MOD;
 	return ret;
+}
+
+
+//bfs
+int dirr[4] = { 1,-1,0,0 };
+int dirc[4] = { 0,0,1,-1 };
+bool visited[1001][1001];
+
+//Right & Left & Up & Down
+bool RLUDPath() {
+
+	queue<pair<int, int>> q;
+	q.push(make_pair(0, 0));
+
+	while (!q.empty()) {
+		pair<int, int> cur = q.front();
+		int curr = cur.first;
+		int curc = cur.second;
+		q.pop();
+	
+		//(R,C)에 도착한 경우 경로 발견
+		if (curr == n - 1 && curc == n - 1) 
+			return true;
+
+		if (visited[curr][curc]) continue;
+		visited[curr][curc] = true;
+
+		for (int i = 0; i < 4; i++) {
+			int nextr = curr + dirr[i];
+			int nextc = curc + dirc[i];
+
+			if (nextr < 0 || nextr > n - 1) continue;
+			if (nextc < 0 || nextc > n - 1) continue;
+			if (visited[nextr][nextc]) continue;
+			if (mp[nextr][nextc] == '#') continue;
+
+			q.push(make_pair(nextr, nextc));
+		}
+	}
+
+	return false;
 }
 
 int main() {
@@ -31,19 +83,27 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	memset(mp, 0, sizeof(mp));
-	memset(cache, -1, sizeof(cache));
+	for (int i = 0; i < 1001; ++i)
+		for (int j = 0; j < 1001; ++j) {
+			cache[i][j] = -1;
+			visited[i][j] = false;
+		}
 
-	cin >> R >> C;
-	int k;
-	cin >> k;
-	for (int i = 0; i < k; ++i) {
-		int r, c;
-		cin >> r >> c;
-		mp[r][c] = 1;
+	cin >> n;
+	for (int i = 0; i < n; ++i)
+		cin >> mp[i];
+
+	//Right & Down 경로의 개수
+	ull RD = RDPath(0, 0);
+	if (RD != 0) {
+		cout << RD;
+		return 0;
 	}
 
-	cout << validPath(1, 1);
+	//Right & Left & Up & Down 경로 존재
+	bool RLUD = RLUDPath();
+	if (RLUD) cout << "THE GAME IS A LIE";
+	else cout << "INCONCEIVABLE";
 
 	return 0;
 }
