@@ -1,95 +1,75 @@
 #include <iostream>
-#include <vector>
+#include <cstring>
 #include <queue>
 #include <string>
-#include <utility>
-#include <cstring>
-#include <algorithm>
 using namespace std;
 
-const int MAXN = 100 + 1;
+typedef long long int ll;
+
+const ll MOD = 2147483648 - 1; //2^31 - 1
 
 int n;
-string mp[MAXN];
+//빈 칸 '.', 장애물 칸 '#'
+string mp[1001];
 
-int visited[MAXN][MAXN] = { 0 };
-int rgbvisited[MAXN][MAXN] = { 0 };
+//dp - Right & Down
+ll cache[1001][1001];
 
-int dirr[4] = { 0,0,1,-1 };
-int dirc[4] = { 1,-1,0,0 };
+ll dp(int r, int c) {
+	//base case
+	//(R,C)에 도착한 경우 경로 하나 발견
+	if (r == n - 1 && c == n - 1) return 1;
 
-//적록색약 없는 경우 mp[r][c]와 같은 구역 탐색
-void bfs(int r, int c) {
-	char color = mp[r][c];
+	//범위 밖으로 간 경우 경로 X
+	if (r < 0 || r > n-1) return 0;
+	if (c < 0 || c > n-1) return 0;
 
-	queue<pair<int, int>> q;
-	q.push(make_pair(r, c));
+	//장애물이 있는 칸인 경우 경로 X
+	if (mp[r][c] == '#') return 0;
 
-	while (!q.empty()) {
-		pair<int, int> cur = q.front();
-		int curr = cur.first;
-		int curc = cur.second;
-		q.pop();
+	ll& ret = cache[r][c];
+	if (ret != -1) return ret;
 
-		//방문 확인
-		if (visited[curr][curc]) continue;
-		visited[curr][curc] = 1;
-
-		for (int i = 0; i < 4; i++) {
-			int nextr = curr + dirr[i];
-			int nextc = curc + dirc[i];
-
-			//범위 확인
-			if (nextr < 0 || nextr >= n) continue;
-			if (nextc < 0 || nextc >= n) continue;
-
-			//같은 색을 가진 인접한 좌표 방문
-			if (mp[nextr][nextc] == color)
-				q.push(make_pair(nextr, nextc));
-		}
-	}
-
-	return;
+	ret = (dp(r + 1, c) + dp(r, c + 1)) % MOD;
+	return ret;
 }
 
-//적록색약 있는 경우 mp[r][c]와 같은 구역 탐색
-void rgbbfs(int r, int c) {
-	char color = mp[r][c];
 
+//bfs - Right & Left & Up & Down
+int dirr[4] = { 1,-1,0,0 };
+int dirc[4] = { 0,0,1,-1 };
+bool visited[1001][1001];
+
+bool bfs() {
 	queue<pair<int, int>> q;
-	q.push(make_pair(r, c));
+	q.push(make_pair(0, 0));
 
 	while (!q.empty()) {
 		pair<int, int> cur = q.front();
 		int curr = cur.first;
 		int curc = cur.second;
 		q.pop();
+	
+		//(R,C)에 도착한 경우 경로 발견
+		if (curr == n - 1 && curc == n - 1) 
+			return true;
 
-		//방문 확인
-		if (rgbvisited[curr][curc]) continue;
-		rgbvisited[curr][curc] = 1;
+		if (visited[curr][curc]) continue;
+		visited[curr][curc] = true;
 
 		for (int i = 0; i < 4; i++) {
 			int nextr = curr + dirr[i];
 			int nextc = curc + dirc[i];
 
-			//범위 확인
-			if (nextr < 0 || nextr >= n) continue;
-			if (nextc < 0 || nextc >= n) continue;
+			if (nextr < 0 || nextr > n - 1) continue;
+			if (nextc < 0 || nextc > n - 1) continue;
+			if (mp[nextr][nextc] == '#') continue;
 
-			//같은 색을 가진 인접한 좌표 방문
-			if (color == 'R' || color == 'G') {
-				if (mp[nextr][nextc] == 'R' || mp[nextr][nextc] == 'G')
-					q.push(make_pair(nextr, nextc));
-			}
-			else {
-				if (mp[nextr][nextc] == 'B')
-					q.push(make_pair(nextr, nextc));
-			}
+			q.push(make_pair(nextr, nextc));
 		}
 	}
 
-	return;
+	return false;
 }
 
 int main() {
@@ -97,31 +77,26 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	memset(visited, 0, sizeof(visited));
-	memset(rgbvisited, 0, sizeof(rgbvisited));
+	for (int i = 0; i < 1001; ++i)
+		for (int j = 0; j < 1001; ++j) {
+			cache[i][j] = -1;
+			visited[i][j] = false;
+		}
 
 	cin >> n;
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < n; ++i)
 		cin >> mp[i];
 
-	//적록색약 없는 사람이 보는 구역의 개수
-	int cnt = 0;
-	//적록색약 있는 사람이 보는 구역의 개수
-	int rgbcnt = 0;
-
-	for (int r = 0; r < n; ++r) {
-		for (int c = 0; c < n; ++c) {
-			if (visited[r][c] == 0) {
-				bfs(r, c);
-				++cnt;
-			}
-			if (rgbvisited[r][c] == 0) {
-				rgbbfs(r, c);
-				++rgbcnt;
-			}
-		}
+	//Right & Down 경로의 개수
+	ll path = dp(0, 0);
+	if (path != 0) {
+		cout << path;
+		return 0;
 	}
 
-	cout << cnt << " " << rgbcnt << "\n";
+	//Right & Left & Up & Down 경로 존재
+	if (bfs()) cout << "THE GAME IS A LIE";
+	else cout << "INCONCEIVABLE";
+
 	return 0;
 }
