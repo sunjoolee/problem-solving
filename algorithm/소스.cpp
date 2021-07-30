@@ -1,46 +1,95 @@
 #include <iostream>
-#include <string>
 #include <vector>
+#include <queue>
+#include <string>
+#include <utility>
+#include <cstring>
 #include <algorithm>
 using namespace std;
 
-typedef long long ll;
+const int MAXN = 100 + 1;
 
 int n;
+string mp[MAXN];
 
-//<접두사도 되고 접미사도 되는 문자열의 최대 길이, 나타나는 횟수>
-pair<int, int> getPartialMatch(const vector<ll>& N) {
-	vector<int> pi(n, 0);
+int visited[MAXN][MAXN] = { 0 };
+int rgbvisited[MAXN][MAXN] = { 0 };
 
-	//최대 길이, 나타나는 횟수
-	int maxpi = 0;
-	int cnt = 0;
+int dirr[4] = { 0,0,1,-1 };
+int dirc[4] = { 1,-1,0,0 };
 
-	int begin = 1;
-	int matched = 0;
-	while (begin + matched < n) {
-		if (N[matched] == N[begin + matched]) {
-			++matched;
-			pi[begin + matched - 1] = matched;
-			
-			//최대 길이, 나타나는 횟수 갱신
-			if (matched > maxpi) {
-				maxpi = matched;
-				cnt = 1;
-			}
-			else if (matched == maxpi) {
-				++cnt;
-			}
+//적록색약 없는 경우 mp[r][c]와 같은 구역 탐색
+void bfs(int r, int c) {
+	char color = mp[r][c];
+
+	queue<pair<int, int>> q;
+	q.push(make_pair(r, c));
+
+	while (!q.empty()) {
+		pair<int, int> cur = q.front();
+		int curr = cur.first;
+		int curc = cur.second;
+		q.pop();
+
+		//방문 확인
+		if (visited[curr][curc]) continue;
+		visited[curr][curc] = 1;
+
+		for (int i = 0; i < 4; i++) {
+			int nextr = curr + dirr[i];
+			int nextc = curc + dirc[i];
+
+			//범위 확인
+			if (nextr < 0 || nextr >= n) continue;
+			if (nextc < 0 || nextc >= n) continue;
+
+			//같은 색을 가진 인접한 좌표 방문
+			if (mp[nextr][nextc] == color)
+				q.push(make_pair(nextr, nextc));
 		}
-		else {
-			if (matched == 0) ++begin;
+	}
+
+	return;
+}
+
+//적록색약 있는 경우 mp[r][c]와 같은 구역 탐색
+void rgbbfs(int r, int c) {
+	char color = mp[r][c];
+
+	queue<pair<int, int>> q;
+	q.push(make_pair(r, c));
+
+	while (!q.empty()) {
+		pair<int, int> cur = q.front();
+		int curr = cur.first;
+		int curc = cur.second;
+		q.pop();
+
+		//방문 확인
+		if (rgbvisited[curr][curc]) continue;
+		rgbvisited[curr][curc] = 1;
+
+		for (int i = 0; i < 4; i++) {
+			int nextr = curr + dirr[i];
+			int nextc = curc + dirc[i];
+
+			//범위 확인
+			if (nextr < 0 || nextr >= n) continue;
+			if (nextc < 0 || nextc >= n) continue;
+
+			//같은 색을 가진 인접한 좌표 방문
+			if (color == 'R' || color == 'G') {
+				if (mp[nextr][nextc] == 'R' || mp[nextr][nextc] == 'G')
+					q.push(make_pair(nextr, nextc));
+			}
 			else {
-				begin += matched - pi[matched - 1];
-				matched = pi[matched - 1];
+				if (mp[nextr][nextc] == 'B')
+					q.push(make_pair(nextr, nextc));
 			}
 		}
 	}
-	return make_pair(maxpi, cnt);
+
+	return;
 }
 
 int main() {
@@ -48,23 +97,31 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
+	memset(visited, 0, sizeof(visited));
+	memset(rgbvisited, 0, sizeof(rgbvisited));
+
 	cin >> n;
+	for (int i = 0; i < n; i++)
+		cin >> mp[i];
 
-	vector<ll> num(n, 0);
-	for (int i = 0; i < n; ++i) {
-		ll input;
-		cin >> input;
-		num[n - 1 - i] = input;
+	//적록색약 없는 사람이 보는 구역의 개수
+	int cnt = 0;
+	//적록색약 있는 사람이 보는 구역의 개수
+	int rgbcnt = 0;
+
+	for (int r = 0; r < n; ++r) {
+		for (int c = 0; c < n; ++c) {
+			if (visited[r][c] == 0) {
+				bfs(r, c);
+				++cnt;
+			}
+			if (rgbvisited[r][c] == 0) {
+				rgbbfs(r, c);
+				++rgbcnt;
+			}
+		}
 	}
 
-	pair<ll, ll> res = getPartialMatch(num);
-
-	if (res.first == 0) {
-		cout << -1;
-		return 0;
-	}
-	else
-		cout << res.first << " " << res.second;
-
+	cout << cnt << " " << rgbcnt << "\n";
 	return 0;
 }
