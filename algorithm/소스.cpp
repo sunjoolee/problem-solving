@@ -1,60 +1,80 @@
 #include <iostream>
-#include <cstring>
-#include <limits.h>
+#include <vector>
+#include <queue>
 #include <algorithm>
 using namespace std;
 
-typedef unsigned long long ull;
-const int MAXN = 2223;
 
-int n;
-int mp[MAXN][MAXN];
-ull cache[MAXN][MAXN];
+//adj[i] : 노드i와 인접한 노드 집합
+vector<int> adj[200000];
 
-int dirr[2] = { 0,1 };
-int dirc[2] = { 1,0 };
+//visited[i] : 노드 i가 bfs에 의해 방문된 횟수
+//(adj[i].size() / 2)번 이상 방문되면 루머를 믿기 시작한다
+int visited[200000] = { 0 };
 
-//dp(r,c): (r,c)좌표에서 (n-1,n-1)좌표까지 가는데 필요한 최소 비용
-ull dp(int r, int c) {
-	//base case
-	if (r == n - 1 && c == n - 1) return 0;
+//belive[i]: 노드 i가 루머를 믿기 시작한 시간
+int believe[200000];
 
-	ull& ret = cache[r][c];
-	if (ret != -1) return ret;
-
-	ret = LLONG_MAX;
-	for (int i = 0; i < 2; i++) {
-		int nextr = r + dirr[i];
-		int nextc = c + dirc[i];
-
-		if (r < 0 || r >= n) continue;
-		if (c < 0 || c >= n) continue;
-
-		//다음 칸이 현재 칸보다 크거나 같을 경우 비용 발생
-		if (mp[r][c] <= mp[nextr][nextc]) {
-			ret = min(ret, (mp[nextr][nextc] - mp[r][c] + 1) + dp(nextr, nextc));
-		}
-		else
-			ret = min(ret, dp(nextr, nextc));
-	}
-	
-	return ret;
-}
+//<현재 노드 위치, 현재 시간>
+//루머를 믿기 시작하면 노드 큐에 저장
+queue<pair<int, int>> q;
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	for (int i = 0; i < MAXN; ++i)
-		for (int j = 0; j < MAXN; ++j)
-			cache[i][j] = -1;
+	for (int i = 0; i < 200000; ++i)
+		believe[i] = -1;
 
+	int n;
 	cin >> n;
-	for (int i = 0; i < n; ++i)
-		for(int j = 0; j<n; ++j)
-			cin >> mp[i][j];
 
-	cout<< dp(0, 0);
+	for (int i = 0; i < n; ++i) {
+		while (true) {
+			int input;
+			cin >> input;
+			if (input == 0) break;
+
+			adj[i].push_back(input - 1);
+		}
+	}
+
+
+	//최초 유포자
+	int m;
+	cin >> m;
+	for (int i = 0; i < m; ++i) {
+		int input;
+		cin >> input;
+		q.push(make_pair(input - 1, 0));
+	}
+
+	while (!q.empty()) {
+		pair<int, int> cur = q.front();
+		int curnode = cur.first;
+		int curtime = cur.second;
+		q.pop();
+
+		//자신이 루머를 믿기 시작한 시간 갱신
+		if (believe[curnode] != -1) continue;
+		believe[curnode] = curtime;
+
+		//자신의 주변 노드에 루머 퍼트리기
+		for (int i = 0; i < adj[curnode].size(); ++i) {
+			int adjnode = adj[curnode][i];
+
+			if (believe[adjnode] == -1) {
+				visited[adjnode]++;
+				if (visited[adjnode] >= ((double)adj[adjnode].size() / 2)) {
+					q.push(make_pair(adjnode, curtime + 1));
+				}
+			}
+		}
+	}
+	
+	for (int i = 0; i < n; ++i)
+		cout << believe[i] << " ";
+
 	return 0;
 }
