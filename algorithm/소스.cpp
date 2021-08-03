@@ -1,34 +1,30 @@
 #include <iostream>
-#include <deque>
+#include <math.h>
 #include <algorithm>
 using namespace std;
 
-deque<int> card;
+//Ç×»ó a > b
+int GCD(int a, int b) {
+	if (a % b == 0) return b;
+	else return GCD(b, a % b);
+}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int n;
-	cin >> n;
+	int n, m;
+	cin >> n >> m;
 
-	if (n == 1) {
-		cout << 1;
-		return 0;
+	if (n < m) {
+		int tmp = m;
+		m = n;
+		n = tmp;
 	}
 
-	for (int i = 1; i <= n; ++i)
-		card.push_back(i);
-
-	while (true) {
-		card.pop_front();
-		if (card.size() == 1) break;
-
-		card.push_back(card.front());
-		card.pop_front();
-	}
-
-	cout << card.front();
+	int gcd = GCD(n, m);
+	int lcm = n * m / gcd;
+	cout << gcd << "\n" << lcm;
 	return 0;
 }
