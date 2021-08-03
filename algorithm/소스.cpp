@@ -1,9 +1,9 @@
 #include <iostream>
-#include <vector>
+#include <deque>
 #include <algorithm>
 using namespace std;
 
-vector<int> num;
+deque<int> card;
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -12,22 +12,23 @@ int main() {
 
 	int n;
 	cin >> n;
-	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
-		num.push_back(input);
+
+	if (n == 1) {
+		cout << 1;
+		return 0;
 	}
 
-	int m;
-	cin >> m;
-	for (int i = 0; i < m; ++i) {
-		int input;
-		cin >> input;
+	for (int i = 1; i <= n; ++i)
+		card.push_back(i);
 
-		auto res = find(num.begin(), num.end(), input);
-		if (res != num.end()) cout << "1\n";
-		else cout << "0\n";
+	while (true) {
+		card.pop_front();
+		if (card.size() == 1) break;
+
+		card.push_back(card.front());
+		card.pop_front();
 	}
 
+	cout << card.front();
 	return 0;
 }
