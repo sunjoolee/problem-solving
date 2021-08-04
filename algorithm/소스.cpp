@@ -1,7 +1,6 @@
 #include <iostream>
-#include <deque>
-#include <string>
-#include <algorithm>
+#include <queue>
+#include <vector>
 using namespace std;
 
 int main() {
@@ -9,53 +8,34 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	deque<int> q;
+	int n, k;
+	cin >> n >> k;
 
-	int n;
-	cin >> n;
-	while (n--) {
-		string input;
-		cin >> input;
+	queue<int> circle;
+	for (int i = 1; i <= n; ++i)
+		circle.push(i);
 
-		if (input == "push_front") {
-			int x;
-			cin >> x;
-			q.push_front(x);
+	
+	int seq = 1;
+	vector<int> josephus;
+
+	while (!circle.empty()) {
+		if (seq == k) {
+			josephus.push_back(circle.front());
+			circle.pop();
+			seq = 1;
 		}
-		else if (input == "push_back") {
-			int x;
-			cin >> x;
-			q.push_back(x);
-		}
-		else if (input == "pop_front"){
-			if (q.empty()) cout << -1<<"\n";
-			else {
-				cout << q.front() << "\n";
-				q.pop_front();
-			}
-		}
-		else if (input == "pop_back") {
-			if (q.empty()) cout << -1 << "\n";
-			else {
-				cout << q.back() << "\n";
-				q.pop_back();
-			}
-		}
-		else if (input == "size") {
-			cout << q.size() << "\n";
-		}
-		else if (input == "empty") {
-			cout << q.empty() << "\n";
-		}
-		else if (input == "front") {
-			if (q.empty()) cout << -1 << "\n";
-			else cout << q.front() << "\n";
-		}
-		else if (input == "back") {
-			if (q.empty()) cout << -1 << "\n";
-			else cout << q.back() << "\n";
+		else {
+			circle.push(circle.front());
+			circle.pop();
+			seq++;
 		}
 	}
 
+	cout << "<" << josephus[0];
+	for (int i = 1; i < n; ++i)
+		cout << ", " << josephus[i];
+	cout << ">";
+	
 	return 0;
 }
