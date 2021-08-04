@@ -1,41 +1,55 @@
 #include <iostream>
-#include <queue>
+#include <stack>
 #include <vector>
 using namespace std;
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-
-	int n, k;
-	cin >> n >> k;
-
-	queue<int> circle;
-	for (int i = 1; i <= n; ++i)
-		circle.push(i);
-
 	
-	int seq = 1;
-	vector<int> josephus;
+	int n;
+	cin >> n;
 
-	while (!circle.empty()) {
-		if (seq == k) {
-			josephus.push_back(circle.front());
-			circle.pop();
-			seq = 1;
+	stack<int> s;
+	vector<char> res;
+
+	//스택에 들어가게 되는 숫자
+	int num = 1;
+
+	for (int i = 0; i < n; ++i) {
+		int input;
+		cin >> input;
+		
+		//스택 비어있는 경우 일단 숫자 하나 넣기
+		if (s.empty()) {
+			s.push(num);
+			res.push_back('+');
+			num++;
 		}
-		else {
-			circle.push(circle.front());
-			circle.pop();
-			seq++;
+
+		//입력된 수열과 스택의 top 비교
+
+		if (input < s.top()) {
+			cout << "NO";
+			return 0;
+		}
+
+		while (input > s.top()) {
+			s.push(num);
+			res.push_back('+');
+			num++;
+		}
+
+		if (input == s.top()) {
+			s.pop();
+			res.push_back('-');
 		}
 	}
 
-	cout << "<" << josephus[0];
-	for (int i = 1; i < n; ++i)
-		cout << ", " << josephus[i];
-	cout << ">";
-	
+	for (int i = 0; i < res.size(); ++i)
+		cout << res[i] << "\n";
+
 	return 0;
 }
