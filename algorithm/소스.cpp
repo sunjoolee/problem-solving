@@ -1,5 +1,4 @@
 #include <iostream>
-#include <math.h>
 #include <algorithm>
 using namespace std;
 
@@ -8,17 +7,23 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	while (true) {
-		int num[3];
-		cin >> num[0] >> num[1] >> num[2];
+	int t;
+	cin >> t;
+	while (t--) {
+		int h, w, n;
+		cin >> h >> w >> n;
 
-		if (!num[0] && !num[1] && !num[2]) break;
+		int floor = n % h;
+		int roomnum = n / h + 1;
 
-		sort(num, num + 3);
+		if (floor == 0) {
+			floor = h;
+			--roomnum;
+		}
 
-		if (num[2] * num[2] == num[0] * num[0] + num[1] * num[1]) cout << "right\n";
-		else cout << "wrong\n";
-
+		if (roomnum < 10)
+			cout << floor << 0 << roomnum<<"\n";
+		else cout << floor << roomnum << "\n";
 	}
 	return 0;
 }
