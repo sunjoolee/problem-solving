@@ -1,5 +1,5 @@
 #include <iostream>
-#include <queue>
+#include <deque>
 #include <string>
 #include <algorithm>
 using namespace std;
@@ -9,7 +9,7 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	queue<int> q;
+	deque<int> q;
 
 	int n;
 	cin >> n;
@@ -17,16 +17,28 @@ int main() {
 		string input;
 		cin >> input;
 
-		if (input == "push") {
+		if (input == "push_front") {
 			int x;
 			cin >> x;
-			q.push(x);
+			q.push_front(x);
 		}
-		else if (input == "pop"){
+		else if (input == "push_back") {
+			int x;
+			cin >> x;
+			q.push_back(x);
+		}
+		else if (input == "pop_front"){
 			if (q.empty()) cout << -1<<"\n";
 			else {
 				cout << q.front() << "\n";
-				q.pop();
+				q.pop_front();
+			}
+		}
+		else if (input == "pop_back") {
+			if (q.empty()) cout << -1 << "\n";
+			else {
+				cout << q.back() << "\n";
+				q.pop_back();
 			}
 		}
 		else if (input == "size") {
