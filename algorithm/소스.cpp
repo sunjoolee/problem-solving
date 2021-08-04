@@ -1,29 +1,40 @@
 #include <iostream>
+#include <string>
+#include <vector>
+#include <utility>
 #include <algorithm>
 using namespace std;
+
+bool compare(pair<pair<int, int>, string> a, pair<pair<int, int>, string> b) {
+	//나이순 정렬
+	if (a.first.first < b.first.first) return true;
+	//나이 같다면 가입한 순서대로 정렬
+	else if (a.first.first == b.first.first)
+		return (a.first.second < b.first.second);
+	else return false;
+}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int t;
-	cin >> t;
-	while (t--) {
-		int h, w, n;
-		cin >> h >> w >> n;
+	int n;
+	cin >> n;
 
-		int floor = n % h;
-		int roomnum = n / h + 1;
+	//<<나이, 가입 순서>, 이름>
+	vector<pair<pair<int, int>, string>> v;
+	for (int i = 0; i < n; ++i) {
+		int age;
+		string name;
+		cin >> age >> name;
+		v.push_back(make_pair(make_pair(age, i), name));
+	}
 
-		if (floor == 0) {
-			floor = h;
-			--roomnum;
-		}
-
-		if (roomnum < 10)
-			cout << floor << 0 << roomnum<<"\n";
-		else cout << floor << roomnum << "\n";
+	sort(v.begin(), v.end(), compare);
+	
+	for (int i = 0; i < n; ++i) {
+		cout << v[i].first.first << " "<< v[i].second<<"\n";
 	}
 	return 0;
 }
