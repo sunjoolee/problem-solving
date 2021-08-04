@@ -1,55 +1,64 @@
 #include <iostream>
-#include <stack>
 #include <vector>
+#include <queue>
+#include <algorithm>
 using namespace std;
-
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-	
-	int n;
-	cin >> n;
 
-	stack<int> s;
-	vector<char> res;
+	int t;
+	cin >> t;
 
-	//스택에 들어가게 되는 숫자
-	int num = 1;
+	while (t--) {
+		int n, m;
+		cin >> n >> m;
 
-	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
-		
-		//스택 비어있는 경우 일단 숫자 하나 넣기
-		if (s.empty()) {
-			s.push(num);
-			res.push_back('+');
-			num++;
+		//모든 문서의 중요도 저장
+		vector<int> importance;
+		//프린터큐 <문서 번호, 문서 중요도>
+		queue<pair<int, int>> printor;
+
+		for (int i = 0; i < n; ++i) {
+			int input;
+			cin >> input;
+
+			printor.push(make_pair(i, input));
+			importance.push_back(input);
 		}
 
-		//입력된 수열과 스택의 top 비교
+		//모든 문서의 중요도 정렬
+		sort(importance.begin(), importance.end());
 
-		if (input < s.top()) {
-			cout << "NO";
-			return 0;
-		}
+		//문서가 프린트된 순서
+		int seq = 1;
+		while (true) {
+			pair<int, int> document = printor.front();
 
-		while (input > s.top()) {
-			s.push(num);
-			res.push_back('+');
-			num++;
-		}
-
-		if (input == s.top()) {
-			s.pop();
-			res.push_back('-');
+			//현재 문서의 중요도가 
+			//나머지 모든 문서의 중요도 중 가장 큰 값과 같은 경우
+			if (document.second == importance.back()) {
+				//궁금했던 문서인 경우 
+				if (document.first == m) {
+					//프린트된 순서 출력 후 종료
+					cout << seq<<"\n";
+					break;
+				}
+				//문서 프린트 & 문서의 중요도 벡터에서 제거
+				printor.pop();
+				importance.pop_back();
+				seq++;
+			}
+			//현재 문서의 중요도가 
+			//나머지 모든 문서의 중요도 중 가장 큰 값보다 작은 경우
+			else {
+				//현재 문서 프린터 큐의 뒤로 이동
+				printor.push(document);
+				printor.pop();
+			}
 		}
 	}
-
-	for (int i = 0; i < res.size(); ++i)
-		cout << res[i] << "\n";
-
 	return 0;
 }
