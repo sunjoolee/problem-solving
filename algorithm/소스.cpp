@@ -1,38 +1,50 @@
 #include <iostream>
-
+#include <vector>
+#include <string>
+#include <algorithm>
 using namespace std;
+
+//허프만 코드 사전순으로 정렬
+bool compare(pair<char, string>& a, pair<char, string>& b) {
+	return a.second < b.second;
+}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int A, B;
-	cin >> A >> B;
+	int n;
+	cin >> n;
 
-	int L = 0;
-	int R = 0;
+	vector<pair<char, string>> huffman;
+	for (int i = 0; i < n; ++i) {
+		char a;
+		string code;
+		cin >> a >> code;
 
-	//목적지에서 루트로 거슬러 올라간다
-	while (A > 1 && B > 1) {
-		if (A > B) {
-			A = A - B;
-			L++;
-		}
-		else {
-			B = B - A;
-			R++;
+		huffman.push_back(make_pair(a, code));
+	}
+
+	//허프만 코드 정렬
+	sort(huffman.begin(), huffman.end(), compare);
+
+	string input;
+	cin >> input;
+	int index = 0;
+
+	while (index < input.size()) {
+		for (int i = 0; i < huffman.size(); ++i) {
+			char alpha = huffman[i].first;
+			string code = huffman[i].second;
+
+			if (input.substr(index, code.size()) == code) {
+				cout << alpha;
+				index += code.size();
+				break;
+			}
 		}
 	}
 
-	//A가 1이 된 경우 R을 따라 (1,1)까지 쭉 올라간다
-	if (A == 1)
-		R += (B - 1);
-
-	//B가 1이 된 경우 L을 따라 (1,1)까지 쭉 올라간다
-	else if (B == 1)
-		L += (A - 1);
-
-	cout << L <<" "<<R;
 	return 0;
 }
