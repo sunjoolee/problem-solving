@@ -1,6 +1,5 @@
 #include <iostream>
-#include <cmath>
-#include <string>
+
 using namespace std;
 
 int main() {
@@ -8,34 +7,32 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int height;
-	cin >> height;
+	int A, B;
+	cin >> A >> B;
 
-	int numofnodes = pow(2, height + 1) - 1;
+	int L = 0;
+	int R = 0;
 
-	string path;
-	cin >> path;
-
-	//경로가 주어지지 않은 경우
-	if (cin.eof()) {
-		//루트의 노드 번호 출력 후 종료
-		cout << numofnodes;
-		return 0;
+	//목적지에서 루트로 거슬러 올라간다
+	while (A > 1 && B > 1) {
+		if (A > B) {
+			A = A - B;
+			L++;
+		}
+		else {
+			B = B - A;
+			R++;
+		}
 	}
 
-	
-	int i = 1;
-	for (int j = 0; j < path.size(); ++j) {
-		//LeftChild로 이동
-		if (path[j] == 'L') 
-			i = 2 * i;
-		//RightChild로 이동
-		else if (path[j] == 'R') 
-			i = 2 * i + 1;
-	}
+	//A가 1이 된 경우 R을 따라 (1,1)까지 쭉 올라간다
+	if (A == 1)
+		R += (B - 1);
 
-	//경로의 도착 지점의 노드 번호 출력
-	cout << numofnodes - i + 1;
+	//B가 1이 된 경우 L을 따라 (1,1)까지 쭉 올라간다
+	else if (B == 1)
+		L += (A - 1);
 
+	cout << L <<" "<<R;
 	return 0;
 }
