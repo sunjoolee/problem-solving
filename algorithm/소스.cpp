@@ -1,13 +1,5 @@
 #include <iostream>
-#include <vector>
-#include <string>
-#include <algorithm>
 using namespace std;
-
-//허프만 코드 사전순으로 정렬
-bool compare(pair<char, string>& a, pair<char, string>& b) {
-	return a.second < b.second;
-}
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -17,33 +9,30 @@ int main() {
 	int n;
 	cin >> n;
 
-	vector<pair<char, string>> huffman;
-	for (int i = 0; i < n; ++i) {
-		char a;
-		string code;
-		cin >> a >> code;
+	int root;
+	int parent[21] = { 0 };
+	for (int i = 1; i <= n; ++i) {
+		int p;
+		cin >> p;
+		parent[i] = p;
 
-		huffman.push_back(make_pair(a, code));
+		if (p == -1) root = i;
 	}
 
-	//허프만 코드 정렬
-	sort(huffman.begin(), huffman.end(), compare);
+	for (int i = 1; i <= n; ++i) {
+		int node = i;
+		int height = 0;
 
-	string input;
-	cin >> input;
-	int index = 0;
-
-	while (index < input.size()) {
-		for (int i = 0; i < huffman.size(); ++i) {
-			char alpha = huffman[i].first;
-			string code = huffman[i].second;
-
-			if (input.substr(index, code.size()) == code) {
-				cout << alpha;
-				index += code.size();
-				break;
-			}
+		if (node == root) {
+			cout << height << "\n";
+			continue;
 		}
+
+		while (node != root) {
+			node = parent[node];
+			height++;
+		}
+		cout << height << "\n";
 	}
 
 	return 0;
