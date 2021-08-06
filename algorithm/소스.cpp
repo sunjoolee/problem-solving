@@ -1,23 +1,35 @@
 #include <iostream>
+#include <set>
+#include <string>
+#include <algorithm>
 using namespace std;
+
+set<string> S;
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int T;
-	cin >> T;
-	while (T--) {
-		int A, B;
-		cin >> A >> B;
+	int n, m;
+	cin >> n >> m;
 
-		while (A != B) {
-			if (A > B) A /= 2;
-			else if (A < B) B /= 2;
-		}
+	for (int i = 0; i < n; ++i) {
+		string input;
+		cin >> input;
 
-		cout << 10 * A << "\n";
+		S.insert(input);
 	}
+
+	int cnt = 0;
+	for (int i = 0; i < m; ++i) {
+		string input;
+		cin >> input;
+
+		if(S.find(input) != S.end())
+			cnt++;
+	}
+
+	cout << cnt;
 	return 0;
 }
