@@ -1,44 +1,45 @@
 #include <iostream>
-#include <cstring>
-#include<vector>
-#include <set>
+#include <vector>
 using namespace std;
 
-int input[200001];
-int parent[200001];
+int n;
+vector<int> edge[100001];
 
-set <int> node;
+int visited[100001] = { 0 };
+int parent[100001] = { 0 };
+
+void dfs(int curnode, int parentnode) {
+
+	parent[curnode] = parentnode;
+	visited[curnode] = 1;
+
+	for (int i = 0; i < edge[curnode].size(); ++i) {
+		int nextnode = edge[curnode][i];
+		if (visited[nextnode] == 0)
+			dfs(nextnode, curnode);
+	}
+	return;
+}
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int n;
 	cin >> n;
-	for (int i = 0; i < n; ++i)
-		cin >> input[i];
-
-	memset(parent, -1, sizeof(parent));
-
-	
-	for (int i = 0; i < n; ++i) {
-		int curnode = input[i];
-		node.insert(curnode);
-
-		//아직 parent를 모르는 노드의 경우
-		//parent는 경로에서 자신 바로 앞에 있는 노드
-		if (parent[curnode] == -1) {
-			parent[curnode] = input[i - 1];
-		}
+	for (int i = 1; i < n; ++i) {
+		int a, b;
+		cin >> a >> b;
+		
+		edge[a].push_back(b);
+		edge[b].push_back(a);
 	}
-	//루트 노드는 부모 도시 -1
-	parent[input[0]] = -1;
 
-	//도시의 개수
-	cout << node.size() << "\n";
-	for (auto it = node.begin(); it != node.end(); ++it)
-		cout << parent[*it] << " ";
+	dfs(1, 0);
+
+	for(int i = 2; i<=n; ++i)
+		cout << parent[i]<<"\n";
 
 	return 0;
 }
