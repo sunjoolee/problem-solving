@@ -1,30 +1,36 @@
 #include <iostream>
-#include <vector>
+#include <map>
+#include <utility>
 using namespace std;
 
-//트리의 리프 노드들의 깊이의 합
-int sum = 0;
+int n;
+//<노드, <left child, right child>>
+map<char, pair<char, char>> tree;
 
-vector<vector<int>> edge (500001);
-int visited[500001] = { 0 };
+void preorder(char node) {
+	if (node == '.') return;
 
-void dfs(int node, int depth) {
+	cout << node;
+	preorder(tree[node].first);
+	preorder(tree[node].second);
+	return;
+}
 
-	//리프노드 만나면 종료
-	//간선의 수 1개인 노드 = 리프 노드
-	if (node != 1 && edge[node].size() == 1) {
-		sum += depth;
-		return;
-	}
-	
-	visited[node] = 1;
+void inorder(char node) {
+	if (node == '.') return;
 
-	for(int i = 0; i<edge[node].size(); ++i){
-		if (!visited[edge[node][i]])
-			dfs(edge[node][i], depth + 1);
-	}
+	inorder(tree[node].first);
+	cout << node;
+	inorder(tree[node].second);
+	return;
+}
 
+void postorder(char node) {
+	if (node == '.') return;
 
+	postorder(tree[node].first);
+	postorder(tree[node].second);
+	cout << node;
 	return;
 }
 
@@ -33,23 +39,21 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int n;
 	cin >> n;
+	for (int i = 0; i < n; ++i) {
+		char node, left, right;
+		cin >> node >> left >> right;
 
-	for (int i = 1; i < n; ++i) {
-		int a, b;
-		cin >> a >> b;
-
-		edge[a].push_back(b);
-		edge[b].push_back(a);
+		tree[node].first = left;
+		tree[node].second = right;
 	}
 
-	//루트 노드부터 DFS
-	dfs(1, 0);
-	
-	//sum 홀수인 경우 성원이 승리
-	if (sum % 2) cout << "Yes";
-	else cout << "No";
+	//항상 A가 루트 노드
+	preorder('A');
+	cout << "\n";
+	inorder('A');
+	cout << "\n";
+	postorder('A');
 
 	return 0;
 }
