@@ -1,59 +1,44 @@
 #include <iostream>
-#include <map>
-#include <utility>
+#include <cstring>
+#include<vector>
+#include <set>
 using namespace std;
 
-int n;
-//<노드, <left child, right child>>
-map<char, pair<char, char>> tree;
+int input[200001];
+int parent[200001];
 
-void preorder(char node) {
-	if (node == '.') return;
-
-	cout << node;
-	preorder(tree[node].first);
-	preorder(tree[node].second);
-	return;
-}
-
-void inorder(char node) {
-	if (node == '.') return;
-
-	inorder(tree[node].first);
-	cout << node;
-	inorder(tree[node].second);
-	return;
-}
-
-void postorder(char node) {
-	if (node == '.') return;
-
-	postorder(tree[node].first);
-	postorder(tree[node].second);
-	cout << node;
-	return;
-}
+set <int> node;
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
+	int n;
 	cin >> n;
+	for (int i = 0; i < n; ++i)
+		cin >> input[i];
+
+	memset(parent, -1, sizeof(parent));
+
+	
 	for (int i = 0; i < n; ++i) {
-		char node, left, right;
-		cin >> node >> left >> right;
+		int curnode = input[i];
+		node.insert(curnode);
 
-		tree[node].first = left;
-		tree[node].second = right;
+		//아직 parent를 모르는 노드의 경우
+		//parent는 경로에서 자신 바로 앞에 있는 노드
+		if (parent[curnode] == -1) {
+			parent[curnode] = input[i - 1];
+		}
 	}
+	//루트 노드는 부모 도시 -1
+	parent[input[0]] = -1;
 
-	//항상 A가 루트 노드
-	preorder('A');
-	cout << "\n";
-	inorder('A');
-	cout << "\n";
-	postorder('A');
+	//도시의 개수
+	cout << node.size() << "\n";
+	for (auto it = node.begin(); it != node.end(); ++it)
+		cout << parent[*it] << " ";
 
 	return 0;
 }
