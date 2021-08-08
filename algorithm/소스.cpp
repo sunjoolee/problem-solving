@@ -1,74 +1,56 @@
 #include <iostream>
-#include <vector>
-#include <queue>
-#include <cstring>
+#include <string>
+#include <stack>
 #include <algorithm>
 using namespace std;
-
-vector<int> edge[1001];
-int visited[1001];
-
-void dfs(int curnode) {
-	cout << curnode << " ";
-	visited[curnode] = 1;
-
-	for (int i = 0; i < edge[curnode].size(); ++i) {
-		int nextnode = edge[curnode][i];
-
-		if (visited[nextnode] == 0)
-			dfs(nextnode);
-	}
-	return;
-}
-
-void bfs(int startnode) {
-	queue<int> q;
-	q.push(startnode);
-
-	while (!q.empty()) {
-		int curnode = q.front();
-		q.pop();
-
-		if(visited[curnode] == 1)
-			continue;
-
-		cout << curnode << " ";
-		visited[curnode] = 1;
-
-		for (int i = 0; i < edge[curnode].size(); ++i) {
-			int nextnode = edge[curnode][i];
-
-			if (visited[nextnode] == 0)
-				q.push(nextnode);
-		}
-
-	}
-	return;
-}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int n, m, v;
-	cin >> n >> m >> v;
+	while (true) {
+		string input;
+		getline(cin, input);
 
-	for (int i = 0; i < m; ++i) {
-		int a, b;
-		cin >> a >> b;
-		edge[a].push_back(b);
-		edge[b].push_back(a);
+		//종료 조건
+		if (input == ".") break;
+
+		stack<char> st;
+		bool balance = true;
+		
+		//문자열 검사
+		for (int i = 0; i < input.size(); ++i) {
+			char curchar = input[i];
+			
+			//여는 괄호인 경우 push
+			if (curchar == '(' || curchar == '[')
+				st.push(curchar);
+
+			//닫는 괄호인 경우 짝 맞으면 pop
+			else if (curchar == ')') {
+				if (!st.empty() && st.top() == '(') st.pop();
+				else {
+					balance = false;
+					break;
+				}
+			}
+			else if (curchar == ']') {
+				if (!st.empty() && st.top() == '[') st.pop();
+				else {
+					balance = false;
+					break;
+				}
+			}
+		}
+		//문자열 검사 종료 후 스택 비어있지 않은 경우
+		//문자열 균형을 이루지 않는다
+		if (!st.empty()) 
+			balance = false;
+
+		if (balance) cout << "yes\n";
+		else cout << "no\n";
+
 	}
-
-	for (int i = 1; i <= n; ++i)
-		sort(edge[i].begin(), edge[i].end());
-
-	memset(visited, 0, sizeof(visited));
-	dfs(v);
-	cout << "\n";
-	memset(visited, 0, sizeof(visited));
-	bfs(v);
-
 	return 0;
 }
