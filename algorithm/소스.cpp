@@ -1,60 +1,35 @@
 #include <iostream>
 #include <vector>
-#include <cstring>
 #include <algorithm>
 using namespace std;
 
-int n, s, d;
-
-//간선
-vector<int> edge[100001];
-
+//<연결된 노드, 연결하는 간선의 다이너마이트 수>
+vector<pair<int, int>> edge[1001];
 //노드 방문 여부
-int visited[100001];
+int visited[1001];
 
-//toLeaf[i]: 노드 i ~ 리프 노드까지의 최대 깊이
-int toLeaf[100001] = { 0 };
-
-//오토바이가 이동한 거리(편도)
-int path = 0;
-
-int getToLeaf(int curnode) {
-	
-	//노드 방문 표시
-	visited[curnode] = 1;
-
-	//자식 노드 없을 경우 리프 노드까지의 최대 깊이 = 0
-	int maxdep = 0;
-
-	for (int i = 0; i < edge[curnode].size(); ++i) {
-		int nextnode = edge[curnode][i];
-
-		if (visited[nextnode] == 0)
-			maxdep = max(maxdep, 1 + getToLeaf(nextnode));
-	}
-	
-	toLeaf[curnode] = maxdep;
-	return maxdep;
-}
-
-void moveMotorcycle(int curnode) {
+int getMinCost(int curnode, int curcost) {
 
 	//노드 방문 표시
 	visited[curnode] = 1;
+	
+	//리프 노드인 경우 
+	//최소 다이너마이트 개수 = 자신의 간선의 다이너마이트 수
+	if (curnode != 1 && edge[curnode].size() == 1)
+		return curcost;
 
-	//DFS
+	//리프 노드 아닌 경우
+	//1. 자식 노드들의 최소 다이너마이트 개수의 합 계산
+	int sum = 0;
 	for (int i = 0; i < edge[curnode].size(); ++i) {
-		int nextnode = edge[curnode][i];
+		int nextnode = edge[curnode][i].first;
+		int nextcost = edge[curnode][i].second;
 
-		if (visited[nextnode] == 0) {
-			//toLeaf > d인 경우 오토바이가 이동
-			if (toLeaf[nextnode] >= d) path++;
-
-			moveMotorcycle(nextnode);
-		}
+		if (nextnode != 1 && visited[nextnode] == 0)
+			sum += getMinCost(nextnode, nextcost);
 	}
-
-	return;
+	//2. min(자신의 간선의 다이너마이트 수, 자식 노드들의 최소 다이너마이트 개수의 합)
+	return min(curcost, sum);
 }
 
 int main() {
@@ -62,30 +37,42 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n >> s >> d;
+	int t;
+	cin >> t;
+	while (t--) {
+		//초기화
+		for (int i = 0; i < 1001; ++i) {
+			edge[i].clear();
+			visited[i] = 0;
+		}
 
-	for (int i = 1; i < n; ++i) {
-		int x, y;
-		cin >> x >> y;
+		int n, m;
+		cin >> n >> m;
 
-		edge[x].push_back(y);
-		edge[y].push_back(x);
+		//섬 하나 뿐인 경우
+		if (n == 1) {
+			cout << 0;
+			continue;
+		}
+
+		for (int i = 0; i < m; ++i) {
+			int a, b, d;
+			cin >> a >> b >> d;
+
+			edge[a].push_back(make_pair(b, d));
+			edge[b].push_back(make_pair(a, d));
+		}
+		
+		//루트 노드 1과 연결된 간선에 대해 각각 계산
+		int ans = 0;
+		for (int i = 0; i < edge[1].size(); ++i) {
+			int firstnode = edge[1][i].first;
+			int firstcost = edge[1][i].second;
+			ans += getMinCost(firstnode, firstcost);
+		}
+
+		cout << ans << "\n";
 	}
-
-	//힘 = 0인 경우 모든 간선을 다 이동해야한다
-	if (d == 0){
-		cout << 2 * (n - 1);
-		return 0;
-	}
-
-	memset(visited, 0, sizeof(visited));
-	getToLeaf(s);
-
-	memset(visited, 0, sizeof(visited));
-	moveMotorcycle(s);
-
-	//오토바이가 이동한 거리(왕복)
-	cout << 2 * path;
 
 	return 0;
 }
