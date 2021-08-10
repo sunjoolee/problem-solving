@@ -1,54 +1,38 @@
 #include <iostream>
-#include <vector>
-#include <math.h>
 #include <algorithm>
 using namespace std;
 
-//최적화 문제: k개의 그룹으로 나눴을 때 각 그룹의 맞은 문제의 합 중 최솟값의 최댓값을 구해라
-//결정 문제: 각 그룹에서 맞은 문제의 합이 x혹은 x이상이 되도록 시험지를 k개의 그룹으로 나눌 수 있는가?
+typedef unsigned long long ull;
 
-int n, k;
-vector<int> score;
+ull n, k;
 
-bool decision(double x) {
-	int group = 0;
+//결정 문제: 숫자 x앞에 k개 혹은 k개 이상의 숫자가 존재하는가?
 
-	//그룹에서 맞은 문제의 개수의 합
-	int sum = 0;
-	for (int i = 0; i < n; ++i) {
-		sum += score[i];
-		if (sum >= x) {
-			sum = 0;
-			group++;
-		}
-	}
-	
-	return group >= k;
+bool decision(int x) {
+	ull cnt = 0;
+	for (ull i = 1; i <= n; ++i)
+		cnt += min(x / i, n);
+
+	return cnt >= k;
 }
-
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n >>k;
+	cin >> n >> k;
 
-	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
-		score.push_back(input);
-	}
-
-	double hi = 20 *100000;
-	double lo = 0;
+	ull hi = 100000 * 100000;
+	ull lo = 1;
 	for (int it = 0; it < 100; ++it) {
 		double mid = (hi + lo) / 2;
 
-		if (decision(mid)) lo = mid;
-		else hi = mid;
+		if (decision(mid)) hi = mid;
+		else lo = mid;
 	}
 
-	cout << lo;
+	cout << hi;
+
 	return 0;
 }
