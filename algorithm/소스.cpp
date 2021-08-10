@@ -4,27 +4,26 @@
 #include <algorithm>
 using namespace std;
 
-//최적화 문제: M개의 블루레이로 모든 레슨을 녹화할 수 있는 블루레이의 크기 중 최솟값을 구해라
-//결정 문제:  크기 x 혹은 x이하인 블루레이 M개로 모든 레슨을 녹화할 수 있는가?
+//최적화 문제: k개의 그룹으로 나눴을 때 각 그룹의 맞은 문제의 합 중 최솟값의 최댓값을 구해라
+//결정 문제: 각 그룹에서 맞은 문제의 합이 x혹은 x이상이 되도록 시험지를 k개의 그룹으로 나눌 수 있는가?
 
-int n, m;
-vector<int> lesson;
+int n, k;
+vector<int> score;
 
 bool decision(double x) {
-	//모든 레슨을 녹화하기 위해 필요한 블루레이의 개수
-	int cnt = 1;
+	int group = 0;
 
-	//하나의 블루레이에 들어갈 레슨의 길이의 합
+	//그룹에서 맞은 문제의 개수의 합
 	int sum = 0;
 	for (int i = 0; i < n; ++i) {
-		if (sum + lesson[i] > x) {
-			cnt++;
-			sum = lesson[i];
+		sum += score[i];
+		if (sum >= x) {
+			sum = 0;
+			group++;
 		}
-		else sum += lesson[i];
 	}
-
-	return cnt <= m;
+	
+	return group >= k;
 }
 
 
@@ -33,28 +32,23 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n >> m;
+	cin >> n >>k;
 
-	//가장 길이가 긴 레슨의 길이
-	int longestlesson = 0;
 	for (int i = 0; i < n; ++i) {
 		int input;
 		cin >> input;
-		lesson.push_back(input);
-
-		longestlesson = max(longestlesson, input);
+		score.push_back(input);
 	}
-	
-	double hi = 10000;
-	double lo = longestlesson;
+
+	double hi = 20 *100000;
+	double lo = 0;
 	for (int it = 0; it < 100; ++it) {
 		double mid = (hi + lo) / 2;
 
-		if (decision(mid)) hi = mid;
-		else lo = mid;
+		if (decision(mid)) lo = mid;
+		else hi = mid;
 	}
 
 	cout << lo;
-
 	return 0;
 }
