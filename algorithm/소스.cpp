@@ -1,42 +1,46 @@
 #include <iostream>
-#include <queue>
+#include <string>
+#include <cmath>
 #include <algorithm>
 using namespace std;
 
-int n;
-priority_queue<int, vector<int>, less<int>> maxheap;
-priority_queue<int, vector<int>, greater<int>> minheap;
+typedef long long ll;
+
+//큰 수 덧셈 알고리즘
+string addString(string a, string b) {
+	ll carry = 0;
+	string result = "";
+
+	while (!a.empty() || !b.empty() || carry) {
+		if (!a.empty()) {
+			carry += a.back() - '0';
+			a.pop_back();
+		}
+
+		if (!b.empty()) {
+			carry += b.back() - '0';
+			b.pop_back();
+		}
+
+		result += ((carry % 10) + '0');
+		carry /= 10;
+	}
+
+	reverse(result.begin(), result.end());
+	return result;
+}
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n;
-	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
+	string a, b;
+	cin >> a >> b;
 
-		//규칙 1
-		if (maxheap.size() == minheap.size()) maxheap.push(input);
-		else minheap.push(input);
-
-		//규칙 2
-		if ((!minheap.empty()) && (maxheap.top() > minheap.top())) {
-			int mx = maxheap.top();
-			int mn = minheap.top();
-
-			maxheap.pop();
-			minheap.pop();
-
-			maxheap.push(mn);
-			minheap.push(mx);
-		}
-
-		//중간값 출력
-		if (maxheap.size() % 2 == 1) cout << maxheap.top() << "\n";
-		else cout << min(maxheap.top(), minheap.top()) << "\n";
-	}
+	cout << addString(a, b);
 
 	return 0;
+
 }
