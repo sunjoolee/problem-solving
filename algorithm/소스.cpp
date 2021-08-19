@@ -1,56 +1,42 @@
 #include <iostream>
-#include <vector>
+#include <cmath>
 #include <algorithm>
 using namespace std;
-
-int N, M;
-vector<int> money;
-
-//결정 문제: fajomonths에서의 최대 지출이 x일 때 N개의 날들을 M개의 fajomonths로 구성할 수 있는가?  
-bool decision(int x) {
-	//구성된 fajomonths의 개수
-	int cnt = 1;
-	int sum = 0;
-	for (int i = 0; i < N; ++i) {
-		if (sum + money[i] > x) {
-			++cnt;
-			sum = money[i];
-		}
-		else sum += money[i];
-	}
-
-	if (cnt <= M) return true;
-	return false;
-}
-
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-
-	cin >> N >> M;
 	
-	int moneySum = 0;
-	int moneyMax = 0;
-	for (int i = 0; i < N; ++i) {
-		int input;
-		cin >> input;
-		money.push_back(input);
+	int room;
+	cin >> room;
 
-		moneySum += input;
-		moneyMax = max(moneyMax, input);
+	//1 ~ room번방까지 지나야하는 방의 개수 = room번방이 포함된 육각형의 번호
+
+	//1 ~ 1번방까지 이동하는 경우
+	if (room == 1) {
+		cout << 1;
+		return 0;
 	}
 
-	double lo = moneyMax;
-	double hi = moneySum;
-	for (int it = 0; it < 100; ++it) {
-		double mid = (hi + lo) / 2;
+	//육각형의 번호
+	int hex = 2;
+	//육각형에 포함된 방의 시작 번호
+	int start = 2;
+	//육각형에 포함된 방의 개수
+	int num = 6;
 
-		if (decision(mid)) hi = mid;
-		else lo = mid;
+	while (true) {
+		//현재 육각형에 방이 포함된 경우
+		if (start <= room && room <= start + num - 1) {
+			cout << hex;
+			return 0;
+		}
+		//현재 방이 포함되지 않았다면 다음 육각형으로 이동해야
+		++hex;
+		start += num;
+		num += 6;
 	}
 
-	cout << (int)hi;
 	return 0;
 }
