@@ -1,103 +1,66 @@
 #include <iostream>
-#include <queue>
 #include <vector>
-#include <cmath>
-#include <cstring>
 #include <algorithm>
 using namespace std;
 
-//지점 수, 방문 수
-int N, K;
+typedef long long ll;
 
-//edge[i]: 지점 i의 <x좌표, y좌표>
-vector<pair<int, int>> edge;
+int N;
+vector<int> A;
 
-//dist[i]: i와 다른 지점들 간의 거리 
-vector<int> dist[1002];
+//A에서 이분 탐색으로 val값을 찾기 위해 필요한 비교 횟수 반환
+ll binary_search(int value, int left, int right) {
+	int mid = (left + right) / 2;
 
-int visited[1002];
+	if (A[mid] == value)
+		return 0;
 
-//두 지점간의 거리 계산
-int d(pair<int, int>a, pair<int, int> b) {
-	double x1 = a.first; double y1 = a.second;
-	double x2 = b.first; double y2 = b.second;
-	
-	//거리 올림
-	return ceil(sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2)) + 0.5);
+	else if (value < A[mid])
+		return 1LL + binary_search(value, left, mid - 1);
+	else
+		return 1LL + binary_search(value, mid + 1, right);
 }
 
-//연료통 x리터일 때 지점을 K번 이하 방문하여 목적지까지 도착할 수 있는가?
-bool bfs(int x) {
-	memset(visited, 0, sizeof(visited));
 
-	//<지점 번호, 방문 횟수>
-	queue<pair<int, int>> q;
-	q.push(make_pair(0, 0));
+//A에서 이분 탐색으로 val값을 찾기 위해 필요한 비교 횟수 반환
+ll ternary_search(int value, int left, int right) {
+	int left_third = left + ((right - left) / 3);
+	int right_third = right - ((right - left) / 3);
 
-	while (!q.empty()) {
-		pair<int, int> cur = q.front();
-		int curNode = cur.first;
-		int curCnt = cur.second;
-		q.pop();
-
-		//이미 방문한 지점이면 건너뛰기
-		if (visited[curNode]) continue;
-		visited[curNode] = 1;
-
-		//지점 방문 횟수 K번 이상인 경우 건너뛰기
-		if (curCnt > K + 1) continue;
-
-		//도착 지점 도착
-		if (edge[curNode].first == 10000 && edge[curNode].second == 10000)
-			return true;
-
-		for (int i = 0; i < edge.size(); ++i) {
-			//아직 방문하지 않았고, x연료로 갈 수 있는 거리(10 km/l) 내 지점인 경우
-			if (visited[i] == 0) {
-				if (dist[curNode][i] <= 10 * x) {
-					q.push(make_pair(i, curCnt + 1));
-				}
-			}
-		}
-	}
-	return false;
+	if (A[left_third] == value)
+		return 0;
+	else if (A[right_third] == value)
+		return 1LL;
+	else if (value < A[left_third])
+		return 2LL + ternary_search(value, left, left_third - 1);
+	else if (value < A[right_third])
+		return 2LL + ternary_search(value, left_third + 1, right_third - 1);
+	else
+		return 2LL + ternary_search(value, right_third + 1, right);
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-	
-	cin >> N >> K;
 
-	//출발 지점 추가
-	edge.push_back(make_pair(0, 0));
+	cin >> N;
+
+	for (int i = 0; i < N; ++i)
+		A.push_back(i);
+
+	int res1, res2, res3;
+	res1 = res2 = res3 = 0; 
 	for (int i = 0; i < N; ++i) {
-		int x, y;
-		cin >> x >> y;
-		edge.push_back(make_pair(x, y));
+		ll B, T;
+		B = binary_search(A[i], 0, N - 1);
+		T = ternary_search(A[i], 0, N - 1);
+
+		if (B < T) ++res1;
+		else if (B == T) ++res2;
+		else if (B > T) ++res3;
 	}
-	//도착 지점 추가
-	edge.push_back(make_pair(10000, 10000));
-
-	//모든 지점들 간의 서로 간의 거리 저장
-	for (int i = 0; i < edge.size(); ++i) {
-		for (int j = 0; j < edge.size(); ++j) {
-
-			//dist[i][j]: i번 지점과 j번 지점 간의 거리
-			dist[i].push_back(d(edge[i], edge[j]));
-		}
-	}
-
-	int lo = 0;
-	int hi = 10000 * 2;
-	for (int it = 0; it < 100; ++it) {
-		int mid = (hi + lo) / 2;
-
-		if (bfs(mid)) hi = mid;
-		else lo = mid;
-	}
-
-	cout << hi;
+	
+	cout << res1 << "\n" << res2 << "\n" << res3;
 	return 0;
 }
