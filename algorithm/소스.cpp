@@ -4,27 +4,25 @@
 #include <algorithm>
 using namespace std;
 
-typedef long long ll;
-
-//N: 수의 개수
-//M: 수의 변경 횟수
-//K: 구간의 합 구하는 횟수
-int N, M, K;
-vector<ll> arr;
+//N: 정수의 개수
+//K: 라운드 수
+int N, K;
+//arr의 값은 1, 0, -1 중 하나를 갖는다
+vector<int> arr;
 
 struct SegmentTree {
-	vector<ll> tree;
+	vector<int> tree;
 
-	//구간의 합 계산
-	ll merge(ll left, ll right) {
-		return left + right;
+	//구간의 곱 계산
+	int merge(int left, int right) {
+		return left * right;
 	}
 
 	//---------------------------------------
 
 	//node: Segment Tree의 노드의 번호
 	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
-	ll buildRecursive(int node, int nodeLeft, int nodeRight) {
+	int buildRecursive(int node, int nodeLeft, int nodeRight) {
 		//리프노드에 도달한 경우
 		if (nodeLeft == nodeRight)
 			return tree[node] = arr[nodeLeft];
@@ -50,7 +48,7 @@ struct SegmentTree {
 	//index: newVal 값으로 업데이트할 노드의 번호
 	//node: Segment Tree의 노드의 번호
 	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
-	ll updateRecursive(int index, ll newVal, int node, int nodeLeft, int nodeRight) {
+	int updateRecursive(int index, int newVal, int node, int nodeLeft, int nodeRight) {
 		//업데이트할 노드가 포함되지 않은 구간인 경우
 		if (index < nodeLeft || nodeRight < index)
 			return tree[node];
@@ -68,7 +66,7 @@ struct SegmentTree {
 		return tree[node] = merge(leftVal, rightVal);
 	}
 
-	void update(int index, ll newVal) {
+	void update(int index, int newVal) {
 		//루트 노드부터 제귀적으로 업데이트
 		updateRecursive(index, newVal, 1, 0, N-1);
 	}
@@ -76,14 +74,14 @@ struct SegmentTree {
 
 	//---------------------------------------
 
-	//left ~ right: 합을 계산하고자하는 쿼리의 구간
+	//left ~ right: 곱을 계산하고자하는 쿼리의 구간
 	//node: Segment Tree의 노드의 번호
 	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
-	ll queryRecursive(int left, int right, int node, int nodeLeft, int nodeRight) {
+	int queryRecursive(int left, int right, int node, int nodeLeft, int nodeRight) {
 		//쿼리의 구간에 포함되지 않는 구간인 경우 default 값 반환 
 		//default 값은 merge 연산에 따라 다르다
 		if (right < nodeLeft || nodeRight < left)
-			return 0LL;
+			return 1;
 
 		//쿼리의 구간에 포함되는 구간인 경우
 		if (left <= nodeLeft && nodeRight <= right) 
@@ -98,7 +96,7 @@ struct SegmentTree {
 		return merge(leftVal, rightVal);
 	}
 
-	ll query(int left, int right) {
+	int query(int left, int right) {
 		// 루트 노드부터 제귀적으로 쿼리 구간의 합 계산
 		return queryRecursive(left, right, 1, 0, N - 1);
 	}
@@ -111,31 +109,51 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> M >> K;
+	while (true) {
+		arr.clear();
 
-	for (int i = 0; i < N; ++i) {
-		ll input;
-		cin >> input;
-		arr.push_back(input);
-	}
+		cin >> N >> K;
+		if (cin.eof()) break;
 
-	SegmentTree segmentTree;
-	segmentTree.build();
+		for (int i = 0; i < N; ++i) {
+			int input;
+			cin >> input;
 
-	for (int i = 0; i < M + K; ++i) {
-		int operation;
-		cin >> operation;
-		if (operation == 1) {
-			int index; ll newVal;
-			cin >> index >> newVal;
-
-			segmentTree.update(index-1, newVal);
+			if (input > 0) arr.push_back(1);
+			else if (input == 0) arr.push_back(0);
+			else if (input < 0) arr.push_back(-1);
 		}
-		else if (operation == 2) {
-			int left, right;
-			cin >> left >> right;
-			cout << segmentTree.query(left-1, right-1) << "\n";
+
+		SegmentTree segmentTree;
+		segmentTree.build();
+
+		while (K--) {
+			char operation;
+			cin >> operation;
+
+			//변경
+			if (operation == 'C') {
+				int index, input;
+				cin >> index >> input;
+
+				if (input > 0) segmentTree.update(index - 1, 1);
+				else if (input == 0) segmentTree.update(index - 1, 0);
+				else if (input < 0) segmentTree.update(index - 1, -1);
+			}
+
+			//곱셈
+			else if (operation == 'P') {
+				int left, right;
+				cin >> left >> right;
+
+				int q = segmentTree.query(left - 1, right - 1);
+
+				if (q > 0) cout << "+ ";
+				else if (q == 0) cout << "0 ";
+				else if (q < 0) cout << "- ";
+			}
 		}
+		cout << "\n";
 	}
 
 	return 0;
