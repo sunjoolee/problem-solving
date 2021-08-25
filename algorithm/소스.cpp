@@ -1,40 +1,39 @@
 #include <iostream>
-#include <vector>
-#include <algorithm>
 using namespace std;
 
-int isPrime[1000001] = { 0 };
-vector<int> primeNum;
+int n;
+int cnt = 0;
+
+//digit-1번째 자리의 수까지의 합이 digitsum일 때, digit번째 수를 고른다
+void dp(int digit, int digitsum) {
+	//N번째 수까지 모두 완성한 경우
+	if (digit > n) {
+		if (digitsum == 0) ++cnt;
+		return;
+	}
+
+	//digit번째 자리의 수 0
+	dp(digit + 1, digitsum);
+	//digit번째 자리의 수 1
+	dp(digit + 1, (digitsum + 1 )% 3);
+	//digit번째 자리의 수 2
+	dp(digit + 1, (digitsum + 2) % 3);
+
+	return;
+}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	//에라토스테네스의 체
-	isPrime[0] = isPrime[1] = 1;
-	for (int i = 2; i <= 1000; i++) {
-		if (!isPrime[i]) {
-			for (int j = i * i; j <= 1000000; j += i)
-				isPrime[j] = 1;
-		}
-	}
+	cin >> n;
 
-	for (int i = 2; i <= 1000000; i++)
-		if (!isPrime[i]) primeNum.push_back(i);
+	//첫번째 자리의 수 1
+	dp(2, 1);
+	//첫번째 자리의 수 2
+	dp(2, 2);
 
-	int t;
-	cin >> t;
-	while (t--) {
-		int n;
-		cin >> n;
-
-		int cnt = 0;
-		for (auto it = primeNum.begin(); it != primeNum.end(); ++it) {
-			if (*it > (n / 2)) break;
-			if (!isPrime[n - *it]) ++cnt;
-		}
-		cout << cnt << "\n";
-	}
+	cout << cnt;
 	return 0;
 }
