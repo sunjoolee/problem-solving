@@ -1,44 +1,50 @@
 #include <iostream>
-#include <cstring>
+#include <math.h>
+#include <vector>
+#include <algorithm>
 using namespace std;
 
-typedef long long ll;
-const int MOD = 1000000009;
+typedef unsigned long long ull;
+const int MAXN = 100000000;
+const ull MOD = 4294967296; //2^32
 
 int n;
-ll cache[33334];
-
-//digit-1번째 자리의 수까지의 합이 digitsum일 때, digit번째 수를 고른다
-ll dp(int digit, int digitsum) {
-	//N번째 수까지 모두 완성한 경우
-	if (digit > n) {
-		if (digitsum == 0) return 1;
-		else return 0;
-	}
-
-	ll& ret = cache[digit];
-	if (ret != -1) return ret;
-
-	ret = dp(digit + 1, digitsum);
-	ret %= MOD;
-	ret += dp(digit + 1, (digitsum + 1 )% 3);
-	ret %= MOD;
-	ret += dp(digit + 1, (digitsum + 2) % 3);
-	ret %= MOD;
-
-	return ret;
-}
+bool isPrime[MAXN + 1] = { 0 };
+vector<int> primeNum;
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-	
-	memset(cache, -1, sizeof(cache));
+
+	//에라토스테네스의 체
+	isPrime[0] = isPrime[1] = 1;
+	for (int i = 2; i <= sqrt(MAXN); i++) {
+		if (!isPrime[i]) {
+			for (int j = i * i; j <= MAXN; j += i)
+				isPrime[j] = 1;
+		}
+	}
+	for (int i = 2; i <= MAXN; ++i)
+		if (!isPrime[i]) primeNum.push_back(i);
 
 	cin >> n;
+	ull res = 1;
+	for (auto it = primeNum.begin(); it != primeNum.end(); ++it) {
+		if (*it > n) break;
 
-	ll res = dp(2, 1) + dp(2, 2);
+		ull num = *it;
+		int cnt = 0;
+		while (true) {
+			if (num > n)break;
+			
+			++cnt;
+			num *= *it;
+		}
+		cnt %= MOD;
+		res *= (num / *it) % MOD;
+		res % MOD;
+	}
+	
 	cout << res % MOD;
-	return 0;
 }
