@@ -1,64 +1,100 @@
 #include <iostream>
 #include <vector>
+#include <cstring>
+#include <limits.h>
 #include <algorithm>
 using namespace std;
 
-typedef long long ll;
 
-int N, Q;
+int N, M;
+vector<int> arr;
 
-struct FenwickTree {
-	vector<ll> tree;
-
-	FenwickTree(int size) : tree(size + 1) {}
-
-	ll sum(int pos) {
-		ll ret = 0LL;
-		while (pos > 0) {
-			ret += tree[pos];
-
-			//0이 아닌 마지막 비트만큼 빼면서 구간들의 값 변경
-			pos -= (pos & -pos);
-		}
-		return ret;
-	}
-
-	void add(int pos, ll val) {
-		while (pos < tree.size()) {
-			tree[pos] += val;
-			//0이 아닌 마지막 비트만큼 더하면서 구간들의 값 변경
-			pos += (pos & -pos);
-		}
-	}
+struct treeNode {
+	int minVal;
+	int maxVal;
 };
+
+struct SegmentTree {
+	vector<treeNode> tree;
+
+	treeNode merge(treeNode left, treeNode right) {
+		treeNode mergeNode;
+		mergeNode.minVal = min(left.minVal, right.minVal);
+		mergeNode.maxVal = max(left.maxVal, right.maxVal);
+		return mergeNode;
+	}
+
+	treeNode buildRecursive(int node, int nodeLeft, int nodeRight) {
+		if (nodeLeft == nodeRight) {
+			treeNode mergeNode;
+			mergeNode.minVal = arr[nodeLeft];
+			mergeNode.maxVal = arr[nodeLeft];
+			
+			return tree[node] = mergeNode;
+		}
+
+		int mid = (nodeLeft + nodeRight) / 2;
+		treeNode leftNode = buildRecursive(node * 2, nodeLeft, mid);
+		treeNode rightNode = buildRecursive(node * 2 + 1, mid + 1, nodeRight);
+
+		return tree[node] = merge(leftNode, rightNode);
+	}
+
+	void build() {
+		tree.resize(N * 4);
+		buildRecursive(1, 0, N - 1);
+	}
+
+	treeNode queryRecursive(int left, int right, int node, int nodeLeft, int nodeRight) {
+		//쿼리의 구간에 포함되지 않는 구간인 경우 default 값 반환 
+		//default 값은 merge 연산에 따라 다르다
+		if (right < nodeLeft || nodeRight < left) {
+			treeNode defaultNode;
+			defaultNode.minVal = INT_MAX;
+			defaultNode.maxVal = 0;
+
+			return defaultNode;
+		}
+
+		if (left <= nodeLeft && nodeRight <= right)
+			return tree[node];
+
+		int mid = (nodeLeft + nodeRight) / 2;
+		treeNode leftNode = queryRecursive(left, right, node * 2, nodeLeft, mid);
+		treeNode rightNode = queryRecursive(left, right, node * 2 + 1, mid + 1, nodeRight);
+
+		return merge(leftNode, rightNode);
+	}
+
+	treeNode query(int left, int right) {
+		return queryRecursive(left, right, 1, 0, N - 1);
+	}
+
+};
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> Q;
+	cin >> N >> M;
 
-	FenwickTree fenwickTree(N);
-
-	for (int i = 1; i <= N; ++i) {
-		ll input;
+	for (int i = 0; i < N; ++i) {
+		int input;
 		cin >> input;
-		fenwickTree.add(i, input);
+		arr.push_back(input);
 	}
 
-	while(Q--) {
-		int x, y; 
-		cin >> x >> y;
-		
-		if(x > y) cout << fenwickTree.sum(x) - fenwickTree.sum(y - 1) << "\n";
-		else cout << fenwickTree.sum(y) - fenwickTree.sum(x - 1) << "\n";
+	SegmentTree segmentTree;
+	segmentTree.build();
 
-		int a; ll b;
+	for (int i = 0; i < M; ++i) {
+		int a, b;
 		cin >> a >> b;
 
-		b = b - (fenwickTree.sum(a) - fenwickTree.sum(a - 1));
-		fenwickTree.add(a, b);
+		treeNode res = segmentTree.query(a-1, b-1);
+		cout << res.minVal << " " << res.maxVal << "\n";
 	}
 
 	return 0;
