@@ -1,26 +1,32 @@
 #include <iostream>
+#include <vector>
 #include <math.h>
 #include <utility>
 #include <algorithm>
 using namespace std;
 
-typedef long long ll;
+typedef pair<int, int> dot;
+typedef vector<dot> polygon;
 
-int ccw(pair<ll, ll> a, pair<ll, ll> b) {
-	ll cross = a.first * b.second - a.second * b.first;
+double norm(dot a){
+	return hypot(a.first, a.second);
+}
+
+int ccw(dot a, dot b) {
+	int cross = a.first * b.second - a.second * b.first;
 
 	if (cross > 0) return 1;
 	else if (cross < 0) return -1;
 	else return 0;
 }
 
-int ccw(pair<ll, ll> p, pair<ll, ll> a, pair<ll, ll> b) {
+int ccw(dot p, dot a, dot b) {
 	a.first -= p.first; a.second -= p.second;
 	b.first -= p.first; b.second -= p.second;
 	return ccw(a, b);
 }
 
-int segmentIntersects(pair<ll, ll> a, pair<ll, ll> b, pair<ll, ll> c, pair<ll, ll> d) {
+int segmentIntersects(dot a, dot b, dot c, dot d) {
 	int ab = ccw(a, b, c) * ccw(a, b, d);
 	int cd = ccw(c, d, a) * ccw(c, d, b);
 
@@ -32,20 +38,89 @@ int segmentIntersects(pair<ll, ll> a, pair<ll, ll> b, pair<ll, ll> c, pair<ll, l
 	return ab <= 0 && cd <= 0;
 }
 
+polygon giftWrap(const vector<dot>& points) {
+	int n = points.size();
+	polygon hull;
+
+	dot pivot = *min_element(points.begin(), points.end());
+	hull.push_back(pivot);
+	while (true) {
+		dot ph = hull.back();
+		dot next = points[0];
+		for (int i = 1; i < n; ++i) {
+			int cross = ccw(ph, next, points[i]);
+			double dist = norm(make_pair(next.first - ph.first, next.second - ph.second)) - norm(make_pair(points[i].first - ph.first, points[i].second - ph.second));
+
+			if (cross > 0 || (cross == 0 && dist < 0))
+				next = points[i];
+		}
+		if (next == pivot) break;
+		hull.push_back(next);
+	}
+	return hull;
+}
+
+bool isInside(dot q, const polygon& p) {
+	int crosses = 0;
+	for (int i = 0; i < p.size(); ++i) {
+		int j = (i + 1) % p.size();
+		if (p[i].second > q.second != p[j].second > q.second) {
+			double atX = (p[j].first - p[i].first)*(q.second - p[i].second) / (p[j].second - p[i].second) + p[i].first;
+			if (q.first < atX) {
+				++crosses;
+			}
+		}
+	}
+	return crosses % 2 > 0;
+}
+
+bool polygonIntersects(const polygon& p, const polygon& q) {
+	int n = p.size();
+	int m = q.size();
+	//처음에 한 다각형이 다른 다각형에 완전히 포함되어 있는 경우 예외 처리
+	if (isInside(p[0], q) || isInside(q[0], p)) return true;
+
+	//이 외의 경우, 두 다각형이 서로 겹친다면 서로 닿는 두 변이 반드시 존재한다
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < m; ++j) {
+			if (segmentIntersects(p[i], p[(i + 1) % n], q[j], q[(j + 1) % m]))
+				return true;
+		}
+	}
+
+	return false;
+}
+
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	ll x1, y1, x2, y2, x3, y3, x4, y4;
-	cin >> x1 >> y1 >> x2 >> y2 >> x3 >> y3 >> x4 >> y4;
-	
-	pair<ll, ll> a = make_pair(x1, y1);
-	pair<ll, ll> b = make_pair(x2, y2);
-	pair<ll, ll> c = make_pair(x3, y3);
-	pair<ll, ll> d = make_pair(x4, y4);
+	int T;
+	cin >> T;
 
-	cout << segmentIntersects(a, b, c, d);
+	while (T--) {
+		vector<dot> nerds;
+		vector<dot> not_nerds;
+
+		int n;
+		cin >> n;
+		for (int i = 0; i < n; ++i) {
+			int a, b, c;
+			cin >> a >> b >> c;
+
+			if (a == 1) nerds.push_back(make_pair(b, c));
+			else not_nerds.push_back(make_pair(b, c));
+		}
+
+		polygon convex_hull1 = giftWrap(nerds);
+		polygon convex_hull2 = giftWrap(not_nerds);
+
+		if (polygonIntersects(convex_hull1, convex_hull2))
+			cout << "THEORY IS INVALID\n";
+		else 
+			cout << "THEORY HOLDS\n";
+	}
 
 	return 0;
 }
