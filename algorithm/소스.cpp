@@ -1,70 +1,51 @@
 #include <iostream>
-#include <vector>
-#include <map>
-#include <string>
+#include <math.h>
+#include <utility>
 #include <algorithm>
 using namespace std;
 
+typedef long long ll;
 
-struct OptimizedDisjointSet {
-	vector<int> parent, rank, size;
+int ccw(pair<ll, ll> a, pair<ll, ll> b) {
+	ll cross = a.first * b.second - a.second * b.first;
 
-	OptimizedDisjointSet(int n) : parent(n), rank(n, 1), size(n, 1) {
-		for (int i = 0; i < n; ++i)
-			parent[i] = i;
+	if (cross > 0) return 1;
+	else if (cross < 0) return -1;
+	else return 0;
+}
+
+int ccw(pair<ll, ll> p, pair<ll, ll> a, pair<ll, ll> b) {
+	a.first -= p.first; a.second -= p.second;
+	b.first -= p.first; b.second -= p.second;
+	return ccw(a, b);
+}
+
+int segmentIntersects(pair<ll, ll> a, pair<ll, ll> b, pair<ll, ll> c, pair<ll, ll> d) {
+	int ab = ccw(a, b, c) * ccw(a, b, d);
+	int cd = ccw(c, d, a) * ccw(c, d, b);
+
+	if (ab == 0 && cd == 0) {
+		if (b < a) swap(a, b);
+		if (d < c) swap(c, d);
+		return !(b < c || d < a);
 	}
-
-	int find(int u) {
-		if (u == parent[u]) return u;
-		return parent[u] = find(parent[u]);
-	}
-
-	//u가 포함된 상호 배타적 집합 + v가 포함된 상호 배타적 집합
-	//의 결과인 상호 배타적 집합의 크기 반환
-	int merge(int u, int v) {
-		u = find(u); v = find(v);
-		if (u == v) return size[u];
-
-		if (rank[u] > rank[v]) swap(u, v);
-		parent[u] = v;
-		if (rank[u] == rank[v]) ++rank[v];
-
-		size[v] += size[u];
-		return size[v];
-	}
-};
+	return ab <= 0 && cd <= 0;
+}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int t;
-	cin >> t;
-	while (t--) {
-		//친구 관계의 수
-		int f;
-		cin >> f;
+	ll x1, y1, x2, y2, x3, y3, x4, y4;
+	cin >> x1 >> y1 >> x2 >> y2 >> x3 >> y3 >> x4 >> y4;
+	
+	pair<ll, ll> a = make_pair(x1, y1);
+	pair<ll, ll> b = make_pair(x2, y2);
+	pair<ll, ll> c = make_pair(x3, y3);
+	pair<ll, ll> d = make_pair(x4, y4);
 
-		map <string, int> name2node;
-		OptimizedDisjointSet ods(2 * f);
+	cout << segmentIntersects(a, b, c, d);
 
-		int nodeNo = 0;
-
-		for (int i = 0; i < f; ++i) {
-			string name1, name2;
-			cin >> name1 >> name2;
-
-			auto it = name2node.find(name1);
-			if (it == name2node.end()) 
-				name2node[name1] = nodeNo++;
-
-			it = name2node.find(name2);
-			if (it == name2node.end()) 
-				name2node[name2] = nodeNo++;
-
-			cout << ods.merge(name2node[name1], name2node[name2]) << "\n";
-		}
-	}
 	return 0;
 }
