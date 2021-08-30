@@ -1,100 +1,58 @@
 #include <iostream>
 #include <vector>
-#include <cstring>
-#include <limits.h>
 #include <algorithm>
 using namespace std;
 
+//최적화된 상호 배타적 집합의 구현
+struct OptimizedDisjointSet {
+	vector<int> parent, rank;
 
-int N, M;
-vector<int> arr;
+	OptimizedDisjointSet(int n) : parent(n), rank(n, 1) {
+		for (int i = 0; i < n; ++i)
+			parent[i] = i;
+	}
 
-struct treeNode {
-	int minVal;
-	int maxVal;
+	int find(int u) {
+		if (u == parent[u]) return u;
+		return parent[u] = find(parent[u]);
+	}
+
+	void merge(int u, int v) {
+		u = find(u); v = find(v);
+		if (u == v) return;
+
+		if (rank[u] > rank[v]) swap(u, v);
+		parent[u] = v;
+		if (rank[u] == rank[v]) ++rank[v];
+	}
 };
-
-struct SegmentTree {
-	vector<treeNode> tree;
-
-	treeNode merge(treeNode left, treeNode right) {
-		treeNode mergeNode;
-		mergeNode.minVal = min(left.minVal, right.minVal);
-		mergeNode.maxVal = max(left.maxVal, right.maxVal);
-		return mergeNode;
-	}
-
-	treeNode buildRecursive(int node, int nodeLeft, int nodeRight) {
-		if (nodeLeft == nodeRight) {
-			treeNode mergeNode;
-			mergeNode.minVal = arr[nodeLeft];
-			mergeNode.maxVal = arr[nodeLeft];
-			
-			return tree[node] = mergeNode;
-		}
-
-		int mid = (nodeLeft + nodeRight) / 2;
-		treeNode leftNode = buildRecursive(node * 2, nodeLeft, mid);
-		treeNode rightNode = buildRecursive(node * 2 + 1, mid + 1, nodeRight);
-
-		return tree[node] = merge(leftNode, rightNode);
-	}
-
-	void build() {
-		tree.resize(N * 4);
-		buildRecursive(1, 0, N - 1);
-	}
-
-	treeNode queryRecursive(int left, int right, int node, int nodeLeft, int nodeRight) {
-		//쿼리의 구간에 포함되지 않는 구간인 경우 default 값 반환 
-		//default 값은 merge 연산에 따라 다르다
-		if (right < nodeLeft || nodeRight < left) {
-			treeNode defaultNode;
-			defaultNode.minVal = INT_MAX;
-			defaultNode.maxVal = 0;
-
-			return defaultNode;
-		}
-
-		if (left <= nodeLeft && nodeRight <= right)
-			return tree[node];
-
-		int mid = (nodeLeft + nodeRight) / 2;
-		treeNode leftNode = queryRecursive(left, right, node * 2, nodeLeft, mid);
-		treeNode rightNode = queryRecursive(left, right, node * 2 + 1, mid + 1, nodeRight);
-
-		return merge(leftNode, rightNode);
-	}
-
-	treeNode query(int left, int right) {
-		return queryRecursive(left, right, 1, 0, N - 1);
-	}
-
-};
-
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> M;
+	int n, m;
+	cin >> n >> m;
 
-	for (int i = 0; i < N; ++i) {
-		int input;
-		cin >> input;
-		arr.push_back(input);
-	}
+	//0 ~ n까지 n+1 크기의 unionFind
+	OptimizedDisjointSet unionFind(n+1);
 
-	SegmentTree segmentTree;
-	segmentTree.build();
+	while (m--) {
+		int input, a, b;
+		cin >> input >> a >> b;
 
-	for (int i = 0; i < M; ++i) {
-		int a, b;
-		cin >> a >> b;
-
-		treeNode res = segmentTree.query(a-1, b-1);
-		cout << res.minVal << " " << res.maxVal << "\n";
+		//합집합 연산
+		if (input == 0) {
+			unionFind.merge(a, b);
+		}
+		//같은 집합에 포함되어있는지 확인 연산
+		else if (input == 1) {
+			if (unionFind.find(a) == unionFind.find(b)) 
+				cout << "YES\n";
+			else 
+				cout << "NO\n";
+		}
 	}
 
 	return 0;
