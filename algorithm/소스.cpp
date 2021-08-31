@@ -1,19 +1,17 @@
 #include <iostream>
 #include <vector>
-#include <math.h>
 #include <utility>
 #include <algorithm>
 using namespace std;
 
-typedef pair<int, int> dot;
+typedef long long ll;
+typedef pair<ll, ll> dot;
 typedef vector<dot> polygon;
 
-double norm(dot a){
-	return hypot(a.first, a.second);
-}
+vector<dot> dots;
 
 int ccw(dot a, dot b) {
-	int cross = a.first * b.second - a.second * b.first;
+	ll cross = a.first * b.second - a.second * b.first;
 
 	if (cross > 0) return 1;
 	else if (cross < 0) return -1;
@@ -26,37 +24,97 @@ int ccw(dot p, dot a, dot b) {
 	return ccw(a, b);
 }
 
-int segmentIntersects(dot a, dot b, dot c, dot d) {
-	int ab = ccw(a, b, c) * ccw(a, b, d);
-	int cd = ccw(c, d, a) * ccw(c, d, b);
-
-	if (ab == 0 && cd == 0) {
-		if (b < a) swap(a, b);
-		if (d < c) swap(c, d);
-		return !(b < c || d < a);
-	}
-	return ab <= 0 && cd <= 0;
+//ccw값을 이용하려 좌회전 여부 검사
+bool leftTurn(dot p, dot a, dot b) {
+	return ccw(p, a, b) > 0;
 }
 
-polygon giftWrap(const vector<dot>& points) {
-	int n = points.size();
-	polygon hull;
+//퀵 소트를 위한 비교 함수
+bool cmp(dot& a, dot& b) {
+	dot a0 = make_pair(a.first - dots[0].first, a.second - dots[0].second);
+	dot b0 = make_pair(b.first - dots[0].first, b.second - dots[0].second);
 
-	dot pivot = *min_element(points.begin(), points.end());
-	hull.push_back(pivot);
-	while (true) {
-		dot ph = hull.back();
-		dot next = points[0];
-		for (int i = 1; i < n; ++i) {
-			int cross = ccw(ph, next, points[i]);
-			double dist = norm(make_pair(next.first - ph.first, next.second - ph.second)) - norm(make_pair(points[i].first - ph.first, points[i].second - ph.second));
+	ll cross = a0.first * b0.second - a0.second * b0.first;
 
-			if (cross > 0 || (cross == 0 && dist < 0))
-				next = points[i];
-		}
-		if (next == pivot) break;
-		hull.push_back(next);
+	//외적 결과가 0이 아닐 때
+	//외적 결과 양수(반시계 방향)이면 true, 음수(시계 방향)이면 false 반환
+	if (cross != 0)
+		return (cross > 0);
+
+	//외적 결과가 0일 때(평행) 
+	//Y좌표가 낮으면 (같다면 X좌표가 낮으면) true 반환
+	if (a0.second != b0.second)
+		return a0.second < b0.second ;
+	return a0.first < b0.first;
+}
+
+//모든 노드를 기준점에 대해 반시계 방향으로 정렬(퀵 소트)
+void quickSortByAngle(int first, int last) {
+	if (first >= last) return;
+
+	//맨 앞의 숫자를 퀵소트의 pivot으로 설정
+	int pivot = first;
+	int i = first + 1;
+	int j = last;
+
+	while (i <= j) {
+		while (cmp(dots[i], dots[pivot]) && i <= last) i++;
+		while (!cmp(dots[j], dots[pivot]) && j > first) j--;
+
+		if (i >= j) break;
+
+		swap(dots[i], dots[j]);
 	}
+	swap(dots[pivot], dots[j]);
+
+	quickSortByAngle(first, j - 1);
+	quickSortByAngle(j + 1, last);
+	return;
+}
+
+polygon convexHull() {
+	//1. 기준점 찾기
+	//가장 Y좌표가 낮은 (같다면 X좌표가 낮은)점을 기준으로 한다
+	int minX = 1000000000, minY = 1000000000, minIdx = 0;
+	for (int i = 0; i < dots.size(); i++) {
+		if (minY > dots[i].second || (minY == dots[i].second && minX > dots[i].first)) {
+			minX = dots[i].first;
+			minY = dots[i].second;
+			minIdx = i;
+		}
+	}
+	//dots[0]가 기준점이 되도록 swap
+	swap(dots[minIdx], dots[0]);
+
+	//2. 모든 노드를 기준점에 대해 반시계 방향으로 정렬
+	quickSortByAngle(1, dots.size() - 1);
+
+	//3. 기준점부터 시작해서, 순서대로 모든 노드에 대해서 좌회전 여부를 검사
+	// 좌회전에 해당하는 선분만 찾은 것 = Convex Hull
+	vector<int> stack(dots.size());
+	int idx = -1;
+	stack[++idx] = 0;
+	stack[++idx] = 1;
+
+	int next = 2;
+	while (next < dots.size()) {
+		while ((idx + 1) >= 2) {
+			int second = stack[idx--];
+			int first = stack[idx];
+
+			if (leftTurn(dots[first], dots[second], dots[next])) {
+				stack[++idx] = second;
+				break;
+			}
+		}
+		stack[++idx] = next++;
+	}
+
+	//4. 볼록 껍질 반환
+	polygon hull;
+	for (int i = 0; i < idx + 1; ++i)
+		hull.push_back(dots[stack[i]]);
+	
 	return hull;
 }
 
@@ -74,53 +132,39 @@ bool isInside(dot q, const polygon& p) {
 	return crosses % 2 > 0;
 }
 
-bool polygonIntersects(const polygon& p, const polygon& q) {
-	int n = p.size();
-	int m = q.size();
-	//처음에 한 다각형이 다른 다각형에 완전히 포함되어 있는 경우 예외 처리
-	if (isInside(p[0], q) || isInside(q[0], p)) return true;
 
-	//이 외의 경우, 두 다각형이 서로 겹친다면 서로 닿는 두 변이 반드시 존재한다
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < m; ++j) {
-			if (segmentIntersects(p[i], p[(i + 1) % n], q[j], q[(j + 1) % m]))
-				return true;
-		}
-	}
-
-	return false;
-}
-
-int main() {
-	ios_base::sync_with_stdio(false);
+int main(void) {
 	cin.tie(NULL);
-	cout.tie(NULL);
+	ios::sync_with_stdio(false);
 
-	int T;
-	cin >> T;
+	int N;
+	cin >> N;
 
-	while (T--) {
-		vector<dot> nerds;
-		vector<dot> not_nerds;
+	dot cow;
+	cin >> cow.first >> cow.second;
 
-		int n;
-		cin >> n;
-		for (int i = 0; i < n; ++i) {
-			int a, b, c;
-			cin >> a >> b >> c;
+	for (int i = 0; i < N; i++) {
+		ll x, y;
+		cin >> x >> y;
+		dots.push_back(make_pair(x, y));
+	}
+	
+	int cnt = 0;
+	while (true) {
+		//더이상 볼록 껍질을 만들 수 없으면 종료
+		if (dots.size() < 3) break;
 
-			if (a == 1) nerds.push_back(make_pair(b, c));
-			else not_nerds.push_back(make_pair(b, c));
+		polygon hull = convexHull();
+		//볼록 껍질 내부에 소가 있는지 확인
+		if (isInside(cow, hull)) {
+			++cnt;
+			//dots에서 hull에 포함된 점 제거
+			for (int i = 0; i < hull.size(); ++i)
+				dots.erase(find(dots.begin(), dots.end(), hull[i]));
 		}
-
-		polygon convex_hull1 = giftWrap(nerds);
-		polygon convex_hull2 = giftWrap(not_nerds);
-
-		if (polygonIntersects(convex_hull1, convex_hull2))
-			cout << "THEORY IS INVALID\n";
-		else 
-			cout << "THEORY HOLDS\n";
+		else break;
 	}
 
+	cout << cnt;
 	return 0;
 }
