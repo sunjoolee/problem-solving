@@ -11,13 +11,19 @@ const double MAXX = 1001;
 typedef pair<double, double> dot;
 typedef vector<dot> polygon;
 
+//0. dot 연산
+
+dot dot_minus(dot a, dot b) {
+	return {a.first - b.first, a.second - b.second};
+}
+
 double ccw(dot a, dot b) {
 	return a.first * b.second - a.second * b.first;
 }
 
 double ccw(dot p, dot a, dot b) {
-	a.first -= p.first; a.second -= p.second;
-	b.first -= p.first; b.second -= p.second;
+	a = dot_minus(a, p);
+	b = dot_minus(b, p);
 	return ccw(a, b);
 }
 
@@ -29,32 +35,31 @@ double norm(dot a) {
 	return hypot(a.first, a.second);
 }
 
-double dot_product(dot a, dot rhs) {
-	return a.first * rhs.first + a.second * rhs.second;
-}
-
 dot normalize(dot a) {
 	return { a.first / norm(a), a.second / norm(a) };
+}
+
+double dot_product(dot a, dot rhs) {
+	return a.first * rhs.first + a.second * rhs.second;
 }
 
 
 //1. 그라함 스캔
 
 //퀵 소트를 위한 비교 함수
-bool cmp(vector<dot>& dots, dot& a, dot& b) {
-	double cross = ccw(dots[0], a, b);
-	
-	//세 점이 한 직선 위에 있지 않은 경우 반시계 방향으로 정렬
+bool cmp(dot p, dot a, dot b) {
+	double cross = ccw(p, a, b);
+
 	if (cross != 0)
 		return (cross > 0);
 
-	//세 점이 한 직선 위에 있는 경우 p[0]와 가까운 점이 앞에 오도록 정렬
-	if (norm({dots[0].first - a.first, dots[0].second - a.second }) < norm({dots[0].first - b.first, dots[0].second - b.second}))
-		return true;
+	//세 점이 한 직선 위에 있는 경우 p와 가까운 점이 앞에 오도록 
+	double dist1 = norm(dot_minus(p, a));
+	double dist2 = norm(dot_minus(p, b));
+	if (dist1 < dist2) return true;
 	return false;
 }
 
-//모든 노드를 기준점에 대해 반시계 방향으로 정렬(퀵 소트)
 void quickSortByAngle(vector<dot>& dots, int first, int last) {
 	if (first >= last) return;
 
@@ -63,8 +68,8 @@ void quickSortByAngle(vector<dot>& dots, int first, int last) {
 	int j = last;
 
 	while (i <= j) {
-		while (i <= last && cmp(dots, dots[i], dots[pivot])) i++;
-		while (j > first && !cmp(dots, dots[j], dots[pivot])) j--;
+		while (i <= last && cmp(dots[0], dots[i], dots[pivot])) i++;
+		while (j > first && !cmp(dots[0], dots[j], dots[pivot])) j--;
 
 		if (i >= j) break;
 
@@ -77,20 +82,19 @@ void quickSortByAngle(vector<dot>& dots, int first, int last) {
 	return;
 }
 
+//기준점을 찾기 위한 비교 함수
+bool cmp2(dot a, dot b) {
+	//기준점: y좌표가 가장 작은 점 (y좌표가 같다면 x좌표가 가장 작은 점) 
+	if (a.second < b.second) return true;
+	if (a.second == b.second) return a.first < b.first;
+	return false;
+}
+
 polygon convexHull(vector<dot>& dots) {
-	double minX = MAXX, minY = MAXX;
-	int minIdx = 0;
-
-	//y좌표가 가장 작은 점 (y좌표가 같다면 x좌표가 가장 작은 점) 
-	for (int i = 0; i < dots.size(); i++) {
-		if (minY > dots[i].second || (minY == dots[i].second && minX > dots[i].first)) {
-			minX = dots[i].first;
-			minY = dots[i].second;
-			minIdx = i;
-		}
-	}
-	swap(dots[minIdx], dots[0]);
-
+	
+	//기준점 dots[0]
+	sort(dots.begin(), dots.end(), cmp2);
+	
 	quickSortByAngle(dots, 1, dots.size() - 1);
 
 	vector<int> stack(dots.size());
@@ -130,26 +134,29 @@ double diameter(const polygon& p) {
 	int right = max_element(p.begin(), p.end()) - p.begin();
 
 	dot calipersA = { 0, 1 };
-	double ret = norm({ p[right].first - p[left].first, p[right].second - p[left].second });
+	double ret = norm(dot_minus(p[right], p[left]));
 
 	vector<dot> toNext(n);
-	for (int i = 0; i < n; ++i)
-		toNext[i] = normalize({ p[(i + 1) % n].first - p[i].first, p[(i + 1) % n].second - p[i].second });
+	for (int i = 0; i < n; ++i) {
+		int next;
+		i - 1 < 0 ? next = n - 1 : next = i - 1;
+		toNext[i] = normalize(dot_minus(p[next], p[i]));
+	}
 
 	int a = left, b = right;
 	while (a != right || b != left) {
 		double cosThetaA = dot_product(calipersA, toNext[a]);
-		double cosThetaB = dot_product({ -calipersA.first, -calipersA.second }, toNext[b]);
+		double cosThetaB = dot_product(dot_minus({ 0,0 }, calipersA), toNext[b]);
 
 		if (cosThetaA > cosThetaB) {
 			calipersA = toNext[a];
-			a = (a + 1) % n;
+			a - 1 < 0 ? a = n - 1 : --a;
 		}
 		else {
-			calipersA = { -toNext[b].first, -toNext[b].second };
-			b = (b + 1) % n;
+			calipersA = dot_minus({ 0,0 }, toNext[b]);
+			b - 1 < 0 ? b = n - 1 : --b;
 		}
-		ret = max(ret, norm({ p[a].first - p[b].first , p[a].second - p[b].second }));
+		ret = max(ret, norm(dot_minus(p[a], p[b])));
 	}
 
 	return ret;
@@ -170,7 +177,7 @@ int main(void) {
 		dots.push_back({ x,y });
 	}
 
-	//소수점 아래 7자리까지 출력
+	//소수점 아래 7자리까지 출력하도록 설정
 	cout << fixed;
 	cout.precision(7);
 
@@ -178,7 +185,7 @@ int main(void) {
 		double ret = 0.0;
 		for (int i = 0; i < C; ++i) {
 			for (int j = 0; j < C; ++j) {
-				ret = max(ret, norm({ dots[i].first - dots[j].first, dots[i].second - dots[j].second }));
+				ret = max(ret, norm(dot_minus(dots[i], dots[j])));
 			}
 		}
 		cout << ret;
