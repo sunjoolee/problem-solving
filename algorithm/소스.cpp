@@ -1,14 +1,13 @@
 #include <iostream>
 #include <vector>
-#include <queue>
 #include <cstring>
 #include <string>
 #include <algorithm>
 using namespace std;
 
-//주어지는 문자열은 0 ~ 9 숫자로 이루어짐 
-const int ALPHABETS = 10;
-int toNumber(char ch) { return ch - '0'; }
+//주어지는 문자열은 알파벳 소문자로만 이루어짐
+const int ALPHABETS = 26;
+int toNumber(char ch) { return ch - 'a'; }
 
 struct TrieNode {
 	TrieNode* children[ALPHABETS];
@@ -17,7 +16,7 @@ struct TrieNode {
 	TrieNode() : terminal(false) {
 		memset(children, 0, sizeof(children));
 	}
-	~TrieNode(){
+	~TrieNode() {
 		for (int i = 0; i < ALPHABETS; ++i) {
 			if (children[i]) delete children[i];
 		}
@@ -36,7 +35,7 @@ struct TrieNode {
 
 	TrieNode* find(const char* key) {
 		if (*key == 0) return this;
-		
+
 		int next = toNumber(*key);
 		if (children[next] == NULL)
 			return NULL;
@@ -45,45 +44,30 @@ struct TrieNode {
 	}
 };
 
+
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int T;
-	cin >> T;
-	while(T--){
-		int N;
-		cin >> N;
+	int N, M;
+	cin >> N >> M;
 
-		vector<string> inputs;
-		TrieNode* root = new TrieNode();
-
-		for (int i = 0; i < N; ++i) {
-			string input;
-			cin >> input;
-			
-			inputs.push_back(input);
-			root->insert(input.c_str());
-		}
-
-		bool flag = true;
-		for (int i = 0; i < N; ++i) {
-			TrieNode* ret = root->find(inputs[i].c_str());
-			
-			if (ret != NULL) {
-				for (int next = 0; next < 10; next++) {
-					if (ret->children[next]) {
-						flag = false;
-						break;
-					}
-				}
-				if (!flag) break;
-			}
-		}
-
-		if (flag)cout << "YES\n";
-		else cout << "NO\n";
+	string input;
+	TrieNode* root = new TrieNode();
+	for (int i = 0; i < N; ++i) {
+		cin >> input;
+		root->insert(input.c_str());
 	}
+
+	int cnt = 0;
+	for (int i = 0; i < M; ++i) {
+		cin >> input;
+		TrieNode* ret = root->find(input.c_str());
+
+		if (ret != NULL && ret->terminal) ++cnt;
+	}
+
+	cout << cnt;
 	return 0;
 }
