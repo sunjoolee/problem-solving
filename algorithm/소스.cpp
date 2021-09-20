@@ -1,59 +1,35 @@
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <string>
 #include <algorithm>
 using namespace std;
 
-struct TrieNode {
-	string food;
-	vector<TrieNode*> children;
+int V, E;
 
-	void insert(const vector<string>& key, int index) {
-		if (index == key.size()) return;
+vector<vector<int>> adj(3001);
+vector<bool> visited;
 
-		else {
-			string nextFood = key[index];
+void dfs(int here) {
+	visited[here] = true;
 
-			for (int i = 0; i < children.size(); ++i) {
-				if (children[i]->food == nextFood) {
-					children[i]->insert(key, index + 1);
-					return;
-				}
-			}
-
-			TrieNode* t = new TrieNode();
-			t->food = nextFood;
-			this->children.push_back(t);
-
-			t->insert(key, index + 1);
-			return;
-		}
+	for (int i = 0; i < adj[here].size(); ++i) { 
+		int there = adj[here][i];
+		if (!visited[there]) 
+			dfs(there);
 	}
-
-};
-
-bool cmp(TrieNode* t1, TrieNode* t2) {
-	if (t1->food < t2->food) return true;
-	else return false;
 }
 
-void dfs(TrieNode* root, int dep) {
+int dfsAll() {
+	visited = vector<bool>(V, false);
 
-	if (dep > 0) {
-		for (int i = 1; i < dep; ++i) {
-			cout << "--";
+	//모든 정점이 방문될 때까지 dfs를 호출해야하는 횟수
+	int cnt = 0;
+	for (int i = 0; i < V; ++i) {
+		if (!visited[i]) {
+			dfs(i);
+			++cnt;
 		}
-		cout << root->food << "\n";
 	}
-	
-	sort(root->children.begin(), root->children.end(), cmp);
-
-	for (int i = 0; i < root->children.size(); ++i) {
-		TrieNode* child = root->children[i];
-		dfs(child, dep+1);
-	}
-	return;
+	return cnt;
 }
 
 int main() {
@@ -61,26 +37,33 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int N;
-	cin >> N;
+	cin >> V >> E;
 
-	TrieNode* root = new TrieNode();
-	root->food = "";
+	for (int i = 0; i < E; ++i) {
+		int a, b;
+		cin >> a >> b;
 
-	for (int i = 0; i < N; ++i) {
-		int K;
-		cin >> K;
-
-		vector<string> inputFood;
-		for (int j = 0; j < K; ++j) {
-			string input;
-			cin >> input;
-			inputFood.push_back(input);
-		}
-		root->insert(inputFood, 0);
+		adj[a - 1].push_back(b - 1);
+		adj[b - 1].push_back(a - 1);
 	}
 
-	dfs(root, 0);
+	//모든 간선 하나의 컴포넌트에 포함되어 있는가
+	int component = dfsAll();
+	if (component > 1) {
+		cout << "NO";
+		return 0;
+	}
 
+	//오일러 서킷/트레일 존재하는지 검사
+	//그래프의 모든 정점이 짝수점 -> 오일러 서킷 존재
+	//그래프의 두 정점 홀수점 & 나머지 모든 정점 짝수점 -> 오일러 트레일 존재
+	int cnt = 0;
+	for (int k = 0; k < V; ++k) {
+		if (adj[k].size() % 2) ++cnt;
+	}
+
+	if (cnt == 0 || cnt == 2) cout << "YES";
+	else cout << "NO";
+	
 	return 0;
 }
