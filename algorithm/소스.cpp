@@ -3,33 +3,30 @@
 #include <algorithm>
 using namespace std;
 
-int N, M;
+int w, h;
+//지도(1: 땅, 0: 바다)
+int map[51][51];
+//그래프 정점 V: 지도의 땅의 좌표
+vector<pair<int, int>> V;
+//그래프 정점 방문 표시
+bool visited[51][51] = { 0 };
 
-vector<vector<int>> adj(1001);
-vector<bool> visited;
+int dirR[8] = {-1,-1,-1,0,0,1,1,1};
+int dirC[8] = {-1,0,1,-1,1,-1,0,1};
 
-void dfs(int here) {
-	visited[here] = true;
+void dfs(int row, int col) {
+	visited[row][col] = true;
 
-	for (int i = 0; i < adj[here].size(); ++i) {
-		int there = adj[here][i];
-		if (!visited[there])
-			dfs(there);
+	for (int i = 0; i < 8; ++i) {
+		int row2 = row + dirR[i];
+		int col2 = col + dirC[i];
+
+		if (row2 < 0 || row2 >= h) continue;
+		if (col2 < 0 || col2 >= w) continue;
+
+		if (map[row2][col2] && !visited[row2][col2])
+			dfs(row2,col2);
 	}
-}
-
-int dfsAll() {
-	visited = vector<bool>(N, false);
-
-	//모든 정점이 방문될 때까지 dfs를 호출해야하는 횟수
-	int cnt = 0;
-	for (int i = 0; i < N; ++i) {
-		if (!visited[i]) {
-			dfs(i);
-			++cnt;
-		}
-	}
-	return cnt;
 }
 
 int main() {
@@ -37,15 +34,37 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> M;
-	for (int i = 0; i < M; ++i) {
-		int a, b;
-		cin >> a >> b;
+	while (true) {
+		//초기화
+		V.clear();
+		for (int i = 0; i < 50; ++i) {
+			for (int j = 0; j < 50; ++j) {
+				map[i][j] = -1;
+				visited[i][j] = false;
+			}
+		}
 
-		adj[a - 1].push_back(b - 1);
-		adj[b - 1].push_back(a - 1);
+		cin >> w >> h;
+		if (!w && !h) break;
+
+		for (int i = 0; i < h; ++i) {
+			for (int j = 0; j < w; ++j) {
+				cin >> map[i][j];
+
+				if (map[i][j]) V.push_back({ i, j });
+			}
+		}
+
+		int cnt = 0;
+		for (int i = 0; i < V.size(); ++i) {
+			int row = V[i].first;
+			int col = V[i].second;
+			if (map[row][col] && !visited[row][col]) {
+				dfs(row, col);
+				cnt++;
+			}
+		}
+		cout << cnt << "\n";
 	}
-
-	cout << dfsAll();
 	return 0;
 }
