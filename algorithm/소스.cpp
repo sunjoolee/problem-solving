@@ -1,51 +1,45 @@
 #include <iostream>
 #include <vector>
-#include <queue>
+#include <set>
 #include <algorithm>
 using namespace std;
 
-int n, m;
+vector<vector<int>> adj;
 
-//inDegree[i]: 정점i에 들어가는 간선의 수
-vector<int> inDegree;
-//child[i]: 노드i를 선행 노드로 하는 노드들의 집합
-vector<vector<int>> child;
+int counter = 0;
+vector<int> discovered;
+set<int> cutVertex;
 
-//위상 정렬 함수
-void topologySort() {
+//here을 루트로 하는 서브트리에 있는 절단점들을 찾는다
+//반환값: 해당 서브트리에서 (역방향) 간선으로 갈 수 있는 정점 중 가장 일찍 발견된 정점의 발견 시점
+//처음 호출할 때는 isRoot = true이다
+int findCutVertex(int here, bool isRoot) {
+	discovered[here] = counter++;
+	int ret = discovered[here];
 
-	vector<int> result(n, 0);
-	queue<int> q;
+	//here가 스패닝 트리의 루트인 경우 절단점 판정을 위해 자손 서브트리의 개수 저장
+	int children = 0;
+	for (int i = 0; i < adj[here].size(); ++i) {
+		int there = adj[here][i];
+		if (discovered[there] == -1) {
+			++children;
 
-	//진입 차수 0인 정점 큐에 삽입
-	for (int i = 0; i < n; ++i)
-		if (inDegree[i] == 0) q.push(i);
-	
-	//정렬이 완전히 수행되기까지 n개의 정점을 방문한다
-	for (int i = 0; i < n; ++i) {
-		//n개의 정점을 방문하기 전에 큐가 비어버리면 
-		//사이클이 발생한 것이다
-		if (q.empty()) return;
+			//이 서브트리에서 갈 수 있는 가장 일찍 발견된 정점의 발견 시점
+			int subtree = findCutVertex(there, false);
 
-		//진입 차수가 0인 정점 선택
-		int parent = q.front();
-		result[i] = parent;
-
-		//선택된 정점과 여기에 부속된 모든 간선들 삭제
-		q.pop();
-		for (int i = 0; i < child[parent].size(); ++i) {
-			int childnode = child[parent][i];
-			//새롭게 진입차수가 0이 된 정점을 큐에 삽입
-			if (--inDegree[childnode] == 0)
-				q.push(childnode);
+			//그 노드가 here 아래에 있다면 현재 위치는 절단점이 된다
+			if (!isRoot && subtree >= discovered[here]) {
+				cutVertex.insert(here);
+			}
+			else ret = min(ret, subtree);
 		}
+		else ret = min(ret, discovered[there]);
 	}
 
-	//위상 정렬 결과 출력
-	for (int i = 0; i < n; ++i)
-		cout << result[i] + 1 << " ";
+	//here가 스패닝 트리의 루트인 경우 절단점 판정
+	if (isRoot && children >= 2) cutVertex.insert(here);
 
-	return;
+	return ret;
 }
 
 
@@ -54,19 +48,27 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n >> m;
+	int V, E;
+	cin >> V >> E;
 
-	inDegree = vector<int>(n, 0);
-	child = vector<vector<int>> (n, vector<int>(0));
+	adj = vector<vector<int>>(V, vector<int>(0));
+	discovered = vector<int>(V, -1);
 
-	for (int i = 0; i < m; ++i) {
+	for (int i = 0; i < E; ++i) {
 		int u, v;
 		cin >> u >> v;
 
-		child[u-1].push_back(v - 1);
-		inDegree[v - 1]++;
+		adj[u - 1].push_back(v - 1);
+		adj[v - 1].push_back(u - 1);
 	}
 
-	topologySort();
+	for (int i = 0; i < V; ++i) {
+		if(discovered[i] == -1)
+			findCutVertex(i, true);
+	}
+
+	cout << cutVertex.size()<<"\n";
+	for (auto it = cutVertex.begin(); it != cutVertex.end(); ++it)
+		cout << *it + 1 << " ";
 	return 0;
 }
