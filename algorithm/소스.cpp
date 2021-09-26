@@ -4,38 +4,42 @@
 #include <algorithm>
 using namespace std;
 
-vector<vector<int>> adj;
+//전체 학생 수
+int n;
 
-int counter = 0;
-vector<int> discovered;
-set<pair<int, int>> bridge;
+//각 학생은 한 명의 학생만 지목할 수 있다
+//adj[i]: 학생 i가 지목한 학생
+vector<int> adj;
 
-//반환값: 해당 서브트리에서 (역방향) 간선으로 갈 수 있는 정점 중 가장 일찍 발견된 정점의 발견 시점
-//처음 호출할 때는 parent = -1이다
-int findBridge(int here, int parent) {
-	discovered[here] = counter++;
-	int ret = discovered[here];
+//사이클에 포함된 학생 수
+int inCycle;
 
-	for (int i = 0; i < adj[here].size(); ++i) {
-		int there = adj[here][i];
+int counter;
+vector<int> discovered, finished;
 
-		//자신의 부모로 가는 간선 무시
-		if (there == parent) continue;
-
-		if (discovered[there] == -1) {
-			//there을 루트로 하는 서브트리에서 갈 수 있는 가장 일찍 발견된 정점의 발견 시점
-			int subtree = findBridge(there, here);
-
-			//그 노드가 here 아래에 있다면 간선(here, there)는 다리이다
-			if (subtree > discovered[here]) {
-				if (here < there) bridge.insert({ here, there });
-				else bridge.insert({ there, here });
-			}
-			else ret = min(ret, subtree);
-		}
-		else ret = min(ret, discovered[there]);
+//there -> ... -> here -> there 사이클 속 포함된 정점의 수 계산 
+int countCycle(int here, int there) {
+	int cnt = 1; //there 
+	while (there != here) {
+		there = adj[there];
+		cnt++;
 	}
-	return ret;
+	return cnt;
+}
+
+void solve(int here) {
+	discovered[here] = counter++;
+
+	int there = adj[here];
+
+	//아직 방문한 적 없다면 방문한다
+	if (discovered[there] == -1) solve(there);
+	
+	//역방향 간선인 경우 사이클에 포함된 정점 수 세기
+	else if (discovered[here] > discovered[there] && finished[there] == 0) 
+		inCycle += countCycle(here, there);
+	
+	finished[here] = 1;
 }
 
 
@@ -44,25 +48,40 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int V, E;
-	cin >> V >> E;
+	int t;
+	cin >> t;
+	while (t--) {
+		cin >> n;
 
-	adj = vector<vector<int>>(V, vector<int>(0));
-	discovered = vector<int>(V, -1);
+		//초기화
+		inCycle = 0;
+		counter = 0;
+		adj = vector<int>(n);
+		discovered = vector<int>(n, -1);
+		finished = vector<int>(n, 0);
 
-	for (int i = 0; i < E; ++i) {
-		int u, v;
-		cin >> u >> v;
+		for (int i = 0; i < n; ++i) {
+			int input;
+			cin >> input;
 
-		adj[u - 1].push_back(v - 1);
-		adj[v - 1].push_back(u - 1);
+			//자기 자신을 선택한 경우 전처리
+			if (i == input - 1) {
+				discovered[i] = counter++;
+				finished[i] = 1;
+				inCycle++;
+			}
+
+			else adj[i] = input - 1;
+		}
+
+		//solve all
+		for (int i = 0; i < n; ++i) {
+			if (discovered[i] == -1)
+				solve(i);
+		}
+
+		cout << n - inCycle<<"\n";
+
 	}
-
-	findBridge(0, -1);
-
-	cout << bridge.size() << "\n";
-	for (auto it = bridge.begin(); it != bridge.end(); ++it)
-		cout << it->first + 1 << " " << it->second + 1 << "\n";
-
 	return 0;
 }
