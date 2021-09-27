@@ -1,87 +1,110 @@
 #include <iostream>
 #include <vector>
-#include <set>
+#include <stack>
 #include <algorithm>
 using namespace std;
 
-//전체 학생 수
-int n;
+int V, E;
+vector<vector<int>> adj;
 
-//각 학생은 한 명의 학생만 지목할 수 있다
-//adj[i]: 학생 i가 지목한 학생
-vector<int> adj;
+int vertexCounter = 0;
+vector<int> discovered;
 
-//사이클에 포함된 학생 수
-int inCycle;
+int sccCounter = 0;
+vector<int> sccId;
+//sccComponent[sccId]: sccId를 갖는 컴포넌트에 포함된 정점의 집합
+vector<vector<int>> sccComponent;
 
-int counter;
-vector<int> discovered, finished;
+//정점의 번호를 담는 스택
+stack<int> st;
 
-//there -> ... -> here -> there 사이클 속 포함된 정점의 수 계산 
-int countCycle(int here, int there) {
-	int cnt = 1; //there 
-	while (there != here) {
-		there = adj[there];
-		cnt++;
+
+//here를 루트로 하는 서브트리에서 역방향 간선이나 교차 간선을 통해 갈 수 있는 정점 중 최소 발견 순서 반환
+//이미 SCC로 묶인 정점으로 연결된 간선은 무시한다
+int scc(int here) {
+	int ret = discovered[here] = vertexCounter++;
+
+	//스택에 here을 넣는다
+	//here의 자손들은 모두 스택에서 here 위에 쌓이게 된다
+	st.push(here);
+
+	for (int i = 0; i < adj[here].size(); ++i) {
+		int there = adj[here][i];
+
+		//(here, there)이 트리 간선인 경우
+		if (discovered[there] == -1) {
+			ret = min(ret, scc(there));
+		}
+		//(here, there)이 무시해야하는 교차 간선이 아닌 경우
+		else if (sccId[there] == -1) {
+			ret = min(ret, discovered[there]);
+		}
 	}
-	return cnt;
+
+	//here에서 부모로 올라가는 간선을 끊어도 되는 경우 
+	//= here를 루트로 하는 서브트리에서 갈 수 있는 정점 중 가장 높은 정점이 here인 경우
+	if (ret == discovered[here]) {
+		//here을 루트로 하는 서브트리에 남아 있는 정점들을 하나의 컴포넌트로 묶는다
+		vector<int> component;
+		while (true) {
+			int t = st.top();
+			st.pop();
+			
+			sccId[t] = sccCounter;
+			component.push_back(t);
+
+			if (t == here) break;
+		}
+
+		sort(component.begin(), component.end());
+		sccComponent.push_back(component);
+
+		sccCounter++;
+	}
+	return ret;
 }
 
-void solve(int here) {
-	discovered[here] = counter++;
-
-	int there = adj[here];
-
-	//아직 방문한 적 없다면 방문한다
-	if (discovered[there] == -1) solve(there);
-	
-	//역방향 간선인 경우 사이클에 포함된 정점 수 세기
-	else if (discovered[here] > discovered[there] && finished[there] == 0) 
-		inCycle += countCycle(here, there);
-	
-	finished[here] = 1;
+bool cmp(const vector<int>& a, const vector<int>& b) {
+	return a[0] < b[0];
 }
-
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int t;
-	cin >> t;
-	while (t--) {
-		cin >> n;
+	cin >> V >> E;
 
-		//초기화
-		inCycle = 0;
-		counter = 0;
-		adj = vector<int>(n);
-		discovered = vector<int>(n, -1);
-		finished = vector<int>(n, 0);
+	//초기화
+	adj = vector<vector<int>> (V, vector<int>(0));
+	discovered = vector<int>(adj.size(), -1);
+	sccId = vector<int>(V, -1);
 
-		for (int i = 0; i < n; ++i) {
-			int input;
-			cin >> input;
-
-			//자기 자신을 선택한 경우 전처리
-			if (i == input - 1) {
-				discovered[i] = counter++;
-				finished[i] = 1;
-				inCycle++;
-			}
-
-			else adj[i] = input - 1;
-		}
-
-		//solve all
-		for (int i = 0; i < n; ++i) {
-			if (discovered[i] == -1)
-				solve(i);
-		}
-
-		cout << n - inCycle<<"\n";
-
+	//그래프 입력 받기
+	for (int i = 0; i < E; ++i) {
+		int A, B;
+		cin >> A >> B;
+		
+		adj[A - 1].push_back(B - 1);
 	}
+
+	//scc all
+	for (int i = 0; i < V; ++i) {
+		if (discovered[i] == -1)
+			scc(i);
+	}
+
+	//결과 출력
+	cout << sccCounter << "\n";
+	
+	sort(sccComponent.begin(), sccComponent.end(), cmp);
+
+	for (int i = 0; i < sccComponent.size(); ++i) {
+		for (int j = 0; j < sccComponent[i].size(); ++j) {
+			cout << sccComponent[i][j] + 1 << " ";
+		}
+		cout << "-1\n";
+	}
+
 	return 0;
 }
