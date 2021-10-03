@@ -1,41 +1,29 @@
 #include <iostream>
-#include <string>
+#include <math.h>
 #include <algorithm>
 using namespace std;
 
-int N;
+//3^12 = 531441
+char res[540000];
 
-void recursion(int n) {
-	if (n == N) {
-		for (int i = 0; i < n; ++i) cout << "____";
-		cout << "\"재귀함수가 뭔가요?\""<<"\n";
-
-		for (int i = 0; i < n; ++i) cout << "____";
-		cout << "\"재귀함수는 자기 자신을 호출하는 함수라네\"" << "\n";
-			
-
-		for (int i = 0; i < n; ++i) cout << "____";
-		cout << "라고 답변하였지." << "\n";
-
+void recursive(int start, int len) {
+	if (len == 1) {
+		res[start] = '-';
+		return;
+	}
+	if (len == 3) {
+		res[start] = '-';
+		res[start + 1] = ' ';
+		res[start + 2] = '-';
 		return;
 	}
 
-	for (int i = 0; i < n; ++i) cout << "____";
-	cout << "\"재귀함수가 뭔가요?\"" << "\n";
+	recursive(start, len / 3);
 
-	for (int i = 0; i < n; ++i) cout << "____";
-	cout << "\"잘 들어보게. 옛날옛날 한 산 꼭대기에 이세상 모든 지식을 통달한 선인이 있었어." << "\n";
-		
-	for (int i = 0; i < n; ++i) cout << "____"; 
-	cout << "마을 사람들은 모두 그 선인에게 수많은 질문을 했고, 모두 지혜롭게 대답해 주었지." << "\n";
-		
-	for (int i = 0; i < n; ++i) cout << "____"; 
-	cout << "그의 답은 대부분 옳았다고 하네.그런데 어느 날, 그 선인에게 한 선비가 찾아와서 물었어.\"" << "\n";
-		
-	recursion(n + 1);
+	for (int i = len / 3; i < (len / 3 )* 2; ++i) 
+		res[start + i] = ' ';
 
-	for (int i = 0; i < n; ++i) cout << "____";
-	cout << "라고 답변하였지." << "\n";
+	recursive(start + (len / 3) * 2, len / 3);
 
 	return;
 }
@@ -45,11 +33,19 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N;
+	int n;
+	while (true) {
+		cin >> n;
+		if (cin.eof()) break;
 
-	cout << "어느 한 컴퓨터공학과 학생이 유명한 교수님을 찾아가 물었다.\n";
-	
-	recursion(0);
+		int l = pow(3, n);
+
+		recursive(0,l);
+
+		for (int i = 0; i < l; ++i)
+			cout << res[i];
+		cout << "\n";
+	}
 
 	return 0;
 }
