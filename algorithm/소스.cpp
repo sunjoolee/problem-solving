@@ -1,39 +1,51 @@
 #include <iostream>
 #include <string>
-#include <map>
 #include <algorithm>
 using namespace std;
-
-int n, m;
-map<string, int> m1;
-map<int, string> m2;
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> n >> m;
-	for (int i = 0; i < n; ++i) {
-		string name;
-		cin >> name;
+	int m;
+	unsigned int bitmask = 0;
 
-		m1[name] = i + 1;
-		m2[i + 1] = name;
-	}
-
+	cin >> m;
+	
+	string op;
+	int x;
 	for (int i = 0; i < m; ++i) {
-		string input;
-		cin >> input;
+		cin >> op;
+		if (op == "all") {
+			bitmask = (1 << 20) - 1;
+			continue;
+		}
+		if (op == "empty") {
+			bitmask = 0;
+			continue;
+		}
 
-		//첫글자 대문자라면 이름
-		if (input[0] >= 65 && input[0] <= 90)
-			cout << m1[input] << "\n";
-		//아니라면 숫자
-		else {
-			cout << m2[stoi(input)] << "\n";
+		cin >> x;
+		if (op == "add") {
+			bitmask |= (1 << (x - 1));
+			continue;
+		}
+		if (op == "remove") {
+			bitmask &= ~(1 << (x - 1));
+			continue;
+		}
+		if (op == "check") {
+			if (bitmask & (1 << (x - 1))) cout << "1\n";
+			else cout << "0\n";
+			continue;
+		}
+		if (op == "toggle") {
+			bitmask ^= (1 << (x - 1));
+			continue;
 		}
 	}
+
 
 	return 0;
 }
