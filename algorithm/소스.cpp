@@ -5,52 +5,82 @@
 using namespace std;
 
 int N, M;
-//그래프 인접 리스트 표현
-vector<vector<int>> adj;
 
-//start부터 너비 우선 탐색하여 방문하는 정점 수
-int bfs(int start) {
-	int cnt = 0;
-	queue<int> q;
-	vector<int> found(N, 0);
+//익은 토마토 1, 안익은 토마토 0, 빈칸 -1
+int box[1001][1001];
 
-	q.push(start);
-	found[start] = 1;
+//좌표 발견 여부 저장
+int found[1001][1001] = { 0 };
 
-	while (!q.empty()) {
-		int here = q.front();
-		cnt++;
-		q.pop();
+int dirR[4] = { 0, 0, 1, -1 };
+int dirC[4] = { 1, -1, 0, 0 };
 
-		for (int i = 0; i < adj[here].size(); ++i) {
-			int there = adj[here][i];
+int bfs() {
+	//토마토가 다 익을 때까지 걸리는 날짜
+	int day = 0;
 
-			if (found[there] == 0) {
-				q.push(there);
-				found[there] = 1;
+	//q<<좌표, 날짜>
+	queue<pair<pair<int, int>, int>> q;
+
+	//익은 토마토 큐에 저장
+	for (int i = 0; i < N; ++i) {
+		for (int j = 0; j < M; ++j) {
+			if (box[i][j] == 1) {
+				q.push({ {i, j}, 0});
+				found[i][j] = 1;
 			}
 		}
 	}
-	return cnt;
+
+	while (!q.empty()) {
+
+		pair<pair<int, int>, int> here = q.front();
+		int hereR = here.first.first;
+		int hereC = here.first.second;
+		int hereDay = here.second;
+		q.pop();
+
+		//토마토 익음
+		box[hereR][hereC] = 1;
+		day = hereDay;
+
+		for (int i = 0; i < 4; ++i) {
+			int nextR = hereR + dirR[i];
+			int nextC = hereC + dirC[i];
+
+			if (nextR < 0 || nextR >= N) continue;
+			if (nextC < 0 || nextC >= M) continue;
+
+			//인접한 칸의 발견하지 않은 안익은 토마토 큐에 저장
+			if (box[nextR][nextC] == 0 && found[nextR][nextC] == 0) {
+				q.push({ {nextR, nextC}, hereDay + 1 });
+				found[nextR][nextC] = 1;
+			}
+		}
+	}
+	
+	//모든 토마토 익었는지 검사
+	for (int i = 0; i < N; ++i) {
+		for (int j = 0; j < M; ++j) {
+			if (box[i][j] == 0) return -1;
+		}
+	}
+	return day;
 }
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> M;
-	
-	adj = vector<vector<int>>(N, vector<int>(0));
-
-	for (int i = 0; i < M; ++i) {
-		int a, b;
-		cin >> a >> b;
-
-		adj[a - 1].push_back(b - 1);
-		adj[b - 1].push_back(a - 1);
+	cin >> M >> N;
+	for (int i = 0; i < N; ++i) {
+		for (int j = 0; j < M; ++j) {
+			cin >> box[i][j];
+		}
 	}
-	 
-	cout << bfs(0) - 1;
+
+	cout << bfs();
 	return 0;
 }
