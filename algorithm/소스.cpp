@@ -1,31 +1,37 @@
 #include <iostream>
-#include <math.h>
+#include <vector>
+#include <queue>
 #include <algorithm>
 using namespace std;
 
-//3^12 = 531441
-char res[540000];
+int N, M;
+//그래프 인접 리스트 표현
+vector<vector<int>> adj;
 
-void recursive(int start, int len) {
-	if (len == 1) {
-		res[start] = '-';
-		return;
+//start부터 너비 우선 탐색하여 방문하는 정점 수
+int bfs(int start) {
+	int cnt = 0;
+	queue<int> q;
+	vector<int> found(N, 0);
+
+	q.push(start);
+	found[start] = 1;
+
+	while (!q.empty()) {
+		int here = q.front();
+		cnt++;
+		q.pop();
+
+		for (int i = 0; i < adj[here].size(); ++i) {
+			int there = adj[here][i];
+
+			if (found[there] == 0) {
+				q.push(there);
+				found[there] = 1;
+			}
+		}
 	}
-	if (len == 3) {
-		res[start] = '-';
-		res[start + 1] = ' ';
-		res[start + 2] = '-';
-		return;
-	}
-
-	recursive(start, len / 3);
-
-	for (int i = len / 3; i < (len / 3 )* 2; ++i) 
-		res[start + i] = ' ';
-
-	recursive(start + (len / 3) * 2, len / 3);
-
-	return;
+	return cnt;
 }
 
 int main() {
@@ -33,19 +39,18 @@ int main() {
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	int n;
-	while (true) {
-		cin >> n;
-		if (cin.eof()) break;
+	cin >> N >> M;
+	
+	adj = vector<vector<int>>(N, vector<int>(0));
 
-		int l = pow(3, n);
+	for (int i = 0; i < M; ++i) {
+		int a, b;
+		cin >> a >> b;
 
-		recursive(0,l);
-
-		for (int i = 0; i < l; ++i)
-			cout << res[i];
-		cout << "\n";
+		adj[a - 1].push_back(b - 1);
+		adj[b - 1].push_back(a - 1);
 	}
-
+	 
+	cout << bfs(0) - 1;
 	return 0;
 }
