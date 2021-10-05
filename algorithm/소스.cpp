@@ -2,50 +2,36 @@
 #include <algorithm>
 using namespace std;
 
-int N, M, B;
-int ground[501][501];
-
-//높이를 h로 맞추는데 걸리는 시간
-int solve(int h) {
-	//덜어내야하는 높이
-	int minus = 0;
-	//쌓아야하는 높이
-	int plus = 0;
-
-	for (int i = 0; i < N; ++i) {
-		for (int j = 0; j < M; ++j) {
-			if (ground[i][j] > h) minus += (ground[i][j] - h);
-			if (ground[i][j] < h) plus += (h - ground[i][j]);
-		}
-	}
-
-	if (plus <= (minus + B)) return minus * 2 + plus;
-	return -1;
-}
-
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
 
-	cin >> N >> M >> B;
-	for (int i = 0; i < N; ++i) {
-		for (int j = 0; j < M; ++j) {
-			cin >> ground[i][j];
-		}
+	int n;
+	int x[51];
+	int y[51];
+	int rank[51];
+
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		int x_, y_;
+		cin >> x_ >> y_;
+
+		x[i] = x_;
+		y[i] = y_;
 	}
 
-	int mintime = 987654321;
-	int maxh = 0;
-	for (int h = 0; h <= 256; ++h) {
-		int time = solve(h);
-		if (time == -1) continue;
-		else if (time <= mintime) {
-			mintime = time;
-			maxh = h;
+	for (int i = 0; i < n; ++i) {
+		int k = 0;
+		for (int j = 0; j < n; ++j) {
+			if (x[i] < x[j] && y[i] < y[j]) 
+				k++;
 		}
+		rank[i] = k + 1;
 	}
 
-	cout << mintime << " " << maxh;
+	for (int i = 0; i < n; ++i)
+		cout << rank[i] << " ";
 	return 0;
 }
