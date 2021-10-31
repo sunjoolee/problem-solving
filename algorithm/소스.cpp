@@ -1,115 +1,76 @@
 #include <iostream>
 #include <vector>
-#include <string>
 #include <queue>
 #include <algorithm>
 using namespace std;
 
+const int MAX_N = 1001;
 int N, M;
-char map[50][50];
 
-int dir_R[4] = { 0, 0, 1, -1 };
-int dir_C[4] = { -1, 1, 0, 0 };
+//그래프의 인접 리스트 표현
+//adj[u]: <u와 간선으로 연결된 정점 v, 간선의 가중치 w>
+vector<pair<int, int>> adj[MAX_N];
 
-//우선순위 큐를 위한 구조체
-struct pq_struct {
-	pair<int, int> location;
-	pair<int, int> garbage;
-};
+//슈퍼 컴퓨터(= 0번 컴퓨터)부터 다익스트라 탐색
+void dijkstra() {
+	vector<int> dist(N, -1);
+	dist[0] = 0;
 
-//우선순위 계산을 위한 구조체
-struct compare {
-	bool operator() (pq_struct& a, pq_struct& b) {
-		if (a.garbage.first > b.garbage.first) return true;
-		if (a.garbage.first == b.garbage.first)
-			return a.garbage.second > b.garbage.second;
-		return false;
-	}
-};
+	//다익스트라 스패닝 트리
+	vector<int> parent(N, -1);
+	parent[0] = 0;
 
-void dijkstra(pair<int, int> start, pair<int, int> flower) {
-	pair<int, int> min_garbage[50][50];
-	//초기화
-	for (int i = 0; i < 50; ++i) {
-		for (int j = 0; j < 50; ++j) {
-			min_garbage[i][j] = { -1, -1 };
-		}
-	}
-	min_garbage[start.first][start.second] = { 0,0 };
- 
-	priority_queue<pq_struct, vector<pq_struct>, compare> pq;
-	pq.push({ start, { 0 , 0 } });
+	//pq: <-정점까지의 거리, 정점의 번호> 저장
+	priority_queue<pair<int, int>> pq;
+	pq.push(make_pair(0, 0));
 
 	while (!pq.empty()) {
-		pair<int, int> here = pq.top().location;
-		pair<int, int> garbage = pq.top().garbage;
+		int cost = -pq.top().first;
+		int here = pq.top().second;
 		pq.pop();
 
-		//더 나은 경로가 이미 발견되었다면 무시
-		if (min_garbage[here.first][here.second].first != -1 && min_garbage[here.first][here.second] < garbage) continue;
+		//cost보다 짧은 경로가 이미 발견되었다면 무시
+		if (dist[here] != -1 && dist[here] < cost) continue;
 
+		for (int i = 0; i < adj[here].size(); ++i) {
+			int there = adj[here][i].first;
+			int nextDist = adj[here][i].second + cost;
 
-		//현재 위치가 꽃의 위치인 경우
-		if (here == flower) {
-			cout << garbage.first << " " << garbage.second;
-			return;
-		}
-
-		//현재 위치가 쓰레기 칸인 경우
-		if (map[here.first][here.second] == 'g') {
-			garbage.first++;
-		}
-		//현재 위치가 비어있고, 쓰레기와 인잡한 칸인 경우
-		else if (map[here.first][here.second] == '.') {
-			for (int i = 0; i < 4; ++i) {
-				int adj_R = here.first + dir_R[i];
-				int adj_C = here.second + dir_C[i];
-			
-				if (adj_R < 0 || adj_R >= N) continue;
-				if (adj_C < 0 || adj_C >= M) continue;
-
-				if (map[adj_R][adj_C] == 'g') {
-					garbage.second++;
-					break;
-				}
+			if (dist[there] == -1 || dist[there] > nextDist) {
+				dist[there] = nextDist;
+				parent[there] = here;
+				pq.push(make_pair(-nextDist, there));
 			}
 		}
+	}
 
-		//다음 위치로 이동
-		for (int i = 0; i < 4; ++i) {
- 			pair<int, int> there = {here.first + dir_R[i], here.second + dir_C[i]};
-
-			if (there.first < 0 || there.first >= N) continue;
-			if (there.second < 0 || there.second >= M) continue;
-
-			if (min_garbage[there.first][there.second].first == -1 || min_garbage[there.first][there.second] > garbage) {
-				min_garbage[there.first][there.second] = garbage;
-				pq.push({there, garbage});
-			}
-		}
+	//다익스트라 스패닝 트리 출력
+	int cnt = 0;
+	for (int i = 0; i < N; ++i) {
+		if (parent[i] != i && parent[i] != -1) cnt++;
+	}
+	cout << cnt << "\n";
+	for (int i = 0; i < N; ++i) {
+		if (parent[i] != i && parent[i] != -1)
+			cout << i << " " << parent[i] << "\n";
 	}
 	return;
 }
 
+
 int main() {
 	ios_base::sync_with_stdio(false);
-	cin.tie(NULL); 
-	cout.tie(NULL);
+	cin.tie(NULL); cout.tie(NULL);
 
 	cin >> N >> M;
+	for (int i = 0; i < M; ++i) {
+		int A, B, C;
+		cin >> A >> B >> C;
 
-	pair<int, int> start, flower;
-	for (int i = 0; i < N; ++i) {
-		string input;
-		cin >> input;
-
-		for (int j = 0; j < M; ++j) {
-			map[i][j] = input[j];
-			if (map[i][j] == 'S'|| map[i][j] == 's') start = { i, j };
-			if (map[i][j] == 'F'|| map[i][j] == 'f') flower = { i, j };
-		}
+		adj[A - 1].push_back({ B - 1, C });
+		adj[B - 1].push_back({ A - 1, C });
 	}
 
-	dijkstra(start, flower);
+	dijkstra();
 	return 0;
 }
