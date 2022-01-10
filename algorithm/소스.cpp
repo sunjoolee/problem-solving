@@ -6,7 +6,7 @@
 using namespace std;
 
 typedef long long ll;
-const int MAX_V = 1000;
+const int MAX_V = 100000;
 
 struct DisjointSet {
 	vector<int> parent, rank;
@@ -60,6 +60,8 @@ ll kruskal() {
 	//처음엔 모든 정점이 서로 분리되어 있다.
 	DisjointSet sets(V);
 
+	ll maxCost = -1;
+
 	for (int i = 0; i < edges.size(); ++i) {
 		ll cost = edges[i].first;
 		int u = edges[i].second.first;
@@ -71,9 +73,13 @@ ll kruskal() {
 
 		sets.merge(u, v);
 		ret += cost;
+
+		maxCost = max(maxCost, cost);
 	}
 
-	return ret;
+	//두 개의 마을로 분리하기 위해 MST에서 하나의 간선 삭제
+	//유지비의 최솟값을 구해야 하므로 가중치가 가장 큰 간선을 삭제한다
+	return ret - maxCost;
 }
 
 int main() {
