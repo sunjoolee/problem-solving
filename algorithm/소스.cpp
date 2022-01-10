@@ -4,7 +4,8 @@
 #include <algorithm>
 using namespace std;
 
-const int MAX_V = 100;
+typedef long long int ll;
+const int MAX_V = 200001;
 
 //크루스칼 최소 스패닝 트리 알고리즘
 //트리를 이용해 상호 배타적 집합을 구현한다
@@ -37,19 +38,24 @@ struct DisjointSet {
 
 //정점의 개수
 int V;
+
+//가능한 워프의 수
+int M;
+
 //그래프의 인접 리스트 (연결된 정점 번호, 간선 가중치) 쌍 저장
-vector<pair<int, double>> adj[MAX_V];
+vector<pair<int, ll>> adj[MAX_V];
 
 //주어진 그래프에 대해 최소 스패닝 트리 가중치의 합을 반환한다.
-double kruskal() {
-	double ret = 0;
+ll kruskal() {
+	ll ret = 0LL;
 
 	//<가중치, <u, v>>의 목록을 얻는다
-	vector<pair<double, pair<int, int>>> edges;
+	vector<pair<ll, pair<int, int>>> edges;
+
 	for (int u = 0; u < V; ++u) {
 		for (int i = 0; i < adj[u].size(); ++i) {
 			int v = adj[u][i].first;
-			double cost = adj[u][i].second;
+			ll cost = adj[u][i].second;
 			edges.push_back({ cost, {u, v} });
 		}
 	}
@@ -58,8 +64,9 @@ double kruskal() {
 
 	//처음엔 모든 정점이 서로 분리되어 있다.
 	DisjointSet sets(V);
+
 	for (int i = 0; i < edges.size(); ++i) {
-		double cost = edges[i].first;
+		ll cost = edges[i].first;
 		int u = edges[i].second.first;
 		int v = edges[i].second.second;
 
@@ -67,6 +74,11 @@ double kruskal() {
 		//이미 u와 v가 연결되어있을 경우(사이클) 무시
 		if (sets.find(u) == sets.find(v)) continue;
 
+		//설치할 수 있는 워프의 개수 확인
+		if (u != 0 && v != 0) {
+			if (M == 0) continue;
+			else M--;
+		}
 		sets.merge(u, v);
 		ret += cost;
 	}
@@ -78,26 +90,31 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	//별의 개수
-	cin >> V;
+	//워프: 두 도시 사이를 연결하는 간선
+	//비상 탈출구: 출구와 도시를 연결하는 간선
 
-	//별의 좌표
-	vector<pair<double, double>> stars;
+	cin >> V >> M;
 	
-	for (int i = 0; i < V; ++i) {
-		double x, y;
-		cin >> x >> y;
-		stars.push_back({ x, y });
+	// 출구 : 0번 정점
+	// N개의 방 : 1 ~ N번 정점
+	// 따라서 총 정점의 수 = N + 1
+	V++;
+
+	//워프 가중치
+	for (int i = 0; i < M; ++i) {
+		int a, b;
+		ll c;
+		cin >> a >> b >> c;
+		adj[a].push_back({ b, c });
+		adj[b].push_back({ a, c });
 	}
 
-	//그래프 생성
-	for (int i = 0; i < V; ++i) {
-		for (int j = 0; j < V; ++j) {
-			double dist  = sqrt(pow(stars[i].first - stars[j].first, 2) + pow(stars[i].second - stars[j].second, 2));
-
-			adj[i].push_back({ j, dist });
-			adj[j].push_back({ i, dist });
-		}
+	//비상 탈출구 가중치
+	for (int i = 1; i < V; ++i) {
+		ll t;
+		cin >> t;
+		adj[0].push_back({ i, t });
+		adj[i].push_back({ 0, t });
 	}
 
 	cout << kruskal();
