@@ -5,10 +5,8 @@
 #include <algorithm>
 using namespace std;
 
-const int MAX_V = 50;
-
-//크루스칼 최소 스패닝 트리 알고리즘
-//트리를 이용해 상호 배타적 집합을 구현한다
+typedef long long ll;
+const int MAX_V = 1001;
 
 struct DisjointSet {
 	vector<int> parent, rank;
@@ -40,19 +38,19 @@ struct DisjointSet {
 int V;
 
 //그래프의 인접 리스트 (연결된 정점 번호, 간선 가중치) 쌍 저장
-vector<pair<int, int>> adj[MAX_V];
+vector<pair<int, ll>> adj[MAX_V];
 
 //주어진 그래프에 대해 최소 스패닝 트리 가중치의 합을 반환한다.
-int kruskal() {
-	int ret = 0;
+ll kruskal() {
+	ll ret = 0LL;
 
 	//<가중치, <u, v>>의 목록을 얻는다
-	vector<pair<int, pair<int, int>>> edges;
+	vector<pair<ll, pair<int, int>>> edges;
 
 	for (int u = 0; u < V; ++u) {
 		for (int i = 0; i < adj[u].size(); ++i) {
 			int v = adj[u][i].first;
-			int cost = adj[u][i].second;
+			ll cost = adj[u][i].second;
 			edges.push_back({ cost, {u, v} });
 		}
 	}
@@ -63,7 +61,7 @@ int kruskal() {
 	DisjointSet sets(V);
 
 	for (int i = 0; i < edges.size(); ++i) {
-		int cost = edges[i].first;
+		ll cost = edges[i].first;
 		int u = edges[i].second.first;
 		int v = edges[i].second.second;
 
@@ -75,57 +73,45 @@ int kruskal() {
 		ret += cost;
 	}
 
-	//모든 컴퓨터 연결 확인
-	bool connected = true;
-	for (int i = 0; i < V; ++i) {
-		//모두 하나의 집합에 있다면 모두 같은 parent를 갖는다
-		if (sets.parent[i] != sets.parent[0]) {
-			connected = false;
-			break;
-		}
-	}
-
-	if (!connected) return -1;
 	return ret;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
+	
+	//간선의 개수
+	int M;
+	//케이블의 개수
+	int K;
 
-	//알파벳 숫자 매핑
-	map<char, int> alphaToNum;
-	for (int i = 0; i < 26; ++i) {
-		char alpha = 97 + i; //소문자
-		char alpha2 = 65 + i; //대문자
+	cin >> V >> M >> K;
+	
+	//입력으로 주어지는 도시 1~N번
+	//발전소끼리 연결하기 위한 가상의 도시 0번
+	//따라서 총 정점의 개수 = N + 1
+	V++;
 
-		alphaToNum[alpha] = i + 1;
-		alphaToNum[alpha2] = i + 27;
-	}
-
-	cin >> V;
-	int totalLen = 0;
-
-	for (int i = 0; i < V; ++i) {
-		string input;
+	//발전소
+	for (int i = 0; i < K; ++i) {
+		int input;
 		cin >> input;
 
-		for (int j = 0; j < V; ++j) {
-			
-			//간선 존재하지 않는 경우
-			if (input[j] == '0') continue;
-
-			int len = alphaToNum[input[j]];
-			totalLen += len;
-
-			adj[i].push_back({ j, len });
-		}
+		adj[0].push_back({ input, 0LL});
+		adj[input].push_back({0, 0LL});
 	}
-	
-	int res = kruskal();
 
-	if (res == -1) cout << "-1";
-	else cout << totalLen - res;
+	//케이블
+	for (int i = 0; i < M; ++i) {
+		int u, v;
+		ll w;
+		cin >> u >> v >> w;
+
+		adj[u].push_back({ v, w });
+		adj[v].push_back({ u, w });
+	}
+
+	cout << kruskal();
 
 	return 0;
 }
