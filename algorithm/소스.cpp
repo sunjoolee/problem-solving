@@ -6,7 +6,7 @@
 using namespace std;
 
 typedef long long ll;
-const int MAX_V = 10000;
+const int MAX_V = 1000;
 
 struct DisjointSet {
 	vector<int> parent, rank;
@@ -81,10 +81,10 @@ int main() {
 	cin.tie(NULL); cout.tie(NULL);
 	
 	//간선의 개수
-	int E;
-	cin >> V >> E;
+	int M;
+	cin >> V >> M;
 	
-	for (int i = 0; i < E; ++i) {
+	for (int i = 0; i < M; ++i) {
 		int a, b;
 		ll c;
 		cin >> a >> b >> c;
