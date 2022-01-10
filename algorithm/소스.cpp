@@ -79,7 +79,7 @@ int kruskal() {
 	bool connected = true;
 	for (int i = 0; i < V; ++i) {
 		//모두 하나의 집합에 있다면 모두 같은 parent를 갖는다
-		if (sets.parent[i] != sets.parent[0]) {
+		if (sets.find(i) != sets.find(0)) {
 			connected = false;
 			break;
 		}
