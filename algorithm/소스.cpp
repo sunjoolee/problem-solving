@@ -1,115 +1,83 @@
 #include <iostream>
 #include <vector>
-#include  <algorithm>
+#include <algorithm>
 using namespace std;
 
-typedef long long ll;
 const int MAX_V = 100;
-const ll INF = 987654321;
 
-//회의 참석자 수 
-int V;
-//그래프의 인접 행렬 표현
-//정방향 가중치
-ll adj[MAX_V][MAX_V];
+//크루스칼 최소 스패닝 트리 알고리즘
+//트리를 이용해 상호 배타적 집합을 구현한다
 
-//플로이드-와샬 알고리즘
-void floyd() {
-	for (int i = 0; i < V; ++i) {
-		adj[i][i] = 0LL; 
+struct DisjointSet {
+	vector<int> parent, rank;
+	DisjointSet(int n) : parent(n), rank(n, 1) {
+		for (int i = 0; i < n; ++i)
+			parent[i] = i;
 	}
 
-	//i지점 -> j지점으로 이동할 때 거쳐가는 지점 K
-	for (int k = 0; k < V; ++k) {
-		for (int i = 0; i < V; ++i) {
-			for (int j = 0; j < V; ++j) {
-				adj[i][j] = min(adj[i][j], adj[i][k] + adj[k][j]);
-			}
+	//u가 속한 트리의 루트 번호 반환
+	int find(int u) const {
+		if (u == parent[u]) return u;
+		return parent[u] = find(parent[u]);
+	}
+
+	//u가 속한 트리와 v가 속한 트리를 합친다
+	void merge(int u, int v) {
+		u = find(u); v = find(v);
+
+		//u와 v가 이미 같은 트리에 속하는 경우 걸러냄
+		if (u == v) return;
+
+		if (rank[u] > rank[v]) swap(u, v);
+		parent[u] = v;
+		if (rank[u] == rank[v]) ++rank[v];
+	}
+};
+
+//정점의 개수
+int V;
+//그래프의 인접 리스트 (연결된 정점 번호, 간선 가중치) 쌍 저장
+vector<pair<int, int>> adj[MAX_V];
+
+//주어진 그래프에 대해 최소 스패닝 트리에 포합된 간선의 목록을 selected에 저장하고, 가중치의 합을 반환한다.
+int kruskal(vector<pair<int, int>>& selected) {
+	int ret = 0;
+	selected.clear();
+
+	//<가중치, <u, v>>의 목록을 얻는다
+	vector<pair<int, pair<int, int>>> edges;
+	for (int u = 0; u < V; ++u) {
+		for (int i = 0; i < adj[u].size(); ++i) {
+			int v = adj[u][i].first;
+			int cost = adj[u][i].second;
+			edges.push_back({ cost, {u, v} });
 		}
 	}
+	//가중치순으로 정렬
+	sort(edges.begin(), edges.end());
+
+	//처음엔 모든 정점이 서로 분리되어 있다.
+	DisjointSet sets(V);
+	for (int i = 0; i < edges.size(); ++i) {
+		int cost = edges[i].first;
+		int u = edges[i].second.first;
+		int v = edges[i].second.second;
+
+		//간선 (u, v)를 검사한다.
+		//이미 u와 v가 연결되어있을 경우(사이클) 무시
+		if (sets.find(u) == sets.find(v)) continue;
+
+		sets.merge(u, v);
+		selected.push_back({ u, v });
+		ret += cost;
+	}
+
+	return ret;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-
-	//adj 초기화
-	for (int i = 0; i < MAX_V; ++i) {
-		for (int j = 0; j < MAX_V; ++j) {
-			adj[i][j] = INF;
-		}
-	}
-
-	//참석자 사이 관계 수
-	int M;
-	cin >> V >> M;
-
-	for (int i = 0; i < M; ++i) {
-		int a, b;
-		cin >> a >> b;
-
-		//양방향
-		adj[a - 1][b - 1] = min(adj[a - 1][b - 1], 1LL);
-		adj[b - 1][a - 1] = min(adj[b - 1][a - 1], 1LL);
-	}
-
-	floyd();
-
-	//위원회의 수
-	int groupCnt = 0;
-
-	//group[참석자] = 소속된 위원회 번호 (소속되지 않은 경우 -1)
-	int group[MAX_V];
-
-	//maxTime[참석자] = 참석자가 위원회 대표일 경우 최대 의사전달시간
-	ll maxTime[MAX_V];
-
-	//배열 초기화
-	for (int i = 0; i < MAX_V; ++i) {
-		group[i] = maxTime[i] = -1;
-	}
-
-	//아는 사이 같은 위원회에 속하도록 묶기
-	for (int i = 0; i < V; ++i) {
-		//소속된 위원회 없는 경우 위원회 생성
-		if (group[i] == -1) {
-			groupCnt++;
-			group[i] = groupCnt;
-		}
-
-		for (int j = 0; j < V; ++j) {
-			//경로 존재하는 경우 아는 사이 -> 같은 위원회 소속
-			if (adj[i][j] < INF) {
-				group[j] = group[i];
-
-				//최대 의사전달시간 계산
-				maxTime[i] = max(maxTime[i], adj[i][j]);
-			}
-		}
-
-	}
-	cout << groupCnt << "\n";
-
-	//위원회 대표 추출
-	vector<int> vec;
-	for (int n = 1; n <= groupCnt; ++n) {
-		int minPerson;
-		ll minTime = INF;
-
-		for (int i = 0; i < V; ++i) {
-			if (group[i] != n) continue;
-			
-			if (minTime > maxTime[i]) {
-				minTime = maxTime[i];
-				minPerson = i;
-			}
-		}
-		vec.push_back(minPerson);
-	}
-
-	sort(vec.begin(), vec.end());
-	for (int i = 0; i < vec.size(); ++i)
-		cout << vec[i] << "\n";
 
 	return 0;
 }
