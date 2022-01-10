@@ -1,11 +1,11 @@
 #include <iostream>
 #include <vector>
-#include <cmath>
+#include <string>
+#include <map>
 #include <algorithm>
 using namespace std;
 
-typedef long long int ll;
-const int MAX_V = 200001;
+const int MAX_V = 50;
 
 //크루스칼 최소 스패닝 트리 알고리즘
 //트리를 이용해 상호 배타적 집합을 구현한다
@@ -39,23 +39,20 @@ struct DisjointSet {
 //정점의 개수
 int V;
 
-//가능한 워프의 수
-int M;
-
 //그래프의 인접 리스트 (연결된 정점 번호, 간선 가중치) 쌍 저장
-vector<pair<int, ll>> adj[MAX_V];
+vector<pair<int, int>> adj[MAX_V];
 
 //주어진 그래프에 대해 최소 스패닝 트리 가중치의 합을 반환한다.
-ll kruskal() {
-	ll ret = 0LL;
+int kruskal() {
+	int ret = 0;
 
 	//<가중치, <u, v>>의 목록을 얻는다
-	vector<pair<ll, pair<int, int>>> edges;
+	vector<pair<int, pair<int, int>>> edges;
 
 	for (int u = 0; u < V; ++u) {
 		for (int i = 0; i < adj[u].size(); ++i) {
 			int v = adj[u][i].first;
-			ll cost = adj[u][i].second;
+			int cost = adj[u][i].second;
 			edges.push_back({ cost, {u, v} });
 		}
 	}
@@ -66,7 +63,7 @@ ll kruskal() {
 	DisjointSet sets(V);
 
 	for (int i = 0; i < edges.size(); ++i) {
-		ll cost = edges[i].first;
+		int cost = edges[i].first;
 		int u = edges[i].second.first;
 		int v = edges[i].second.second;
 
@@ -74,15 +71,21 @@ ll kruskal() {
 		//이미 u와 v가 연결되어있을 경우(사이클) 무시
 		if (sets.find(u) == sets.find(v)) continue;
 
-		//설치할 수 있는 워프의 개수 확인
-		if (u != 0 && v != 0) {
-			if (M == 0) continue;
-			else M--;
-		}
 		sets.merge(u, v);
 		ret += cost;
 	}
 
+	//모든 컴퓨터 연결 확인
+	bool connected = true;
+	for (int i = 0; i < V; ++i) {
+		//모두 하나의 집합에 있다면 모두 같은 parent를 갖는다
+		if (sets.parent[i] != sets.parent[0]) {
+			connected = false;
+			break;
+		}
+	}
+
+	if (!connected) return -1;
 	return ret;
 }
 
@@ -90,34 +93,39 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	//워프: 두 도시 사이를 연결하는 간선
-	//비상 탈출구: 출구와 도시를 연결하는 간선
+	//알파벳 숫자 매핑
+	map<char, int> alphaToNum;
+	for (int i = 0; i < 26; ++i) {
+		char alpha = 97 + i; //소문자
+		char alpha2 = 65 + i; //대문자
 
-	cin >> V >> M;
+		alphaToNum[alpha] = i + 1;
+		alphaToNum[alpha2] = i + 27;
+	}
+
+	cin >> V;
+	int totalLen = 0;
+
+	for (int i = 0; i < V; ++i) {
+		string input;
+		cin >> input;
+
+		for (int j = 0; j < V; ++j) {
+			
+			//간선 존재하지 않는 경우
+			if (input[j] == '0') continue;
+
+			int len = alphaToNum[input[j]];
+			totalLen += len;
+
+			adj[i].push_back({ j, len });
+		}
+	}
 	
-	// 출구 : 0번 정점
-	// N개의 방 : 1 ~ N번 정점
-	// 따라서 총 정점의 수 = N + 1
-	V++;
+	int res = kruskal();
 
-	//워프 가중치
-	for (int i = 0; i < M; ++i) {
-		int a, b;
-		ll c;
-		cin >> a >> b >> c;
-		adj[a].push_back({ b, c });
-		adj[b].push_back({ a, c });
-	}
-
-	//비상 탈출구 가중치
-	for (int i = 1; i < V; ++i) {
-		ll t;
-		cin >> t;
-		adj[0].push_back({ i, t });
-		adj[i].push_back({ 0, t });
-	}
-
-	cout << kruskal();
+	if (res == -1) cout << "-1";
+	else cout << totalLen - res;
 
 	return 0;
 }
