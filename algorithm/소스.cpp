@@ -6,7 +6,7 @@
 using namespace std;
 
 typedef long long ll;
-const int MAX_V = 1001;
+const int MAX_V = 301;
 
 struct DisjointSet {
 	vector<int> parent, rank;
@@ -85,30 +85,30 @@ int main() {
 	//케이블의 개수
 	int K;
 
-	cin >> V >> M >> K;
+	cin >> V;
 	
-	//입력으로 주어지는 도시 1~N번
-	//발전소끼리 연결하기 위한 가상의 도시 0번
+	//입력으로 주어지는 논 1~N번
+	//논에 직접 우물을 파는 경우 연결할 가상의 정점 0번
 	//따라서 총 정점의 개수 = N + 1
 	V++;
 
-	//발전소
-	for (int i = 0; i < K; ++i) {
-		int input;
-		cin >> input;
+	//논에 우물을 팔 때 드는 비용
+	for (int i = 1; i < V; ++i) {
+		ll w;
+		cin >> w;
 
-		adj[0].push_back({ input, 0LL});
-		adj[input].push_back({0, 0LL});
+		adj[i].push_back({ 0, w });
+		adj[0].push_back({ i, w });
 	}
 
-	//케이블
-	for (int i = 0; i < M; ++i) {
-		int u, v;
-		ll w;
-		cin >> u >> v >> w;
+	//다른 논으로부터 물을 끌어오는 경우
+	for (int i = 1; i < V; ++i) {
+		for(int j = 1; j < V; ++j) {
+			ll p;
+			cin >> p;
 
-		adj[u].push_back({ v, w });
-		adj[v].push_back({ u, w });
+			adj[i].push_back({ j, p });
+		}
 	}
 
 	cout << kruskal();
