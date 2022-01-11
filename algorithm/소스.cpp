@@ -1,12 +1,18 @@
 #include <iostream>
 #include <vector>
-#include <string>
-#include <map>
+#include <cmath>
 #include <algorithm>
 using namespace std;
 
 typedef long long ll;
 const int MAX_V = 100000;
+
+//행성 구조체
+struct Planet {
+	ll x, y, z;
+	Planet(ll x, ll y, ll z) : x(x), y(y), z(z) {};
+};
+
 
 struct DisjointSet {
 	vector<int> parent, rank;
@@ -34,24 +40,28 @@ struct DisjointSet {
 	}
 };
 
-//정점의 개수
+//행성의 개수
 int V;
 
-//그래프의 인접 리스트 (연결된 정점 번호, 간선 가중치) 쌍 저장
-vector<pair<int, ll>> adj[MAX_V];
+//행성의 목록 저장
+vector<Planet> planets;
 
-//주어진 그래프에 대해 최소 스패닝 트리 가중치의 합을 반환한다.
-ll kruskal() {
+//주어진 행성들에 대해 최소 스패닝 트리 가중치의 합을 반환
+ll kruskalPlanets() {
 	ll ret = 0LL;
 
-	//<가중치, <u, v>>의 목록을 얻는다
+	//<가중치, <u, v>>의 목록 = u번째 행성과 v번째 행성 사이의 거리
 	vector<pair<ll, pair<int, int>>> edges;
 
 	for (int u = 0; u < V; ++u) {
-		for (int i = 0; i < adj[u].size(); ++i) {
-			int v = adj[u][i].first;
-			ll cost = adj[u][i].second;
-			edges.push_back({ cost, {u, v} });
+		Planet uPlanet = planets[u];
+
+		//양방향 간선이므로 모든 (u, v)쌍의 가중치를 계산하지 않아도 됨
+		for (int v = u; v < V; ++v) {
+			Planet vPlanet = planets[v];
+			
+			ll dist = min(abs(uPlanet.x - vPlanet.x), min(abs(uPlanet.y - vPlanet.y), abs(uPlanet.z - vPlanet.z)));
+			edges.push_back({ dist, {u, v} });
 		}
 	}
 	//가중치순으로 정렬
@@ -59,8 +69,6 @@ ll kruskal() {
 
 	//처음엔 모든 정점이 서로 분리되어 있다.
 	DisjointSet sets(V);
-
-	ll maxCost = -1;
 
 	for (int i = 0; i < edges.size(); ++i) {
 		ll cost = edges[i].first;
@@ -73,33 +81,26 @@ ll kruskal() {
 
 		sets.merge(u, v);
 		ret += cost;
-
-		maxCost = max(maxCost, cost);
 	}
 
-	//두 개의 마을로 분리하기 위해 MST에서 하나의 간선 삭제
-	//유지비의 최솟값을 구해야 하므로 가중치가 가장 큰 간선을 삭제한다
-	return ret - maxCost;
+	return ret;
 }
+
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 	
-	//간선의 개수
-	int M;
-	cin >> V >> M;
+	cin >> V;
 	
-	for (int i = 0; i < M; ++i) {
-		int a, b;
-		ll c;
-		cin >> a >> b >> c;
-
-		adj[a - 1].push_back({ b - 1, c });
-		adj[b - 1].push_back({ a - 1, c });
+	for (int i = 0; i < V; ++i) {
+		ll x, y, z;
+		cin >> x >> y >> z;
+		
+		planets.push_back(Planet(x, y, z));
 	}
 
-	cout << kruskal();
+	cout << kruskalPlanets();
 
 	return 0;
 }
