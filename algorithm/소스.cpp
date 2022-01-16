@@ -1,106 +1,71 @@
 #include <iostream>
 #include <vector>
-#include <cmath>
+#include <queue>
 #include <algorithm>
 using namespace std;
 
-typedef long long ll;
-const int MAX_V = 100000;
+//네트워크 유량 문제를 해결하는 포드-폴커슨 알고리즘의 구현
 
-//행성 구조체
-struct Planet {
-	ll x, y, z;
-	Planet(ll x, ll y, ll z) : x(x), y(y), z(z) {};
-};
-
-
-struct DisjointSet {
-	vector<int> parent, rank;
-	DisjointSet(int n) : parent(n), rank(n, 1) {
-		for (int i = 0; i < n; ++i)
-			parent[i] = i;
-	}
-
-	//u가 속한 트리의 루트 번호 반환
-	int find(int u) {
-		if (u == parent[u]) return u;
-		return parent[u] = find(parent[u]);
-	}
-
-	//u가 속한 트리와 v가 속한 트리를 합친다
-	void merge(int u, int v) {
-		u = find(u); v = find(v);
-
-		//u와 v가 이미 같은 트리에 속하는 경우 걸러냄
-		if (u == v) return;
-
-		if (rank[u] > rank[v]) swap(u, v);
-		parent[u] = v;
-		if (rank[u] == rank[v]) ++rank[v];
-	}
-};
-
-//행성의 개수
+const int MAX_V = 500;
+const int INF = 987654321;
 int V;
 
-//행성의 목록 저장
-vector<Planet> planets;
+//capacity[u][v] = u에서 v로 보낼 수 있는 용량
+//flow[u][v] = u에서 v로 흘러가는 유량 (반대 방향인 경우 음수)
+int capacity[MAX_V][MAX_V], flow[MAX_V][MAX_V];
 
-//주어진 행성들에 대해 최소 스패닝 트리 가중치의 합을 반환
-ll kruskalPlanets() {
-	ll ret = 0LL;
+//flow[]를 계산하고 총 유량을 반환한다.
+int networkFlow(int source, int sink) {
+	
+	//flow를 0으로 초기화한다.
+	memset(flow, 0, sizeof(flow));
+	int totalFlow = 0;
+	
+	while (true) {
+		//BFS로 증가 경로를 찾는다
+		vector<int> parent(MAX_V, -1);
+		queue<int> q;
 
-	//<가중치, <u, v>>의 목록 = u번째 행성과 v번째 행성 사이의 거리
-	vector<pair<ll, pair<int, int>>> edges;
+		parent[source] = source;
+		q.push(source);
 
-	for (int u = 0; u < V; ++u) {
-		Planet uPlanet = planets[u];
+		while (!q.empty() && parent[sink] == -1) {
+			int here = q.front();
+			q.pop();
 
-		//양방향 간선이므로 모든 (u, v)쌍의 가중치를 계산하지 않아도 됨
-		for (int v = u; v < V; ++v) {
-			Planet vPlanet = planets[v];
-			
-			ll dist = min(abs(uPlanet.x - vPlanet.x), min(abs(uPlanet.y - vPlanet.y), abs(uPlanet.z - vPlanet.z)));
-			edges.push_back({ dist, {u, v} });
+			for (int there = 0; there < V; ++there) {
+				//잔여 용량이 남아있는 간선 탐색
+				if (capacity[here][there] - flow[here][there] > 0 && parent[there] == -1) {
+					q.push(there);
+					parent[there] = here;
+				}
+			}
 		}
-	}
-	//가중치순으로 정렬
-	sort(edges.begin(), edges.end());
 
-	//처음엔 모든 정점이 서로 분리되어 있다.
-	DisjointSet sets(V);
-
-	for (int i = 0; i < edges.size(); ++i) {
-		ll cost = edges[i].first;
-		int u = edges[i].second.first;
-		int v = edges[i].second.second;
-
-		//간선 (u, v)를 검사한다.
-		//이미 u와 v가 연결되어있을 경우(사이클) 무시
-		if (sets.find(u) == sets.find(v)) continue;
-
-		sets.merge(u, v);
-		ret += cost;
+		//증가 경로가 없는 경우 종료
+		if (parent[sink] == -1) break;
+		
+		//증가 경로를 통해 유량을 얼마나 보낼지 결정한다
+		int amount = INF;
+		for (int p = sink; p != source; p = parent[p]) {
+			int r = capacity[parent[p]][p] - flow[parent[p]][p];
+			amount = min(r, amount);
+		}
+		//증가 경로를 통해 유량을 보낸다
+		for (int p = sink; p != source; p = parent[p]) {
+			flow[parent[p]][p] += amount;
+			flow[p][parent[p]] -= amount;
+		}
+		totalFlow += amount;
 	}
 
-	return ret;
+	return totalFlow;
 }
 
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-	
-	cin >> V;
-	
-	for (int i = 0; i < V; ++i) {
-		ll x, y, z;
-		cin >> x >> y >> z;
-		
-		planets.push_back(Planet(x, y, z));
-	}
-
-	cout << kruskalPlanets();
 
 	return 0;
 }
