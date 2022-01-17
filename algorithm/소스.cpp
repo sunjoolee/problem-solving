@@ -1,12 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <memory.h>
+#include <map>
 #include <algorithm>
 using namespace std;
 
 //네트워크 유량 문제를 해결하는 포드-폴커슨 알고리즘의 구현
 
-const int MAX_V = 500;
+//정점의 최대 개수 = 소문자 + 대문자
+const int MAX_V = 55;
 const int INF = 987654321;
 int V;
 
@@ -62,10 +65,37 @@ int networkFlow(int source, int sink) {
 	return totalFlow;
 }
 
-
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
+	//파이프의 개수
+	int N;
+	cin >> N;
+	
+	//파이프와 연결된 알파벳의 번호 매핑
+	V = 0;
+	map<char, int> id;
+
+	//capacity를 0으로 초기화한다.
+	memset(capacity, 0, sizeof(capacity));
+
+	for (int i = 0; i < N; ++i) {
+		char node1, node2; int capa;
+		cin >> node1 >> node2 >> capa;
+
+		if (id.find(node1) == id.end())
+			id[node1] = V++;
+		
+		if (id.find(node2) == id.end())
+			id[node2] = V++;
+		
+		//양방향 파이프
+		capacity[id[node1]][id[node2]] = capa;
+		capacity[id[node2]][id[node1]] = capa;
+	}
+
+	//A에서 Z까지 최대 유량 출력
+	cout << networkFlow(id['A'], id['Z']);
 	return 0;
 }
