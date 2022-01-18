@@ -10,7 +10,7 @@ using namespace std;
 //인접 리스트로 포드-풀커슨 알고리즘 구현하기
 
 const int INF = 987654321;
-const int MAX_V = 10000;
+const int MAX_V = 55;
 
 //정점의 개수
 int V;
@@ -93,27 +93,26 @@ int networkFlow(int source, int sink) {
 		//증가 경로를 통해 유량을 얼마나 보낼지 결정한다
 		int amount = INF;
 		for (int p = sink; p != source; p = parent[p]) {
-			for (int i = 0; i < adj[p].size(); ++i) {
-				Edge* pEdge = adj[p][i];
-				if (pEdge->target == parent[p]) {
+			for (int i = 0; i < adj[parent[p]].size(); ++i) {
+				Edge* pEdge = adj[parent[p]][i];
+				if (pEdge->target == p) {
 					amount = min(pEdge->residualCapacity(), amount);
-					break;
 				}
 			}
 		}
 
 		//증가 경로를 통해 유량을 보낸다
 		for (int p = sink; p != source; p = parent[p]) {
-			for (int i = 0; i < adj[p].size(); ++i) {
-				Edge* pEdge = adj[p][i];
-				if (pEdge->target == parent[p]) {
+			for (int i = 0; i < adj[parent[p]].size(); ++i) {
+				Edge* pEdge = adj[parent[p]][i];
+				if (pEdge->target == p) {
 					pEdge->push(amount);
-					break;
 				}
 			}
 		}
 		totalFlow += amount;
 	}
+
 	return totalFlow;
 }
 
@@ -121,6 +120,34 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
+	//파이프의 개수
+	int N;
+	cin >> N;
+
+	//파이프와 연결된 알파벳의 번호 매핑
+	V = 0;
+	map<char, int> id;
+
+	for (int i = 0; i < N; ++i) {
+		char node1, node2; 
+		int capa;
+		cin >> node1 >> node2 >> capa;
+
+		if (id.find(node1) == id.end()) {
+			id[node1] = V++;
+		}
+
+		if (id.find(node2) == id.end()) {
+			id[node2] = V++;
+		}
+
+		//양방향 파이프
+		addEdge(id[node1], id[node2], capa);
+		addEdge(id[node2], id[node1], capa);
+	}
+
+	//A에서 Z까지 최대 유량 출력
+	cout << networkFlow(id['A'], id['Z']);
 
 	return 0;
 }
