@@ -1,206 +1,80 @@
 #include <iostream>
 #include <vector>
-#include <string>
-#include <queue>
-#include <memory.h>
-#include <map>
 #include <algorithm>
 using namespace std;
 
-const int MAX_V = 40000;
-const int INF = 987654321;
-int V;
+const int MAX_N = 200;
+const int MAX_M = 200;
 
-//간선의 정보를 나타내는 구조체
-struct Edge {
-	int target, capacity, flow;
+//--------------------------------------
+//이분 매칭 문제를 해결하는 증가 경로 알고리즘
 
-	//역방향 간선의 포인터
-	Edge* reverse;
+//A와 B의 정점의 개수
+int n, m;
 
-	//이 간선의 잔여 용량을 계산한다
-	int residualCapacity() const { return capacity - flow; }
+//adj[i][j] = Ai와 Bj가 연결되어 있는가?
+bool adj[MAX_N][MAX_M];
 
-	//이 간선을 이용해 amount를 보낸다
-	void push(int amount) {
-		flow += amount;
-		reverse->flow -= amount;
+//각 정점에 매칭된 상대 정점의 번호를 저장한다
+vector<int> aMatch, bMatch;
+
+//dis()의 방문 여부
+vector<bool> visited;
+
+//A의 정점인 a에서 B의 매칭되지 않은 정점으로 가는 경로를 찾는다
+bool dfs(int a) {
+	if (visited[a]) return false;
+	visited[a] = true;
+	for (int b = 0; b < m; ++b) {
+		if (adj[a][b]) {
+			//b가 매칭되어 있지 않다면 bMatch[b]에서부터 시작해 증가 경로를 찾는다
+			if (bMatch[b] == -1 || dfs(bMatch[b])) {
+				//증가 경로 발견 -> a와 b를 매치시킨다
+				aMatch[a] = b;
+				bMatch[b] = a;
+				return true;
+			}
+		}
 	}
-};
-
-//유량 네트워크의 인접 리스트
-vector<Edge*> adj[MAX_V];
-
-//u에서 v로 가는 간선을 추가한다
-void addEdge(int u, int v, int capacity) {
-	Edge* uv = new Edge();
-	Edge* vu = new Edge();
-
-	//u에서 v로 가는 간선을 초기화한다
-	uv->target = v;
-	uv->capacity = capacity;
-	uv->flow = 0;
-	uv->reverse = vu;
-
-	//v에서 u로 가는 간선을 초기화한다 (유령 간선)
-	vu->target = u;
-	vu->capacity = 0;
-	vu->flow = 0;
-	vu->reverse = uv;
-
-	adj[u].push_back(uv);
-	adj[v].push_back(vu);
+	return false;
 }
 
-
-int networkFlow(int source, int sink) {
-
-	int totalFlow = 0;
-
-	while (true) {
-		//BFS로 증가 경로를 찾는다
-		vector<int> parent(MAX_V, -1);
-		queue<int> q;
-
-		parent[source] = source;
-		q.push(source);
-
-		while (!q.empty() && parent[sink] == -1) {
-
-			int here = q.front();
-			q.pop();
-
-			for (int i = 0; i < adj[here].size(); ++i) {
-				Edge* hereToThere = adj[here][i];
-				int there = hereToThere->target;
-
-				//잔여 용량이 남아있는 간선 탐색
-				if (hereToThere->residualCapacity() > 0 && parent[there] == -1) {
-					q.push(there);
-					parent[there] = here;
-				}
-			}
-		}
-
-		//증가 경로가 없는 경우 종료
-		if (parent[sink] == -1) break;
-
-		//증가 경로를 통해 유량을 얼마나 보낼지 결정한다
-		int amount = INF;
-		for (int p = sink; p != source; p = parent[p]) {
-			for (int i = 0; i < adj[parent[p]].size(); ++i) {
-				Edge* pEdge = adj[parent[p]][i];
-				if (pEdge->target == p) {
-					amount = min(pEdge->residualCapacity(), amount);
-				}
-			}
-		}
-
-		//증가 경로를 통해 유량을 보낸다
-		for (int p = sink; p != source; p = parent[p]) {
-			for (int i = 0; i < adj[parent[p]].size(); ++i) {
-				Edge* pEdge = adj[parent[p]][i];
-				if (pEdge->target == p) {
-					pEdge->push(amount);
-				}
-			}
-		}
-		totalFlow += amount;
+//aMatch, bMatch 배열을 계산하고 최대 매칭의 크기를 반환한다
+int bipartiteMatch(){
+	//처음에는 어떤 정점도 연결되어 있지 않다
+	aMatch = vector<int>(n, -1);	
+	bMatch = vector<int>(m, -1);
+	
+	int size = 0;
+	for (int start = 0; start < n; ++start) {
+		visited = vector<bool>(n, false);
+		//깊이 우선 탐색을 통해 start에서 시작하는 증가 경로를 찾는다
+		if (dfs(start))
+			++size;
 	}
-
-	return totalFlow;
-}
-
-
-//도시 크기
-int R, W;
-
-//인접한 좌표 계산을 위한 배열
-const int rDir[4] = { 1, -1, 0, 0 };
-const int wDir[4] = { 0, 0, 1, -1 };
-
-bool inRange(int r, int w) {
-	if (r < 0 || r >= R) return false;
-	if (w < 0 || w >= W) return false;
-	return true;
+	return size;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	cin >> R >> W;
+	memset(adj, 0, sizeof(adj));
 
-	//도시
-	vector<string> city;
+	cin >> n >> m;
 
-	//도시의 정점를 in, out 정점으로 쪼갠다
-	//도시~도시 연결 간선 = 가중치 INF, 양방향 간선
-	//in->out 연결 간선 = 가중치 1, 단방향 간선
-
-	//정점의 번호 짝수 = 도시의 좌표의 번호 & 도시의 정점로 들어가는 in 정점의 번호
-	//정점의 번호 홀수 = 도시의 정점에서 나오는 out 정점의 번호
-	V = 0;
-	vector<vector<int>> id(200, vector<int>(200, -1));
-
-	//도현의 좌표의 아이디 기억하기
-	int sId;
-	//학교의 좌표의 아이디 기억하기
-	int tId;
-
-	for (int i = 0; i < R; ++i) {
-		string input;
-		cin >> input;
-		city.push_back(input);
-
-		//모든 도시의 좌표를 순회하며 도시의 좌표에 번호 붙이기 
-		//해당 좌표 정점을 쪼개어 in->out 간선 만들기
-
-		for (int j = 0; j < W; ++j) {
-			if (city[i][j] != '#') {
-				id[i][j] = V;
-				V += 2;
-
-				//in -> out 간선 추가
-				addEdge(id[i][j], id[i][j] + 1, 1);
-			}
-			if (city[i][j] == 'K') sId = id[i][j];
-			if (city[i][j] == 'H') tId = id[i][j];
+	for (int i = 0; i < n; ++i) {
+		int num;
+		cin >> num;
+		
+		for (int j = 0; j < num; ++j) {
+			int input;
+			cin >> input;
+			adj[i][input-1] = 1;
 		}
 	}
 
-
-	//모든 칸에 대해 인접한 칸을 순회하며 간선을 연결한다 
-	for (int i1 = 0; i1 < R; ++i1) {
-		for (int j1 = 0; j1 < W; ++j1) {
-
-			if (city[i1][j1] != '#') {
-
-				for (int k = 0; k < 4; ++k) {
-					int i2 = i1 + rDir[k];
-					int j2 = j1 + wDir[k];
-
-					if (inRange(i2, j2) && city[i2][j2] != '#') {
-
-						//예외 처리 -> 도현과 학교 인접한 경우
-						if ((id[i1][j1] == sId && id[i2][j2] == tId) || (id[i1][j1] == tId && id[i2][j2] == sId)) {
-							cout << -1;
-							return 0;
-						}
-
-						//(i1, j1)out ~ (i2, j2)in 간선 추가
-						addEdge(id[i1][j1] + 1, id[i2][j2], INF);
-						//(i2, j2)out ~ (i1, j1)in 간선 추가
-						addEdge(id[i2][j2] + 1, id[i1][j1], INF);
-					}
-				}
-			}
-		}
-
-	}
-
-	//도현 좌표 out -> 학교 좌표 in 경로
-	cout << networkFlow(sId + 1, tId);
+	cout << bipartiteMatch();
 
 	return 0;
 }
