@@ -16,33 +16,57 @@ int V;
 //flow[u][v] = u에서 v로 흘러가는 유량 (반대 방향인 경우 음수)
 int cost[MAX_V][MAX_V], capacity[MAX_V][MAX_V], flow[MAX_V][MAX_V];
 
-//flow[]를 계산하고 총 유량과 그 비용을 반환한다.
+
 int networkFlow(int source, int sink) {
 	
 	//flow를 0으로 초기화한다.
 	memset(flow, 0, sizeof(flow));
 	int totalFlow = 0;
+
+	//총 배송비
+	int totalCost = 0;
+	
 	
 	while (true) {
+
 		//BFS로 증가 경로를 찾는다
+		//dist[i][j] : i->j 경로의 최소 비용
+
 		vector<int> parent(MAX_V, -1);
+		vector<int> dist(MAX_V, INF);
+		vector<bool> inQ(MAX_V, false);
 		queue<int> q;
 
 		parent[source] = source;
+		dist[source] = 0;
+
 		q.push(source);
+		inQ[source] = true;
 
 		while (!q.empty() && parent[sink] == -1) {
 			int here = q.front();
 			q.pop();
+			inQ[here] = false;
 
 			for (int there = 0; there < V; ++there) {
 				//잔여 용량이 남아있는 간선 탐색
 				if (capacity[here][there] - flow[here][there] > 0 && parent[there] == -1) {
-					q.push(there);
-					parent[there] = here;
+					
+					//최소 비용 계산
+					if (dist[here] + cost[here][there] < dist[there]) {
+						dist[there] = dist[here] + cost[here][there];
+
+						parent[there] = here;
+
+						if (!inQ[there]) {
+							q.push(there);
+							inQ[there] = true;
+						}
+					}
 				}
 			}
 		}
+
 
 		//증가 경로가 없는 경우 종료
 		if (parent[sink] == -1) break;
@@ -57,11 +81,14 @@ int networkFlow(int source, int sink) {
 		for (int p = sink; p != source; p = parent[p]) {
 			flow[parent[p]][p] += amount;
 			flow[p][parent[p]] -= amount;
+
+			//보내는 경로의 배송비 계산
+			totalCost += amount * cost[parent[p]][p];
 		}
 		totalFlow += amount;
 	}
 
-	return totalFlow;
+	return totalCost;
 }
 
 
@@ -83,10 +110,10 @@ int main() {
 	//점점 수 = 사람 수 + 서점 수 + source + sink
 	V = N + M + 2;
 
-	//cost, capacity INF로 초기화
 	for (int i = 0; i < V; ++i) {
 		for (int j = 0; j < V; ++j) {
-			cost[i][j] = capacity[i][j] = INF;
+			cost[i][j] = 0;
+			capacity[i][j] = INF;
 		}
 	}
 
@@ -94,13 +121,11 @@ int main() {
 	//= 사람 -> sink 간선의 용량
 	for (int i = 0; i < N; ++i) {
 		cin >> capacity[1 + M + i][M+N+1];
-		cost[1 + M + i][M + N + 1] = 0;
 	}
 	//서점이 가지고 있는 책의 수
 	//= source -> 서점 간선의 용량
 	for (int i = 0; i < M; ++i) {
 		cin >> capacity[0][1 + i];
-		cost[0][1 + i] = 0;
 	}
 
 	//서점 i -> 사람 j 로 보내는 배송비
