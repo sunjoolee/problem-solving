@@ -10,7 +10,7 @@ using namespace std;
 //인접 리스트로 포드-풀커슨 알고리즘 구현하기
 
 const int INF = 987654321;
-const int MAX_V = 55;
+const int MAX_V = 60;
 
 //정점의 개수
 int V;
@@ -46,10 +46,9 @@ void addEdge(int u, int v, int capacity) {
 	uv->flow = 0;
 	uv->reverse = vu;
 
-	//v에서 u로 가는 간선을 초기화한다
-	//이 간선은 용량이 0인 유령 간선이다
+	//v에서 u로 가는 간선을 초기화한다 (양방향 간선)
 	vu->target = u;
-	vu->capacity = 0;
+	vu->capacity = capacity;
 	vu->flow = 0;
 	vu->reverse = uv;
 
@@ -128,6 +127,10 @@ int main() {
 	V = 0;
 	map<char, int> id;
 
+	//만들어야할 간선의 정보 저장
+	int makeEdge[MAX_V][MAX_V];
+	memset(makeEdge, 0, sizeof(makeEdge));
+
 	for (int i = 0; i < N; ++i) {
 		char node1, node2; 
 		int capa;
@@ -136,14 +139,21 @@ int main() {
 		if (id.find(node1) == id.end()) {
 			id[node1] = V++;
 		}
-
 		if (id.find(node2) == id.end()) {
 			id[node2] = V++;
 		}
 
-		//양방향 파이프
-		addEdge(id[node1], id[node2], capa);
-		addEdge(id[node2], id[node1], capa);
+		if(id[node1] <= id[node2]) makeEdge[id[node1]][id[node2]] += capa;
+		else makeEdge[id[node2]][id[node1]] += capa;
+	}
+
+
+	//간선 만들기
+	for (int i = 0; i < V; ++i) {
+		for (int j = i; j < V; ++j) {
+			//양방향 파이프
+			addEdge(i, j, makeEdge[i][j]);
+		}
 	}
 
 	//A에서 Z까지 최대 유량 출력
