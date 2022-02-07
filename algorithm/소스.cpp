@@ -1,58 +1,39 @@
 #include <string>
 #include <vector>
-#include <set>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
-set<int> ans; 
-vector<string> user_id_g;
-vector<string> banned_id_g;
+const int MAX_VAL = 2000000000;
 
-int bitCount(int x) {
-	if (x == 0) return 0;
-	return (x % 2) + bitCount(x / 2);
-}
-
-
-bool match(string a, string b) {
-	if (a.length() != b.length()) return false;
-
-	for (int i = 0; i < a.length(); ++i) {
-		if (a[i] == '*' || b[i] == '*') continue;
-		if (a[i] != b[i]) return false;
-	}
-	return true;
-}
-
-void dp(int banned_index, int bitmask) {
-	if (banned_id_g.size() == banned_index) {
-		if (bitCount(bitmask) == banned_id_g.size()) {
-			ans.insert(bitmask);
-		}
-		return;
-	}
-
-	for (int i = 0; i < user_id_g.size(); ++i) {
-		if (match(user_id_g[i], banned_id_g[banned_index])) {
-			if ((bitmask & (1 << i)) == 0) {
-				dp(banned_index + 1, bitmask | (1 << i));
-			}
-		}
-	}
-}
-
-int solution(vector<string> user_id, vector<string> banned_id) {
-	user_id_g = user_id;
-	banned_id_g = banned_id;
-
+int solution(vector<int> stones, int k) {
 	int answer = 0;
 
-	dp(0, 0);
-	answer = ans.size();
+	int minVal = MAX_VAL;
+	for (int i = 0; i <= stones.size() - k; ++i) {		
+		int maxVal = 0;
+		for (int j = 0; j < k; ++j) {
+			maxVal = max(maxVal, stones[i + j]);
+		}
+		minVal = min(minVal, maxVal);
+	}
+	answer = minVal;
 
 	return answer;
 }
 
+int main() {
+	vector<int> a;
+	for (int i = 0; i < 10; ++i) {
+		int input;
+		cin >> input;
+		a.push_back(input);
+	}
 
+	int k;
+	cin >> k;
+
+	cout << solution(a, k);
+}
 
