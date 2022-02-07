@@ -1,53 +1,58 @@
 #include <string>
 #include <vector>
+#include <set>
 #include <iostream>
-#include <algorithm>
+
 using namespace std;
 
-const int MAX_SIZE = 100005;
+set<int> ans; 
+vector<string> user_id_g;
+vector<string> banned_id_g;
 
-//해당 숫자가 집합에 몇 번 포함되었는지 저장
-int arr[MAX_SIZE] = { 0 };
-
-bool cmp(int i, int j) {
-	return j < i;
+int bitCount(int x) {
+	if (x == 0) return 0;
+	return (x % 2) + bitCount(x / 2);
 }
 
-vector<int> solution(string s) {
-	//가장 최대 중복 횟수 = 튜플의 길이
-	int numMax = 0;
 
-	string num = "";
-	for (int i = 0; i < s.length(); ++i) {
-		char ch = s[i];
+bool match(string a, string b) {
+	if (a.length() != b.length()) return false;
 
-		if (ch == '{' || ch == '"') continue;
-		else if (ch == ',' || ch == '}') {
-			if (num == "") continue;
-			
-			int pos = stoi(num);
-			arr[pos]++;
-			if (numMax < arr[pos]) numMax = arr[pos];
-			num = "";
+	for (int i = 0; i < a.length(); ++i) {
+		if (a[i] == '*' || b[i] == '*') continue;
+		if (a[i] != b[i]) return false;
+	}
+	return true;
+}
+
+void dp(int banned_index, int bitmask) {
+	if (banned_id_g.size() == banned_index) {
+		if (bitCount(bitmask) == banned_id_g.size()) {
+			ans.insert(bitmask);
 		}
-		else num += ch;
+		return;
 	}
 
-	vector<int> answer(numMax, 0);
-	for (int i = 0; i < MAX_SIZE; ++i) {
-		if (arr[i] == 0) continue;
-		answer[arr[i] - 1] = i;
+	for (int i = 0; i < user_id_g.size(); ++i) {
+		if (match(user_id_g[i], banned_id_g[banned_index])) {
+			if ((bitmask & (1 << i)) == 0) {
+				dp(banned_index + 1, bitmask | (1 << i));
+			}
+		}
 	}
-	reverse(answer.begin(), answer.end());
+}
+
+int solution(vector<string> user_id, vector<string> banned_id) {
+	user_id_g = user_id;
+	banned_id_g = banned_id;
+
+	int answer = 0;
+
+	dp(0, 0);
+	answer = ans.size();
 
 	return answer;
 }
 
-int main() {
-	string input;
-	cin >> input;
 
-	solution(input);
-
-}
 
