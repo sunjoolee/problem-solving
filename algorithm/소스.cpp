@@ -1,42 +1,61 @@
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <math.h>
+#include <algorithm>
 
 using namespace std;
 
-// k는 1 이상 10^12 이하인 자연수
-// k가 클 경우, ull 타입의 bitmask로 모든 방을 표현할 수 없음!
-
 typedef long long ll;
-typedef unsigned long long ull;
+
+//parent[i]: i번보다 번호가 크고, 배정 가능한 방 중 가장 번호가 작은 방의 번호
+//parent[i] = i일 경우 방 배정 가능 -> 방 배정 후 parent[i] = i+1
+vector<ll> parent;
+
+
+//u가 속한 트리의 루트 번호 반환
+int find(int u) {
+	//부모가 자기 자신을 가리키는 경우 u는 루트 노드
+	if (u == parent[u]) return u;
+
+	//경로 압축(path compression) 최적화 구현
+	return parent[u] = find(parent[u]);
+}
 
 vector<ll> solution(ll k, vector<ll> room_number) {
 	vector<ll> answer;
 
-	ull bitmask = (1 << k) - 1;
-
+	for (ll i = 0; i < k; ++i)
+		parent[i] = i;
+	
 	for (int i = 0; i < room_number.size(); ++i) {
-		ll room = room_number[i] - 1;
-
-		//bitmask에 room번째 원소 포함 여부 확인
-		if (bitmask & (1 << room)) {
-			answer.push_back(room + 1);
-			//room번째 원소 삭제
-			bitmask &= ~(1 << room);
+		ll roomNum = room_number[i] - 1;
+		
+		if (parent[roomNum] == roomNum) {
+			answer.push_back(roomNum + 1);
+			parent[roomNum] = roomNum + 1;
 		}
 		else {
-			// 원하는 방보다 번호가 크면서 비어있는 방 중 가장 번호가 작은 방
-			ull mask = bitmask & -(1 << room);
-			ll room2 = log2(mask & (~mask + 1));
-
-			answer.push_back(room2 + 1);
-			//room2번째 원소 삭제
-			bitmask &= ~(1 << room2);
+			ll availableNum = find(roomNum);
+			answer.push_back(availableNum + 1);
+			parent[availableNum] = availableNum + 1;
 		}
-
 	}
 
 	return answer;
+}
+
+int main() {
+	ll k;
+	vector<ll> room_number;
+	
+	cin >> k;
+	for (int i = 0; i < 6; ++i) {
+		ll n;
+		cin >> n;
+		room_number.push_back(n);
+	}
+
+	solution(k, room_number);
+	return 0;
 }
 
