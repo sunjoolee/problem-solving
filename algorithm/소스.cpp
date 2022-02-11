@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <algorithm>
 
 using namespace std;
@@ -9,7 +10,7 @@ typedef long long ll;
 
 //parent[i]: i번보다 번호가 크고, 배정 가능한 방 중 가장 번호가 작은 방의 번호
 //parent[i] = i일 경우 방 배정 가능 -> 방 배정 후 parent[i] = i+1
-vector<ll> parent;
+unordered_map<ll, ll> parent;
 
 
 //u가 속한 트리의 루트 번호 반환
@@ -25,7 +26,7 @@ vector<ll> solution(ll k, vector<ll> room_number) {
 	vector<ll> answer;
 
 	for (ll i = 0; i < k; ++i)
-		parent[i] = i;
+		parent.insert({ i, i });
 	
 	for (int i = 0; i < room_number.size(); ++i) {
 		ll roomNum = room_number[i] - 1;
