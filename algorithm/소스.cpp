@@ -2,19 +2,18 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include <memory.h>
 
 using namespace std;
 
 const int MAX_N = 25;
 const int INF = 987654321;
 
-
-//메모이제이션
-int arr[25][25][4];
-
 vector<vector<int>> boardG;
 int N;
+
+//메모이제이션
+int arr[MAX_N][MAX_N][4];
+
 
 //방향 0, 1, 2, 3
 int dirR[4] = { 1, -1, 0, 0 };
@@ -56,23 +55,32 @@ int getMinCost(int curR, int curW, int prevDir) {
 	return minCost;
 }
 
+void clearArr() {
+	for (int i = 0; i < 25; ++i) {
+		for (int j = 0; j < 25; ++j) {
+			for (int k = 0; k < 4; ++k) {
+				arr[i][j][k] = -1;
+			}
+		}
+	}
+}
+
 int solution(vector<vector<int>> board) {
 	N = board.size();
 	boardG = board;
 
 	int answer = INF;
 	if (boardG[1][0] == 0) {
-		memset(arr, -1, sizeof(arr));
+		clearArr();
 		answer = min(answer, 100 + getMinCost(1, 0, 0));
 	}
 	if (boardG[0][1] == 0) {
-		memset(arr, -1, sizeof(arr));
+		clearArr();
 		answer = min(answer, 100 + getMinCost(0, 1, 3));
 	}
+
 	return answer;
 }
-
-
 
 int main() {
 	vector<vector<int>> in(4, vector<int> (4, 1));
