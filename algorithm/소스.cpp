@@ -1,97 +1,88 @@
 #include <string>
 #include <vector>
-#include <list>
-#include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <memory.h>
 
 using namespace std;
 
-typedef long long ll;
+const int MAX_N = 25;
+const int INF = 987654321;
 
-list<string> calcList(list <string> exp, string op) {
-	for (auto it = exp.begin(); it != exp.end(); ++it) {
-		if (*it == op) {
-			auto prevIt = --it;
-			++it;
-			auto nextIt = ++it;
-			--it;
 
-			ll num1 = stoi(*prevIt);
-			ll num2 = stoi(*nextIt);
-			
-			exp.erase(prevIt);
-			exp.erase(nextIt);
+//메모이제이션
+int arr[25][25][4];
 
-			//연산 결과
-			ll num3;
-			if (op == "*") num3 = num1 * num2;
-			if (op == "+") num3 = num1 + num2;
-			if (op == "-") num3 = num1 - num2;
+vector<vector<int>> boardG;
+int N;
 
-			//연산자 위치 앞에 연산 결과 삽입
-			exp.insert(it, to_string(num3));
-			
-			//연산자 삭제
-			it = exp.erase(it);
-			--it;
-		}
-	}
+//방향 0, 1, 2, 3
+int dirR[4] = { 1, -1, 0, 0 };
+int dirW[4] = { 0, 0, 1, -1 };
 
-	return exp;
+bool inRange(int r, int w) {
+	if (r < 0 || r >= N) return false;
+	if (w < 0 || w >= N) return false;
+	return true;
 }
 
-ll calcAnswer(list <string> exp, char op1, char op2, char op3) {
+//(curR, curW) -> (N-1, N-1) 이동 최소 비용 반환
+//curDir : 현재 이동해온 방향 (0, 1, 2, 3)
+int getMinCost(int curR, int curW, int prevDir) {
 
-	exp = calcList(exp, string(1, op1));
-	exp = calcList(exp, string(1, op2));
-	exp = calcList(exp, string(1, op3));
-	
-	if (exp.size() != 1) return 0;
+	//목적지 도착
+	if (curR == N - 1 && curW == N - 1) {
+		return 0;
+	}
 
-	return abs(stol(exp.front()));
+	int& minCost = arr[curR][curW][prevDir];
+	if (minCost != -1) {
+		return arr[curR][curW][prevDir];
+	}
+	minCost = INF;
+
+	//현재 위치에서 이동 가능한 방향 파악
+	for (int dir = 0; dir < 4; ++dir) {
+		int nextR = curR + dirR[dir];
+		int nextW = curW + dirW[dir];
+		if (inRange(nextR, nextW) == false || boardG[nextR][nextW] == 1) continue;
+
+		if (dir == prevDir)
+			minCost = min(minCost, 100 + getMinCost(nextR, nextW, dir));
+		else
+			minCost = min(minCost, 600 + getMinCost(nextR, nextW, dir));
+	}
+
+	return minCost;
 }
 
-ll solution(string expression) {
-	ll answer = 0;
+int solution(vector<vector<int>> board) {
+	N = board.size();
+	boardG = board;
 
-	list <string> exp;
-
-	//주어진 수식 list로 변환
-	string num = "";
-	for (int i = 0; i < expression.length(); ++i) {
-		char ch = expression[i];
-
-		if (ch == '+' || ch == '-' || ch == '*') {
-			if (num != "") {
-				exp.push_back(num);
-				num = "";
-			}
-
-			exp.push_back(string(1, ch));
-		}
-		else num += ch;
+	int answer = INF;
+	if (boardG[1][0] == 0) {
+		memset(arr, -1, sizeof(arr));
+		answer = min(answer, 100 + getMinCost(1, 0, 0));
 	}
-	if (num != "") exp.push_back(num);
-
-	//각 우선순위에 따른 결괏값의 최댓값 구하기
-	// + > - > *
-	answer = max(answer, calcAnswer(exp, '+', '-', '*'));
-	answer = max(answer, calcAnswer(exp, '+', '*', '-'));
-	answer = max(answer, calcAnswer(exp, '-', '+', '*'));
-	answer = max(answer, calcAnswer(exp, '-', '*', '+'));
-	answer = max(answer, calcAnswer(exp, '*', '-', '+'));
-	answer = max(answer, calcAnswer(exp, '*', '+', '-'));
-
+	if (boardG[0][1] == 0) {
+		memset(arr, -1, sizeof(arr));
+		answer = min(answer, 100 + getMinCost(0, 1, 3));
+	}
 	return answer;
 }
 
+
+
 int main() {
+	vector<vector<int>> in(4, vector<int> (4, 1));
 
-	string expression;
-	cin >> expression;
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			cin >> in[i][j];
+		}
+	}
 
-	solution(expression);
+	cout << solution(in);
 
-	return 0;
 }
