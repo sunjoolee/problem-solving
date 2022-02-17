@@ -1,92 +1,88 @@
 #include <string>
 #include <vector>
-#include <queue>
-#include <map>
+#include <cmath>
+#include <deque>
 #include <algorithm>
-#include <iostream>
 
 using namespace std;
 
-const int MAX_N = 25;
-const int INF = 987654321;
+typedef long long ll;
 
-int N;
+deque<string> calcList(deque<string> exp, string op) {
 
-//방향 0, 1, 2, 3
-int dirR[4] = { 1, -1, 0, 0 };
-int dirW[4] = { 0, 0, 1, -1 };
+	deque <string> resultExp;
 
-bool inRange(int r, int w) {
-	if (r < 0 || r >= N) return false;
-	if (w < 0 || w >= N) return false;
-	return true;
-}
+	while(!exp.empty()) {
 
-//curR, curW, prevDir
-typedef pair<pair<int, int>, int> pos;
+		string top = exp.front();
+		exp.pop_front();
 
-int solution(vector<vector<int>> board) {
-	N = board.size();
-
-	queue<pair<pos, int>> q;
-	q.push({ {{0, 0}, 0 }, 0 });
-
-	map <pos, int> visitedCost;
-	visitedCost[{ {0, 0}, 0 }] = 0;
-
-	while (!q.empty()) {
-
-		pos curPos = q.front().first;
-		int curCost = q.front().second;
-		q.pop();
-
-		//이미 방문한 좌표인 경우, 최단 경로인지 확인
-		if (visitedCost.find(curPos) != visitedCost.end()) {
-			if (visitedCost[curPos] < curCost)
-				continue;
+		//원하는 연산자가 아닌 경우
+		if (top != op) {
+			resultExp.push_back(top);
+			continue;
 		}
-		visitedCost[curPos] = curCost;
 
+		//원하는 연산자인 경우 
+		ll num1 = stol(resultExp.back());
+		resultExp.pop_back();
+		ll num2 = stol(exp.front());
+		exp.pop_front();
 
-		//현재 위치에서 이동 가능한 방향 확인
-		int curR = curPos.first.first;
-		int curW = curPos.first.second;
-		int prevDir = curPos.second;
+		//연산 결과
+		ll num3;
+		if (op == "*") num3 = num1 * num2;
+		if (op == "+") num3 = num1 + num2;
+		if (op == "-") num3 = num1 - num2;
 
-		for (int dir = 0; dir < 4; ++dir) {
-			int nextR = curR + dirR[dir];
-			int nextW = curW + dirW[dir];
-
-			if (inRange(nextR, nextW) == false || board[nextR][nextW] == 1) continue;
-
-			pos nextPos = { {nextR, nextW}, dir };
-			int nextCost;
-
-			//온 방향과 갈 방향이 일치하는지 확인
-			//현재 위치 (0,0)인 경우 온 방향 체크 X
-			if ((dir == prevDir) || (curR == 0 && curW == 0))
-				nextCost = 100 + curCost;
-			else
-				nextCost = 600 + curCost;
-
-			//이미 방문한 좌표인 경우, 최단 경로인지 확인
-			if (visitedCost.find(nextPos) != visitedCost.end()) {
-				if (visitedCost[nextPos] < nextCost) 
-					continue;
-			}
-			q.push({ nextPos, nextCost });
-			visitedCost[nextPos] = nextCost;
-		}
+		resultExp.push_back(to_string(num3));
 	}
 
-	int res = INF;
-	if (visitedCost.find({ {N - 1, N - 1}, 0 }) != visitedCost.end())
-		res = min(res, visitedCost[{ {N - 1, N - 1}, 0}]);
-	if (visitedCost.find({ {N - 1, N - 1}, 1 }) != visitedCost.end())
-		res = min(res, visitedCost[{ {N - 1, N - 1}, 1}]);
-	if (visitedCost.find({ {N - 1, N - 1}, 2 }) != visitedCost.end())
-		res = min(res, visitedCost[{ {N - 1, N - 1}, 2}]);
+	return resultExp;
+}
 
-	return res;
+ll calcAnswer(deque <string> exp, char op1, char op2, char op3) {
+
+	exp = calcList(exp, string(1, op1));
+	exp = calcList(exp, string(1, op2));
+	exp = calcList(exp, string(1, op3));
+		
+	if (exp.size() != 1) return 0;
+	
+	return abs(stol(exp.front()));
+}
+
+ll solution(string expression) {
+	ll answer = 0;
+
+	deque <string> exp;
+
+	//주어진 수식 deque로 변환
+	string num = "";
+	for (int i = 0; i < expression.length(); ++i) {
+		char ch = expression[i];
+
+		if (ch == '+' || ch == '-' || ch == '*') {
+			if (num != "") {
+				exp.push_back(num);
+				num = "";
+			}
+
+			exp.push_back(string(1, ch));
+		}
+		else num += ch;
+	}
+	if (num != "") exp.push_back(num);
+
+	//각 우선순위에 따른 결괏값의 최댓값 구하기
+	// + > - > *
+	answer = max(answer, calcAnswer(exp, '+', '-', '*'));
+	answer = max(answer, calcAnswer(exp, '+', '*', '-'));
+	answer = max(answer, calcAnswer(exp, '-', '+', '*'));
+	answer = max(answer, calcAnswer(exp, '-', '*', '+'));
+	answer = max(answer, calcAnswer(exp, '*', '-', '+'));
+	answer = max(answer, calcAnswer(exp, '*', '+', '-'));
+
+	return answer;
 }
 
