@@ -1,162 +1,112 @@
 #include <iostream>
-#include <vector>
-#include <map>
-#include <set>
+#include <queue>
 #include <string>
+#include <map>
+#include <vector>
 #include <algorithm>
 using namespace std;
 
-typedef long long ull;
 
-const int INF = 987654321;
+bool solution(int n, vector<vector<int>> path, vector<vector<int>> order) {
+	bool answer;
 
-//N: 보석 진열대의 길이
-int N;
+	//양방향 길 
+	vector<vector<int>> bidirPath(n, vector<int>());
 
-//보석 진열대
-vector<string> arr;
+	for (int i = 0; i < path.size(); ++i) {
+		for (int j = 0; j < path[i].size(); ++j) {
+			int u = i;
+			int v = path[i][j];
 
-//보석 숫자 매핑
-map<string, int> gemToInt;
-
-struct SegmentTree {
-	vector<ull> tree;
-
-	//보석 진열대 구간 내 보석의 종류
-	ull merge(ull left, ull right) {
-		return left | right;
-	}
-
-	//---------------------------------------
-
-	//node: Segment Tree의 노드의 번호
-	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
-
-	ull buildRecursive(int node, int nodeLeft, int nodeRight) {
-
-		//리프노드에 도달한 경우
-		if (nodeLeft == nodeRight) {
-			return tree[node] = (0LL | (1 << gemToInt[arr[nodeLeft]]));
-		}
-
-		//리프노드가 아닌 경우 구간 반으로 나누어 Recursive call
-		//노드의 구간의 오른쪽 반: 노드의 오른쪽 자식이 저장
-		//노드의 구간의 왼쪽 반: 노드의 왼쪽 자식이 저장
-
-		int mid = (nodeLeft + nodeRight) / 2;
-		ull leftVal = buildRecursive(node * 2, nodeLeft, mid);
-		ull rightVal = buildRecursive(node * 2 + 1, mid + 1, nodeRight);
-
-		return tree[node] = merge(leftVal, rightVal);
-	}
-
-	void build() {
-		tree.resize(N * 4);
-		//루트 노드부터 제귀적으로 빌드
-		buildRecursive(1, 0, N - 1);
-	}
-
-	//---------------------------------------
-
-	//left ~ right: 쿼리의 구간
-	//node: Segment Tree의 노드의 번호
-	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
-
-	ull queryRecursive(int left, int right, int node, int nodeLeft, int nodeRight) {
-
-		//쿼리의 구간에 포함되지 않는 구간인 경우 default 값 반환 
-		//default 값은 merge 연산에 따라 다르다
-		if (right < nodeLeft || nodeRight < left) {
-			return 0LL;
-		}
-
-		//쿼리의 구간에 포함되는 구간인 경우
-		if (left <= nodeLeft && nodeRight <= right)
-			return tree[node];
-
-		//쿼리의 구간에 부분적으로 포함되는 구간인 경우
-		//구간 반으로 나누어 Recursive call
-		int mid = (nodeLeft + nodeRight) / 2;
-		ull leftVal = queryRecursive(left, right, node * 2, nodeLeft, mid);
-		ull rightVal = queryRecursive(left, right, node * 2 + 1, mid + 1, nodeRight);
-
-		return merge(leftVal, rightVal);
-	}
-
-	ull query(int left, int right) {
-		// 루트 노드부터 제귀적으로 쿼리 구간의 합 계산
-		return queryRecursive(left, right, 1, 0, N - 1);
-	}
-
-};
-
-vector<int> solution(vector<string> gems) {
-	vector<int> answer;
-
-	//전역 변수 초기화
-	N = gems.size();
-	arr = gems;
-
-	//보석 종류 숫자 매핑
-	int gemId = 0;
-	for (int i = 0; i < gems.size(); ++i) {
-		if (gemToInt.find(gems[i]) == gemToInt.end()) {
-			gemToInt[gems[i]] = gemId;
-			gemId++;
+			bidirPath[u].push_back(v);
+			bidirPath[v].push_back(u);
 		}
 	}
-	//총 보석의 개수
-	int totalGems = gemId;
 
-	//구간 별 포함된 보석의 종류를 비트마스크로 저장한 세그먼트 트리
-	SegmentTree segmentTree;
-	segmentTree.build();
+	//first -> second 순서로 방문해야하는 경우
+	//reverseOrderMap[second] = first
+	map<int, int> reverseOrderMap;
 
+	for (int i = 0; i < order.size(); ++i) {
+		for (int j = 0; j < order[i].size(); ++j) {
+			int first = i;
+			int second = order[i][j];
+			reverseOrderMap[second] = first;
+		}
+	}
+
+	//bfs로 트리 연결
+	queue <int> q;
+	vector<int> visited(n, 0);
 	
-	//가능한 진열대 구간의 길이 이분 탐색
-	int lo = 0, hi = gems.size() + 1;
+	//bfs 반복 횟수
+	int trial = 1;
 
-	int minLen = INF;
-	int minStart = INF;
+	while (true) {
+		bool noChange = true;
 
-	while (lo + 1 < hi) {
-		int mid = (lo + hi) / 2;
+		q.push(0);
+		while (!q.empty()) {
+			int cur = q.front();
+			q.pop();
 
-		bool flag = false;
-		for (int start = 0; start + mid - 1 < gems.size(); ++start) {
+			if (visited[cur] == trial) continue;
+			visited[cur] = trial;
 
-			ull bitmask = segmentTree.query(start, start + mid - 1);
+			for (int i = 0; i < bidirPath[cur].size(); ++i) {
+				int next = bidirPath[cur][i];
 
-			if ( bitmask == ((1LL << totalGems) - 1)) {
-				flag = true;
+				//이미 방문한 노드인지 확인
+				if (visited[next]!= trial){
 
-				if (minLen >= mid) {
-					minLen = mid;
-					minStart = start;
-					break;
+					//먼저 방문해야 할 정점이 방문 되었는지 확인
+					if ((reverseOrderMap.find(next) != reverseOrderMap.end()) && (visited[reverseOrderMap[next]] == 0)) 
+						continue;
+
+					//trial번째 bfs에서 처음으로 방문한 경우 
+					if(visited[next] == 0) noChange = false;
+					
+					q.push(next);
 				}
 			}
 		}
 
-		if (flag) hi = mid;
-		else lo = mid;
-	}
+		trial++;
 
-	answer.push_back(minStart + 1);
-	answer.push_back(minStart + minLen);
+		if (noChange) {
+			answer = true;
+
+			//모든 정점 순회 여부 확인
+			for (int i = 0; i < n; ++i) {
+				if (visited[i] == 0) {
+					answer = false;
+				}
+			}
+
+			break;
+		}
+	}
 
 	return answer;
 }
 
 int main() {
+	int n = 9;
 
-	vector<string> in;
-
-	for (int i = 0; i < 5; ++i) {
-		string s;
-		cin >> s;
-		in.push_back(s);
+	vector<vector<int>> path(9, vector<int>());
+	vector<vector<int>> order(9, vector<int>());
+	
+	for (int i = 0; i < 8; ++i) {
+		int a, b;
+		cin >> a >> b;
+		path[a].push_back(b);
+	}
+	for (int i = 0; i < 3; ++i) {
+		int a, b;
+		cin >> a >> b;
+		order[a].push_back(b);
 	}
 
-	solution(in);
+	cout << solution(n, path, order);
+
 }
