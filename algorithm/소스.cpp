@@ -1,63 +1,63 @@
 #include <string>
 #include <vector>
-#include <list>
 #include <cmath>
+#include <deque>
 #include <algorithm>
-#include <iostream>
 
 using namespace std;
 
 typedef long long ll;
 
-list<string> calcList(list <string> exp, string op) {
-	for (auto it = exp.begin(); it != exp.end(); ++it) {
-		if (*it == op) {
-			auto prevIt = --it;
-			++it;
-			auto nextIt = ++it;
-			--it;
+deque<string> calcList(deque<string> exp, string op) {
 
-			ll num1 = stoi(*prevIt);
-			ll num2 = stoi(*nextIt);
-			
-			exp.erase(prevIt);
-			exp.erase(nextIt);
+	deque <string> resultExp;
 
-			//연산 결과
-			ll num3;
-			if (op == "*") num3 = num1 * num2;
-			if (op == "+") num3 = num1 + num2;
-			if (op == "-") num3 = num1 - num2;
+	while(!exp.empty()) {
 
-			//연산자 위치 앞에 연산 결과 삽입
-			exp.insert(it, to_string(num3));
-			
-			//연산자 삭제
-			it = exp.erase(it);
-			--it;
+		string top = exp.front();
+		exp.pop_front();
+
+		//원하는 연산자가 아닌 경우
+		if (top != op) {
+			resultExp.push_back(top);
+			continue;
 		}
+
+		//원하는 연산자인 경우 
+		ll num1 = stol(resultExp.back());
+		resultExp.pop_back();
+		ll num2 = stol(exp.front());
+		exp.pop_front();
+
+		//연산 결과
+		ll num3;
+		if (op == "*") num3 = num1 * num2;
+		if (op == "+") num3 = num1 + num2;
+		if (op == "-") num3 = num1 - num2;
+
+		resultExp.push_back(to_string(num3));
 	}
 
-	return exp;
+	return resultExp;
 }
 
-ll calcAnswer(list <string> exp, char op1, char op2, char op3) {
+ll calcAnswer(deque <string> exp, char op1, char op2, char op3) {
 
 	exp = calcList(exp, string(1, op1));
 	exp = calcList(exp, string(1, op2));
 	exp = calcList(exp, string(1, op3));
-	
+		
 	if (exp.size() != 1) return 0;
-
+	
 	return abs(stol(exp.front()));
 }
 
 ll solution(string expression) {
 	ll answer = 0;
 
-	list <string> exp;
+	deque <string> exp;
 
-	//주어진 수식 list로 변환
+	//주어진 수식 deque로 변환
 	string num = "";
 	for (int i = 0; i < expression.length(); ++i) {
 		char ch = expression[i];
@@ -86,12 +86,3 @@ ll solution(string expression) {
 	return answer;
 }
 
-int main() {
-
-	string expression;
-	cin >> expression;
-
-	solution(expression);
-
-	return 0;
-}
