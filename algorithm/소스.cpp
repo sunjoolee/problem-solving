@@ -1,88 +1,141 @@
-#include <string>
+#include <iostream>
 #include <vector>
-#include <cmath>
-#include <deque>
+#include <set>
+#include <string>
 #include <algorithm>
-
 using namespace std;
 
 typedef long long ll;
+const int INF = 987654321;
 
-deque<string> calcList(deque<string> exp, string op) {
+//N: 보석 진열대의 길이
+int N;
 
-	deque <string> resultExp;
+//보석 진열대
+vector<string> arr;
 
-	while(!exp.empty()) {
+struct SegmentTree {
+	vector<set<string>> tree;
 
-		string top = exp.front();
-		exp.pop_front();
+	//보석 진열대 구간 내 보석의 종류
+	set <string> merge(set<string> left, set<string> right) {
+		set <string> result;
 
-		//원하는 연산자가 아닌 경우
-		if (top != op) {
-			resultExp.push_back(top);
-			continue;
-		}
+		result.insert(left.begin(), left.end());
+		result.insert(right.begin(), right.end());
 
-		//원하는 연산자인 경우 
-		ll num1 = stol(resultExp.back());
-		resultExp.pop_back();
-		ll num2 = stol(exp.front());
-		exp.pop_front();
-
-		//연산 결과
-		ll num3;
-		if (op == "*") num3 = num1 * num2;
-		if (op == "+") num3 = num1 + num2;
-		if (op == "-") num3 = num1 - num2;
-
-		resultExp.push_back(to_string(num3));
+		return result;
 	}
 
-	return resultExp;
-}
+	//---------------------------------------
 
-ll calcAnswer(deque <string> exp, char op1, char op2, char op3) {
+	//node: Segment Tree의 노드의 번호
+	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
 
-	exp = calcList(exp, string(1, op1));
-	exp = calcList(exp, string(1, op2));
-	exp = calcList(exp, string(1, op3));
-		
-	if (exp.size() != 1) return 0;
-	
-	return abs(stol(exp.front()));
-}
+	set<string> buildRecursive(int node, int nodeLeft, int nodeRight) {
 
-ll solution(string expression) {
-	ll answer = 0;
+		//리프노드에 도달한 경우
+		if (nodeLeft == nodeRight) {
+			set<string> leaf;
+			leaf.insert(arr[nodeLeft]);
+			return tree[node] = leaf;
+		}
 
-	deque <string> exp;
+		//리프노드가 아닌 경우 구간 반으로 나누어 Recursive call
+		//노드의 구간의 오른쪽 반: 노드의 오른쪽 자식이 저장
+		//노드의 구간의 왼쪽 반: 노드의 왼쪽 자식이 저장
 
-	//주어진 수식 deque로 변환
-	string num = "";
-	for (int i = 0; i < expression.length(); ++i) {
-		char ch = expression[i];
+		int mid = (nodeLeft + nodeRight) / 2;
+		set<string> leftVal = buildRecursive(node * 2, nodeLeft, mid);
+		set<string> rightVal = buildRecursive(node * 2 + 1, mid + 1, nodeRight);
 
-		if (ch == '+' || ch == '-' || ch == '*') {
-			if (num != "") {
-				exp.push_back(num);
-				num = "";
+		return tree[node] = merge(leftVal, rightVal);
+	}
+
+	void build() {
+		tree.resize(N * 4);
+		//루트 노드부터 제귀적으로 빌드
+		buildRecursive(1, 0, N - 1);
+	}
+
+	//---------------------------------------
+
+	//left ~ right: 쿼리의 구간
+	//node: Segment Tree의 노드의 번호
+	//nodeLeft ~ nodeRight: 해당 노드가 저장하고 있는 구간
+
+	set<string> queryRecursive(int left, int right, int node, int nodeLeft, int nodeRight) {
+
+		//쿼리의 구간에 포함되지 않는 구간인 경우 default 값 반환 
+		//default 값은 merge 연산에 따라 다르다
+		if (right < nodeLeft || nodeRight < left) {
+			set<string> emptySet;
+			return emptySet;
+		}
+
+		//쿼리의 구간에 포함되는 구간인 경우
+		if (left <= nodeLeft && nodeRight <= right)
+			return tree[node];
+
+		//쿼리의 구간에 부분적으로 포함되는 구간인 경우
+		//구간 반으로 나누어 Recursive call
+		int mid = (nodeLeft + nodeRight) / 2;
+		set<string> leftVal = queryRecursive(left, right, node * 2, nodeLeft, mid);
+		set<string> rightVal = queryRecursive(left, right, node * 2 + 1, mid + 1, nodeRight);
+
+		return merge(leftVal, rightVal);
+	}
+
+	set<string> query(int left, int right) {
+		// 루트 노드부터 제귀적으로 쿼리 구간의 합 계산
+		return queryRecursive(left, right, 1, 0, N - 1);
+	}
+
+};
+
+
+vector<int> solution(vector<string> gems) {
+	vector<int> answer;
+
+	N = gems.size();
+	arr = gems;
+
+	SegmentTree segmentTree;
+	segmentTree.build();
+
+	//총 보석의 개수 = 전체 구간의 쿼리 값 set<string> 의 크기
+	int totalGems = segmentTree.query(0, gems.size() - 1).size();
+
+	//가능한 진열대 구간의 길이 이분 탐색
+	int lo = 0, hi = gems.size() + 1;
+
+	int minLen = INF;
+	int minStart = INF;
+
+	while (lo + 1 < hi) {
+		int mid = (lo + hi) / 2;
+
+		bool flag = false;
+		for (int start = 0; start + mid - 1 < gems.size(); ++start) {
+			if (segmentTree.query(start, start + mid - 1).size() == totalGems) {
+				flag = true;
+
+				if (minLen >= mid) {
+					minLen = mid;
+					minStart = start;
+					break;
+				}
 			}
-
-			exp.push_back(string(1, ch));
 		}
-		else num += ch;
-	}
-	if (num != "") exp.push_back(num);
 
-	//각 우선순위에 따른 결괏값의 최댓값 구하기
-	// + > - > *
-	answer = max(answer, calcAnswer(exp, '+', '-', '*'));
-	answer = max(answer, calcAnswer(exp, '+', '*', '-'));
-	answer = max(answer, calcAnswer(exp, '-', '+', '*'));
-	answer = max(answer, calcAnswer(exp, '-', '*', '+'));
-	answer = max(answer, calcAnswer(exp, '*', '-', '+'));
-	answer = max(answer, calcAnswer(exp, '*', '+', '-'));
+		if (flag) hi = mid;
+		else lo = mid;
+	}
+
+	answer.push_back(minStart + 1);
+	answer.push_back(minStart + minLen);
 
 	return answer;
 }
+
 
