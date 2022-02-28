@@ -1,71 +1,58 @@
 #include <string>
-#include <algorithm>
 #include <vector>
+#include <map>
+#include <algorithm>
 
 using namespace std;
 
-bool cmp(string s1, string s2) {
-	//대소문자 구별 x
-	transform(s1.begin(), s1.end(), s1.begin(), ::tolower);	// 소문자 변환
-	transform(s2.begin(), s2.end(), s2.begin(), ::tolower);	// 소문자 변환
+map<int, char> intToChar;
 
-	//head, num, tail 분리
-	string h1 = "";
-	string num1 = "";
-
-	bool headOver = false;
-	for (int i = 0; i < s1.length(); ++i) {
-		char ch = s1[i];
-
-		//num 입력 받기
-		if (ch >= '0' && ch <= '9') {
-			headOver = true;
-			num1 += ch;
-		}
-		//head 입력받기
-		else if (!headOver) {
-			h1 += ch;
-			continue;
-		}
-		//num과 head 입력 받기 끝난 경우 종료 (tail 필요 X)
-		else break;
+string numToString(int n, int num) {
+	string str = "";
+	while (num > 0) {
+		str += intToChar[num % n];
+		num /= n;
 	}
-
-	string h2 = "";
-	string num2 = "";
-
-	headOver = false;
-	for (int i = 0; i < s2.length(); ++i) {
-		char ch = s2[i];
-
-		//num 입력 받기
-		if (ch >= '0' && ch <= '9') {
-			headOver = true;
-			num2 += ch;
-		}
-		//head 입력받기
-		else if (!headOver) {
-			h2 += ch;
-			continue;
-		}
-		//num과 head 입력 받기 끝난 경우 종료 (tail 필요 X)
-		else break;
-	}
-
-	//head 사전순으로 정렬
-	if (h1 < h2) return true;
-	if (h1 == h2) {
-		//head 동일한 경우 num 숫자 순으로 정렬
-		//head, num 동일한 경우 입력 순으로 정렬됨 (stable_sort)
-		return stoi(num1) < stoi(num2);
-	}
-	return false;
+	return str;
 }
 
-vector<string> solution(vector<string> files) {
+string solution(int n, int t, int m, int p) {
+	//1번째 사람이 0번째 순서를 갖도록 함
+	p--;
 	
-	stable_sort(files.begin(), files.end(), cmp);
+	//map 초기화
+	intToChar[0] = '0';
+	intToChar[1] = '1';
+	intToChar[2] = '2';
+	intToChar[3] = '3';
+	intToChar[4] = '4';
+	intToChar[5] = '5';
+	intToChar[6] = '6';
+	intToChar[7] = '7';
+	intToChar[8] = '8';
+	intToChar[9] = '9';
+	intToChar[10] = 'A';
+	intToChar[11] = 'B';
+	intToChar[12] = 'C';
+	intToChar[13] = 'D';
+	intToChar[14] = 'E';
+	intToChar[15] = 'F';
+
+	string game = "0";
+	int num = 1;
+	while (game.length() < p + (t * m)) {
+		game += numToString(n, num);
+		num++;
+	}
+
+	string answer = "";
+	for (int i = 0; i < t; ++i) {
+		answer += game[p + (i * m)];
+	}
 	
-	vector<string> answer(files.begin(), files.end());
 	return answer;
+}
+
+int main() {
+	solution(2, 4, 2, 1);
 }
