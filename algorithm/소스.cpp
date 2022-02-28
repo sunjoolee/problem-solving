@@ -1,49 +1,48 @@
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 
-const int INF = 987654321;
 using namespace std;
 
-int solution(int cacheSize, vector<string> cities) {
-	int answer = 0;
+vector<int> solution(string msg) {
+	transform(msg.begin(), msg.end(), msg.begin(), ::tolower);
 
-	vector<pair<string, int>> cache;
+	map<string, int> m;
 
-	for (int i = 0; i < cities.size(); ++i) {
-		string city = cities[i];
-		transform(city.begin(), city.end(), city.begin(), ::tolower);	
-		bool hit = false;
-		for (int j = 0; j < cache.size(); ++j) {
-			if (cache[j].first == city) {
-				//hit
-				hit = true;
-				answer += 1;
-				//캐시 갱신
-				cache[j].second = i;
-				break;
-			}
-		}
-		if (hit) continue;
-
-		//miss
-		answer += 5;
-		//캐시에 추가
-		if (cache.size() < cacheSize) {
-			cache.push_back({ city, i });
-		}
-		else {
-			int minUsed = INF;
-			int minIndex;
-			for (int j = 0; j < cache.size(); ++j) {
-				if (cache[j].second < minUsed) {
-					minUsed = cache[j].second;
-					minIndex = j;
-				}
-			}
-			cache[minIndex] = { city, i };
-		}
+	int mIndex;
+	char alphabet = 'a';
+	for (mIndex = 1; mIndex < 27; mIndex++) {
+		m.insert({ string(1, alphabet), mIndex });
+		alphabet++;
 	}
 
+	vector<int> answer;
+	for (int i = 0; i < msg.length(); ) {
+		bool canFind = true;
+		
+		int index;
+		int len = 1;
+		while (canFind) {
+			if (i + len > msg.length()) break;
+
+			string str = msg.substr(i, len);
+			if (m.find(str) == m.end()) {
+				canFind = false;
+				m.insert({ str, mIndex });
+				mIndex++;
+			}
+			else {
+				index = m[str];
+				len++;
+			}
+		}
+		answer.push_back(index);
+		i += (len - 1);
+	}
 	return answer;
+}
+
+int main() {
+	solution("KAKAO");
 }
