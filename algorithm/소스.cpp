@@ -20,65 +20,51 @@ vector<vector<pair<int, int>>> reverseAdj(1000, vector<pair<int, int>>());
 
 vector<bool> isTrap(1000, false);
 
-//최단 거리를 구하기 위한 다익스트라 알고리즘
-int dijkstra(int n, int start, int end) {
+
+//end의 최단 거리를 반환하는 bfs
+int bfs(int n, int startnode, int endnode) {
 	
 	vector<int> dist(n, INF);
-	vector<int> reverseDist(n, INF);
+	vector<int> visited(n, 0);
 	
-	bool reversed = false;
-	dist[start] = 0;
+	//<node, 거리>
+	queue <pair<int, int>> q;
+	q.push({ startnode, 0 });
 
-	//<<-cost, usedTrap>, node>
-	priority_queue<pair<pair<int,bool>, int>> pq;
-	pq.push({ {0, false }, start});
+	while (!q.empty()) {
+		int curnode = q.front().first;
+		int curcost = q.front().second;
+		q.pop();
 
-	while (!pq.empty()) {
-		int cost = -pq.top().first.first;
-		bool hereReversed = pq.top().first.second;
-		int here = pq.top().second;
-		pq.pop();
+		if (!isTrap[curnode] && visited[curnode] == 1) continue;
+		visited[curnode] = 1;
 
-		if (!hereReversed && cost > dist[here]) continue;
-		if (hereReversed && cost > reverseDist[here]) continue;
+		if (isTrap[curnode]) {
+			vector<pair<int, int>> tmp(adj[curnode].begin(), adj[curnode].end());
 
-		//인접한 정점들을 모두 검사한다.
-		if (!isTrap[here]) {
-			for (int i = 0; i < adj[here].size(); i++) {
-				int there = adj[here][i].first;
-				int nextDist = cost + adj[here][i].second;
+			adj[curnode].clear();
+			adj[curnode].assign(reverseAdj[curnode].begin(), reverseAdj[curnode].end());
 
-				//더 짧은 경로를 발견한 경우, dist[]를 갱신하고 우선순위 큐에 넣는다.
-				if (!hereReversed && dist[there] > nextDist) {
-						dist[there] = nextDist;
-						pq.push({ {-nextDist, false}, there });
-				}
-				//더 짧은 경로를 발견한 경우, reverseDist[]를 갱신하고 우선순위 큐에 넣는다.
-				else if (reverseDist[there] > nextDist) {
-						reverseDist[there] = nextDist;
-						pq.push({ {-nextDist, false}, there });
-				}
-			}
+			reverseAdj[curnode].clear();
+			reverseAdj[curnode].assign(tmp.begin(), tmp.end());
 		}
-		else{
-			for (int i = 0; i < reverseAdj[here].size(); i++) {
-				int there = reverseAdj[here][i].first;
-				int nextDist = cost + reverseAdj[here][i].second;
+			
+		for (int i = 0; i < adj[curnode].size(); ++i) {
+			int nextnode = adj[curnode][i].first;
+			int nextcost = curcost + adj[curnode][i].second;
 
-				//더 짧은 경로를 발견한 경우, reverseDist[]를 갱신하고 우선순위 큐에 넣는다.
-				if (!hereReversed && reverseDist[there] > nextDist) {
-					reverseDist[there] = nextDist;
-					pq.push({ {-nextDist, true}, there });
-				}
-				//더 짧은 경로를 발견한 경우, dist[]를 갱신하고 우선순위 큐에 넣는다.
-				else if (dist[there] > nextDist) {
-					dist[there] = nextDist;
-					pq.push({ {-nextDist, true}, there });
-				}
+			if (isTrap[nextnode]) {
+				q.push({ nextnode, nextcost });
 			}
+				
+			else if (visited[nextnode] == 0 || dist[nextnode] > nextcost){
+				dist[nextnode] = nextcost;
+				q.push({ nextnode, nextcost });
+			}	
 		}
+		
 	}
-	return min(dist[end], reverseDist[end]);
+	return dist[endnode];
 }
 
 int solution(int n, int start, int end, vector<vector<int>> roads, vector<int> traps) {
@@ -89,8 +75,8 @@ int solution(int n, int start, int end, vector<vector<int>> roads, vector<int> t
 	for (int i = 0; i < roads.size(); ++i) {
 		vector<int> edge = roads[i];
 
-		int u = edge[0]; 
-		int v = edge[1]; 
+		int u = edge[0] - 1; 
+		int v = edge[1] - 1; 
 		int cost = edge[2];
 
 		adj[u].push_back({ v, cost }); 
@@ -98,10 +84,10 @@ int solution(int n, int start, int end, vector<vector<int>> roads, vector<int> t
 	}
 
 	for (int i = 0; i < traps.size(); ++i) {
-		isTrap[traps[i]] = true;
+		isTrap[traps[i] - 1] = true;
 	}
 
-	int answer = dijkstra(n, start, end);
+	int answer = bfs(n, start - 1, end - 1);
 
 	return answer;
 }
