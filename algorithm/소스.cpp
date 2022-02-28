@@ -1,98 +1,107 @@
 #include <string>
-#include <stack>
 #include <vector>
-#include <iostream>
-
+#include <queue>
+#include <algorithm>
 using namespace std;
 
-string solution(int n, int k, vector<string> cmd) {
-	string answer = "";
+const int INF = 987654321;
 
-	vector<char> table(n, 'O');
-	stack <int> deleted;
+//roads의 행은 [P, Q, S]로 이루어져 있습니다.
+//P에서 Q로 갈 수 있는 길이 있으며, 길을 따라 이동하는데 S만큼 시간이 걸립니다.
+vector<vector<int>> Groads;
+//함정 노드
+vector<int> Gtraps;
 
-	for (int i = 0; i < cmd.size(); ++i) {
-		string curCmd = cmd[i];
+//adj[u] = {v, cost} u -cost-> v
+vector<vector<pair<int, int>>> adj(1000, vector<pair<int, int>>());
 
-		if (curCmd[0] == 'D') {
-			//move만큼 아래로 이동
-			int move = stoi(curCmd.substr(2));
-			while (move != 0) {
-				if (table[k + 1] == 'O') {
-					k++;
-					move--;
+//reverseAdj[u] = {v, cost} u <-cost- v
+vector<vector<pair<int, int>>> reverseAdj(1000, vector<pair<int, int>>());
+
+vector<bool> isTrap(1000, false);
+
+//최단 거리를 구하기 위한 다익스트라 알고리즘
+int dijkstra(int n, int start, int end) {
+	
+	vector<int> dist(n, INF);
+	vector<int> reverseDist(n, INF);
+	
+	bool reversed = false;
+	dist[start] = 0;
+
+	//<<-cost, usedTrap>, node>
+	priority_queue<pair<pair<int,bool>, int>> pq;
+	pq.push({ {0, false }, start});
+
+	while (!pq.empty()) {
+		int cost = -pq.top().first.first;
+		bool hereReversed = pq.top().first.second;
+		int here = pq.top().second;
+		pq.pop();
+
+		if (!hereReversed && cost > dist[here]) continue;
+		if (hereReversed && cost > reverseDist[here]) continue;
+
+		//인접한 정점들을 모두 검사한다.
+		if (!isTrap[here]) {
+			for (int i = 0; i < adj[here].size(); i++) {
+				int there = adj[here][i].first;
+				int nextDist = cost + adj[here][i].second;
+
+				//더 짧은 경로를 발견한 경우, dist[]를 갱신하고 우선순위 큐에 넣는다.
+				if (!hereReversed && dist[there] > nextDist) {
+						dist[there] = nextDist;
+						pq.push({ {-nextDist, false}, there });
 				}
-				else k++;
+				//더 짧은 경로를 발견한 경우, reverseDist[]를 갱신하고 우선순위 큐에 넣는다.
+				else if (reverseDist[there] > nextDist) {
+						reverseDist[there] = nextDist;
+						pq.push({ {-nextDist, false}, there });
+				}
 			}
 		}
-		else if (curCmd[0] == 'U') {
-			//move만큼 위로 이동
-			int move = stoi(curCmd.substr(2));
-			while (move != 0) {
-				if (table[k - 1] == 'O') {
-					k--;
-					move--;
-				}
-				else k--;
-			}
-		}
-		else if (curCmd[0] == 'C') {
-			//선택된 행 삭제
-			table[k] ='X';
-			deleted.push(k);
-			
-			int tmp = k;
-			bool move = false;
+		else{
+			for (int i = 0; i < reverseAdj[here].size(); i++) {
+				int there = reverseAdj[here][i].first;
+				int nextDist = cost + reverseAdj[here][i].second;
 
-			//한 칸 아래로 이동
-			while(!move) {
-				if (tmp + 1 == n) break;
-
-				if (table[tmp + 1] == 'O') {
-					k = tmp + 1;
-					move = true;
+				//더 짧은 경로를 발견한 경우, reverseDist[]를 갱신하고 우선순위 큐에 넣는다.
+				if (!hereReversed && reverseDist[there] > nextDist) {
+					reverseDist[there] = nextDist;
+					pq.push({ {-nextDist, true}, there });
 				}
-				else tmp++;
-			}
-
-			//아래 칸이 없는 경우 한 칸 위로 이동
-			tmp = k;
-			while(!move) {
-				if (table[tmp - 1] == 'O') {
-					k = tmp - 1;
-					move = true;
+				//더 짧은 경로를 발견한 경우, dist[]를 갱신하고 우선순위 큐에 넣는다.
+				else if (dist[there] > nextDist) {
+					dist[there] = nextDist;
+					pq.push({ {-nextDist, true}, there });
 				}
-				else tmp--;
 			}
-		}
-		else if (curCmd[0] == 'Z') {
-			//가장 최근에 삭제된 행 복원
-			table[deleted.top()] = 'O';
-			deleted.pop();
 		}
 	}
-
-	for (int i = 0; i < n; ++i) {
-		answer += table[i];
-	}
-	return answer;
+	return min(dist[end], reverseDist[end]);
 }
 
-int main() {
-	int n, k;
-	vector<string> cmd;
+int solution(int n, int start, int end, vector<vector<int>> roads, vector<int> traps) {
 
-	n = 8;
-	k = 2;
-	cmd.push_back("D 2");
-	cmd.push_back("C");
-	cmd.push_back("U 3");
-	cmd.push_back("C");
-	cmd.push_back("D 4");
-	cmd.push_back("C");
-	cmd.push_back("U 2");
-	cmd.push_back("Z");
-	cmd.push_back("Z");
+	Groads = roads;
+	Gtraps = traps;
 
-	solution(n, k, cmd);
+	for (int i = 0; i < roads.size(); ++i) {
+		vector<int> edge = roads[i];
+
+		int u = edge[0]; 
+		int v = edge[1]; 
+		int cost = edge[2];
+
+		adj[u].push_back({ v, cost }); 
+		reverseAdj[v].push_back({ u, cost });
+	}
+
+	for (int i = 0; i < traps.size(); ++i) {
+		isTrap[traps[i]] = true;
+	}
+
+	int answer = dijkstra(n, start, end);
+
+	return answer;
 }
