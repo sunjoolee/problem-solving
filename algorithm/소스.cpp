@@ -1,58 +1,91 @@
 #include <string>
 #include <vector>
-#include <map>
 #include <algorithm>
-
 using namespace std;
 
-map<int, char> intToChar;
+typedef long long int ll;
 
-string numToString(int n, int num) {
-	string str = "";
-	while (num > 0) {
-		str += intToChar[num % n];
-		num /= n;
-	}
-	return str;
+
+//로그 형식 2016-09-15 03:10:33.020 0.011s
+
+//시:분:초.xxx -> 초.xxx  * 1000
+ll timeToll(string time) {
+	//time 형식 03:10:33.020
+
+	ll res = 0;
+	res += 3600 * stoll(time.substr(0, 2));
+	res += 60 * stoll(time.substr(3, 2));
+	res += stoll(time.substr(6, 2));
+	res *= 1000;
+	res += stoll((time.substr(9)));
+
+	return res;
 }
 
-string solution(int n, int t, int m, int p) {
-	//1번째 사람이 0번째 순서를 갖도록 함
-	p--;
-	
-	//map 초기화
-	intToChar[0] = '0';
-	intToChar[1] = '1';
-	intToChar[2] = '2';
-	intToChar[3] = '3';
-	intToChar[4] = '4';
-	intToChar[5] = '5';
-	intToChar[6] = '6';
-	intToChar[7] = '7';
-	intToChar[8] = '8';
-	intToChar[9] = '9';
-	intToChar[10] = 'A';
-	intToChar[11] = 'B';
-	intToChar[12] = 'C';
-	intToChar[13] = 'D';
-	intToChar[14] = 'E';
-	intToChar[15] = 'F';
+//구간: time ~ time + 1000 - 1 
+bool inRange(ll time, ll start, ll end) {
+	ll timeStart = time;
+	ll timeEnd = time + 1000 - 1;
 
-	string game = "0";
-	int num = 1;
-	while (game.length() < p + (t * m)) {
-		game += numToString(n, num);
-		num++;
+	//구간의 앞에 걸쳐있는 경우
+	//start - 구간 시작 - end - 구간 끝
+	if (start <= timeStart && timeStart <= end && end <= timeEnd) return true;
+
+	//구간 안에 로그가 포함된 경우
+	//구간 시작 - start - end - 구간 끝
+	if (timeStart <= start && end <= timeEnd) return true;
+
+	//구간의 뒤에 걸쳐있는 경우
+	//구간 시작 - start - 구간 끝 - end
+	if (timeStart <= start && start <= timeEnd && timeEnd <= end) return true;
+
+	//로그 안에 구간이 포함된 경우
+	//start - 구간 시작 - 구간 끝 - end
+	if (start <= timeStart && timeEnd <= end) return true;
+
+	else return false;
+}
+
+int solution(vector<string> lines) {
+	
+	vector<pair<ll, ll>> startEndPair;
+
+	for (int i = 0; i < lines.size(); ++i) {
+		//맨 앞 날짜 제거 & 맨 마지막 s 제거
+		string log = lines[i].substr(11, 18);
+
+		ll S = timeToll(log.substr(0, 12));
+		ll T = stod(log.substr(13)) * 1000;
+
+		//로그 시작 시점이 전날로 넘어간 경우 00:00:00.000에 시작한 것으로 처리
+		startEndPair.push_back({ S - T + 1 >= 0 ? S - T + 1 : 0, S });
 	}
 
-	string answer = "";
-	for (int i = 0; i < t; ++i) {
-		answer += game[p + (i * m)];
+	sort(startEndPair.begin(), startEndPair.end());
+
+	int answer = 0;
+
+	for (int i = 0; i < startEndPair.size(); ++i) {
+		// time에서 시작하는 1초 구간에 포함되는 로그 세기
+		int cnt = 0;
+		ll time = startEndPair[i].first;
+		for (int j = 0; j < startEndPair.size(); ++j) {
+			if (inRange(time, startEndPair[j].first, startEndPair[j].second)) {
+				++cnt;
+			}
+		}
+		answer = max(answer, cnt);
+
+		cnt = 0;
+		time = startEndPair[i].second; 
+		for (int j = 0; j < startEndPair.size(); ++j) {
+			if (inRange(time, startEndPair[j].first, startEndPair[j].second)) {
+				++cnt;
+			}
+		}
+		answer = max(answer, cnt);
 	}
-	
+
 	return answer;
 }
 
-int main() {
-	solution(2, 4, 2, 1);
-}
