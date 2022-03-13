@@ -43,7 +43,7 @@ bool melodyInPlayedMusic(vector<int> music, vector<int> melody) {
 	if (melody.size() == music.size()) return equal(melody.begin(), melody.end(), music.begin());
 
 	bool in = false;
-	for (int i = 0; i < music.size() - melody.size(); ++i) {
+	for (int i = 0; i <= music.size() - melody.size(); ++i) {
 		if (equal(melody.begin(), melody.end(), music.begin() + i)) {
 			in = true;
 			break;
@@ -117,6 +117,6 @@ string solution(string m, vector<string> musicinfos) {
 }
 
 int main() {
-	solution("A#", {"12:00,12:01,HELLO,A#"});
+	solution("A#", { "13:00,13:02,HAPPY,B#A#" });
 	return 0;
 }
