@@ -1,69 +1,120 @@
-#include <string>
+#include <iostream>
 #include <vector>
+#include <string>
+#include <map>
+#include <memory.h>
 #include <algorithm>
-
 using namespace std;
 
-int solution(vector<string> words) {
+/*
+struct Trie {
+	bool finish; // 끝나는 지점을 표시해줌 
+	Trie* next[26]; // 26가지 알파벳에 대한 트라이 
+					
+	// 생성자 
+	Trie() : finish(false) { 
+		memset(next, 0, sizeof(next)); 
+	} 
 
-	int N = words.size();
+	// 소멸자 
+	~Trie() { 
+		for (int i = 0; i < 26; i++) 
+			if (next[i]) delete next[i]; 
+	} 
+	
+	// 트라이에 문자열 삽입 
+	void insert(const char* key) {
 
-	int answer = 0;
+		// 문자열이 끝나는 지점일 경우 표시 
+		if (*key == '\0') finish = true; 
 
-	//다른 단어와 공통된 접미사가 있는 경우, 접미사가 끝나는 지점의 인덱스 저장
-	vector<int> maxPrefix(N, -1);
-
-	for (int i = 0; i < words.size(); ++i) {
-		//검색 범위
-		//공통된 접두사를 가진 단어들 사이에서만 재검색되도록 검색 범위 계속 갱신해주기 
-		//맨 처음에는 모든 단어가 검색 범위에 해당됨
-		vector<bool> searchRange(N, true);
-
-		//공통된 접미사를 갖는 단어만 검색 범위에 들도록 함 
-		if (maxPrefix[i] != -1) {
-			for (int j = 0; j < N; ++j) {
-				if (words[j].length() <= maxPrefix[i])
-					searchRange[j] = false;
-				else if (words[i].substr(0, maxPrefix[i] + 1) != words[j].substr(0, maxPrefix[i] + 1))
-					searchRange[j] = false;
+		else {
+			int curr = *key - 'A';
+			if (next[curr] == NULL) {
+				// 탐색이 처음되는 지점일 경우 동적할당 
+				next[curr] = new Trie();
 			}
-		}
-		
-		//공통된 최대 길이 접미사 이후의 단어부터 비교
-		if(maxPrefix[i] != -1) 
-			answer += maxPrefix[i];
-		
-		for (int j = maxPrefix[i] + 1; j < words[i].length(); ++j) {
-			char searchWord = words[i][j];
-			answer++;
-
-			//search 문자열로 검색했을 때 검색 결과가 하나만 반환되는지 검사
-			//이 검색 결과에 포함되는 경우 다음 검색 때 검색 범위로 사용함
-			int searchCnt = 1;
-			for (int k = 0; k < N; ++k) {
-				//자기 자신 스킵
-				if (k == i) continue;
-
-				//검색 범위에 포함된 단어인 경우 검사
-				if (searchRange[k]) {
-					if (words[k].length() > j && words[k][j] == searchWord) {
-						searchCnt++;
-
-						//words[k]와 words[i]는 문자열의 인덱스 0~j까지 공통된 접미사를 가진다는 의미
-						maxPrefix[i] = j;
-						maxPrefix[k] = max(maxPrefix[k],j);
-					}
-					//검색 결과에 포함되지 않으면 검색 범위에서 제외
-					else searchRange[k] = false;
-				}
-			}
-			if (searchCnt == 1) break;
-		}
+			// 다음 문자 삽입 
+			next[curr]->insert(key + 1); 
+		} 
 	}
 	
-	return answer;
+	// 트라이에서 문자열 찾기 
+	Trie* find(const char* key) { 
+
+		// 문자열이 끝나는 위치를 반환 
+		if (*key == '\0') return this;
+
+		int curr = *key - 'A'; 
+		
+		// 찾는 값이 존재하지 않음 
+		if (next[curr] == NULL) return NULL; 
+
+		// 다음 문자를 탐색
+		return next[curr]->find(key + 1); 
+		
+	} 
+};
+
+*/
+
+struct TrieNode {
+	bool isEnd;
+	map<char, TrieNode*> children;
+
+	TrieNode() : isEnd(false) {}
+};
+
+//Trie 자료구조에 단어 추가
+void recursiveAdd(TrieNode* curNode, string word) {
+	if (word.length() == 0) {
+		curNode->isEnd = true;
+	}
+	else {
+		int ch = word[0] - 'a';
+		if (curNode->children.find(ch) == curNode->children.end()) {
+			curNode->children[ch] = &TrieNode();
+		}
+		recursiveAdd(curNode->children[ch], word.substr(1));
+	}
+}
+
+void add(TrieNode* root, string word) {
+	if (word.length() == 0) return;
+	recursiveAdd(root, word);
+}
+
+//Trie 자료구조에서 단어 검색
+bool recursiveSearch(TrieNode* curNode, string word) {
+	if (word.length() == 0) {
+		return curNode->isEnd;
+	}
+	else {
+		char ch = word[0];
+		if (curNode->children.find(ch) == curNode->children.end()){
+			return false;
+		}
+		return recursiveSearch(curNode->children[ch], word.substr(1));
+	}
+}
+
+bool search(TrieNode* root, string word) {
+	if (word.length() == 0) return true;
+	return recursiveSearch(root, word);
 }
 
 int main() {
-	solution({ "go", "gone", "guild" });
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL); cout.tie(NULL);
+
+	TrieNode root;
+
+	add(&root, "baby");
+	add(&root, "boy");
+
+	cout << search(&root, "baby");
+	cout << search(&root, "boo");
+
+	return 0;
 }
+
