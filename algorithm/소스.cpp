@@ -50,15 +50,17 @@ void insert(struct TrieNode *root, string key){
 	pCrawl->isEndOfWord = true;
 }
 
-
-bool search(struct TrieNode *root, string key){
+//트리에 key가 존재하는 경우 1
+//트리에 key가 다른 단어의 접두사로 존재하는 경우 0
+//트리에 key가 존재하지 않는 경우 -1
+int search(struct TrieNode *root, string key){
 	struct TrieNode *pCrawl = root;
 
 	for (int i = 0; i < key.length(); i++)
 	{
 		int index = key[i] - 'a';
 		if (!pCrawl->children[index])
-			return false;
+			return -1;
 
 		pCrawl = pCrawl->children[index];
 	}
@@ -86,13 +88,15 @@ int main(){
 
 		insert(root, input);
 	}
+	
 
+	//포함되어 있는 문자열 중 적어도 하나의 접두사의 수
 	int cnt = 0;
 	for (int i = 0; i < m; ++i) {
 		string input;
 		cin >> input;
 
-		if (search(root, input)) ++cnt;
+		if (search(root, input) != -1) ++cnt;
 	}
 
 	cout << cnt;
