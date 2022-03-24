@@ -72,7 +72,7 @@ bool keyXorLock(vector<ll> k, vector<ll> l) {
 	ll correct = (1 << SIZE) - 1;
 
 	for (int i = 0; i < SIZE; ++i) {
-		if (k[i] ^ l[i] != correct) 
+		if ((k[i] ^ l[i]) & correct != correct) 
 			return false;
 	}
 	return true;
@@ -108,41 +108,43 @@ bool solution(vector<vector<int>> key, vector<vector<int>> lock) {
 		if (rotate != 0) key = rotateVec(key);
 		vector<ll> lockBitmask = toBitmask(lock);
 
-		vector<ll> upKey = toBitmask(key);
+		vector<ll> tmpKey = toBitmask(key);
+		vector<ll> tmpTmpKey;
+
 		for (int up = 0; up < SIZE; ++up) {
-			if(up != 0) upKey = bitmaskMoveUpDown(upKey, 0);
+			if(up != 0) tmpKey = bitmaskMoveUpDown(tmpKey, 0);
 
-			vector<ll> leftKey = upKey;
+			tmpTmpKey = tmpKey;
 			for (int left = 0; left < SIZE; ++left) {
-				if (left != 0) leftKey = toBitmaskMoveRightLeft(leftKey, 1);
+				if (left != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 1);
 
-				if (keyXorLock(leftKey, lockBitmask)) return true;
+				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
 			}
 			
-			vector<ll> rightKey = upKey;
+			tmpTmpKey = tmpKey;
 			for (int right = 0; right < SIZE; ++right) {
-				if (right != 0) rightKey = toBitmaskMoveRightLeft(rightKey, 0);
+				if (right != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 0);
 
-				if (keyXorLock(rightKey, lockBitmask)) return true;
+				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
 			}
 		}
 
-		vector<ll> downKey = toBitmask(key);
+		tmpKey = toBitmask(key);
 		for (int down = 0; down < SIZE; ++down) {
-			if (down != 0) upKey = bitmaskMoveUpDown(downKey, 0);
+			if (down != 0) tmpKey = bitmaskMoveUpDown(tmpKey, 0);
 
-			vector<ll> leftKey = upKey;
+			tmpTmpKey = tmpKey;
 			for (int left = 0; left < SIZE; ++left) {
-				if (left != 0) leftKey = toBitmaskMoveRightLeft(leftKey, 1);
+				if (left != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 1);
 
-				if (keyXorLock(leftKey, lockBitmask)) return true;
+				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
 			}
 
-			vector<ll> rightKey = upKey;
+			tmpTmpKey = tmpKey;
 			for (int right = 0; right < SIZE; ++right) {
-				if (right != 0) rightKey = toBitmaskMoveRightLeft(rightKey, 0);
+				if (right != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 0);
 
-				if (keyXorLock(rightKey, lockBitmask)) return true;
+				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
 			}
 		}
 	}
