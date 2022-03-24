@@ -1,146 +1,125 @@
 #include <string>
 #include <vector>
+#include <queue>
 #include <algorithm>
+
 using namespace std;
 
-typedef long long ll;
+int N;
 
-//열쇠의 크기와 자물쇠 크기 통일
-int SIZE;
+struct qNode {
+	int cost;
+	//로봇의 위치 좌측상단 좌표로 판단
+	int r;
+	int w;
+	//로봇 가로 방향 0/세로 방향 1
+	int dir;
 
-vector<vector<int>> rotateVec(vector<vector<int>> v) {
-	vector<vector<int>> rotateV(SIZE, vector<int>(SIZE, 0));
-
-	for (int i = 0; i < SIZE; ++i) {
-		for (int j = 0; j < SIZE; ++j) {
-			rotateV[j][SIZE - i - 1] = v[i][j];
-		}
+	bool operator<(const qNode node) const {
+		return this->cost > node.cost;
 	}
+};
 
-	return rotateV;
-}
-
-
-vector<vector<int>> moveUp(vector<vector<int>> v, int n) {
-	vector<vector<int>> moveV;
-
-	for (int i = n; i < SIZE; ++i) 
-		moveV.push_back(v[i]);
-	
-	for(int i = 0; i<n; ++i)
-		moveV.push_back(vector<int>(SIZE, 0));
-
-	return moveV;
-}
-
-vector<vector<int>> moveDown(vector<vector<int>> v, int n) {
-	vector<vector<int>> moveV;
-
-	for (int i = 0; i < n; ++i)
-		moveV.push_back(vector<int>(SIZE, 0));
-
-	for (int i = 0; i < SIZE - n; ++i)
-		moveV.push_back(v[i]);
-
-	return moveV;
-}
-
-vector<vector<int>> moveRight(vector<vector<int>> v, int n) {
-	vector<vector<int>> moveV(SIZE, vector<int>());
-
-	for (int i = 0; i < SIZE; ++i) {
-		for (int j = 0; j < n; ++j) 
-			moveV[i].push_back(0);
-
-		for (int j = 0; j < SIZE - n; ++j) 
-			moveV[i].push_back(v[i][j]);
-	}
-
-	return moveV;
-}
-
-vector<vector<int>> moveLeft(vector<vector<int>> v, int n) {
-	vector<vector<int>> moveV(SIZE, vector<int>());
-
-	for (int i = 0; i < SIZE; ++i) {
-		for (int j = n; j < SIZE; ++j) {
-			moveV[i].push_back(v[i][j]);
-		}
-
-		for (int j = 0; j < n; ++j)
-			moveV[i].push_back(0);
-	}
-
-	return moveV;
-}
-
-bool xorVec(vector<vector<int>> k, vector<vector<int>> l) {
-	
-	for (int i = 0; i < SIZE; ++i) {
-		for (int j = 0; j < SIZE; ++j) {
-			if (k[i][j] == 0 && l[i][j]) return false;
-			if (k[i][j] == 1 && l[i][j]) return false;
-		}
-	}
+bool inRange(int r, int w) {
+	if (r < 0 || r >= N) return false;
+	if (w < 0 || w >= N) return false;
 	return true;
 }
 
 
-bool solution(vector<vector<int>> key, vector<vector<int>> lock) {
+int solution(vector<vector<int>> board) {
+	N = board.size();
+	int answer =0;
 
-	//열쇠와 자물쇠 크기 맞추기
-	SIZE = max(key.size(), lock.size());
-	
-	//key는 여유 공간 0으로 초기화
-	if (key.size() < SIZE) {
-		for (int i = 0; i < key.size(); ++i) {
-			while(key[i].size() < SIZE) key[i].push_back(0);
+	//BFS
+	//(0,0),(0,1) 에서 시작
+
+	vector<vector<vector<int>>> visited(N, vector<vector<int>> (N, vector<int>(2, 0)));
+	priority_queue<qNode> q;
+	q.push({ 0, 0, 0, 0 });
+
+	while (!q.empty()) {
+		int curCost = q.top().cost;
+		int curR = q.top().r;
+		int curW = q.top().w;
+		int curDir = q.top().dir;
+		q.pop();
+
+		//종점인지 확인
+		//가로
+		if (curDir == 0){
+			if (curR == N - 1 && curW == N - 2) {
+				answer = -curCost;
+				break;
+			}
 		}
-		while (key.size() < SIZE) {
-			key.push_back(vector<int>(SIZE, 0));
+		//세로
+		else if (curR == N - 2 && curW == N - 1){
+			answer = -curCost;
+			break;
+		}
+
+		//이미 방문한 노드
+		if (visited[curR][curW][curDir] == 1) continue;
+		visited[curR][curW][curDir] = 1;
+
+		//다음 노드 방문
+		//가로
+		if (curDir == 0) {
+			//좌로 이동
+			if (inRange(curR, curW - 1) && !board[curR][curW-1] && !visited[curR][curW - 1][0]){
+				q.push({ curCost -1, curR, curW - 1, 0});
+			}
+			//우로 이동
+			if (inRange(curR, curW + 2) && !board[curR][curW +2] && !visited[curR][curW + 2][0]) {
+				q.push({ curCost - 1, curR, curW + 1, 0});
+			}
+			//위로 회전
+			if (inRange(curR - 1, curW ) && inRange(curR - 1, curW + 1) && !board[curR-1][curW] && !board[curR-1][curW + 1]){
+				if(!visited[curR-1][curW + 1][1]) 
+					q.push({ curR - 1, curW + 1, 1, curCost + 1 });
+				if (!visited[curR - 1][curW][1])
+					q.push({ curCost - 1, curR - 1, curW, 1});
+			}
+			//아래로 회전
+			if (inRange(curR + 1, curW) && inRange(curR + 1, curW + 1) && !board[curR + 1][curW] && !board[curR + 1][curW + 1]) {
+				if (!visited[curR + 1][curW + 1][1])
+					q.push({ curCost - 1, curR + 1, curW + 1, 1 });
+				if (!visited[curR + 1][curW][1])
+					q.push({ curCost - 1, curR + 1, curW, 1});
+			}
+		}
+		//세로
+		else {
+			//위로 이동
+			if (inRange(curR - 1, curW) && !board[curR - 1][curW] &&!visited[curR - 1][curW][1]) {
+				q.push({ curCost - 1, curR - 1, curW, 1});
+			}
+			//아래로 이동
+			if (inRange(curR + 2, curW) && !board[curR + 2][curW ] && !visited[curR + 2][curW][0]) {
+				q.push({ curCost - 1, curR + 2, curW, 1});
+			}
+			//좌로 회전
+			if (inRange(curR, curW-1) && inRange(curR - 1, curW -1) && !board[curR][curW - 1] && !board[curR-1][curW - 1]) {
+				if (!visited[curR][curW - 1][0])
+					q.push({ curCost - 1, curR, curW - 1, 0});
+				if (!visited[curR - 1][curW - 1][0])
+					q.push({ curCost - 1, curR - 1, curW - 1, 0});
+			}
+			//우로 회전
+			if (inRange(curR, curW + 1) && inRange(curR - 1, curW + 1)&& !board[curR][curW + 1] && !board[curR-1][curW + 1]) {
+				if (!visited[curR][curW ][0])
+					q.push({ curCost - 1, curR , curW , 0 });
+				if (!visited[curR - 1][curW][0])
+					q.push({ curCost - 1, curR - 1, curW, 0});
+			}
 		}
 	}
-	//lock은 여유 공간 1로 초기화
-	if (lock.size() < SIZE) {
-		for (int i = 0; i < lock.size(); ++i) {
-			while (lock[i].size() < SIZE) lock[i].push_back(1);
-		}
-		while (lock.size() < SIZE) {
-			lock.push_back(vector<int>(SIZE, 1));
-		}
-	}
 
-	vector<vector<int>> tmp = key;
-	for (int rotate = 0; rotate < 4; ++rotate) {
-		tmp = rotateVec(tmp);
 
-		vector<vector<int>> tmptmp = tmp;
-		for (int up = 0; up <= SIZE; ++up) {
-			for (int left = 0; left <= SIZE; ++left) {
-				tmptmp = moveLeft(moveUp(tmp, up), left);
-				if (xorVec(tmptmp, lock)) return true;
-			}
-			for (int right = 0; right <= SIZE; ++right) {
-				tmptmp = moveRight(moveUp(tmp, up), right);
-				if (xorVec(tmptmp, lock)) return true;
-			}
-		}
-
-		for (int down = 0; down <= SIZE; ++down) {
-			for (int left = 0; left <= SIZE; ++left) {
-				tmptmp = moveLeft(moveDown(tmp, down), left);
-				if (xorVec(tmptmp, lock)) return true;
-			}
-			for (int right = 0; right <= SIZE; ++right) {
-				tmptmp = moveRight(moveDown(tmp, down), right);
-				if (xorVec(tmptmp, lock)) return true;
-			}
-		}
-	}
-
-	return false;
+	return answer;
 }
 
 int main() {
-	solution({ {0, 0, 0},{1, 0, 0},{0, 1, 1} }, { {1, 1, 1},{1, 1, 0},{1, 0, 1} });
+	solution({ {0, 0, 0, 0, 0, 0, 1},{1, 1, 1, 1, 0, 0, 1},{0, 0, 0, 0, 0, 0, 0},{0, 0, 1, 1, 1, 1, 0},{0, 1, 1, 1, 1, 1, 0},{0, 0, 0, 0, 0, 1, 1},{0, 0, 1, 0, 0, 0, 0} });
 }
