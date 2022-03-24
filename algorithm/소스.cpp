@@ -13,67 +13,74 @@ vector<vector<int>> rotateVec(vector<vector<int>> v) {
 
 	for (int i = 0; i < SIZE; ++i) {
 		for (int j = 0; j < SIZE; ++j) {
-			rotateV[j][SIZE - i] = v[i][j];
+			rotateV[j][SIZE - i - 1] = v[i][j];
 		}
 	}
 
 	return rotateV;
 }
 
-vector<ll> toBitmask(vector<vector<int>> intVec) {
-	vector<ll> llVec(SIZE, 0LL);
 
+vector<vector<int>> moveUp(vector<vector<int>> v, int n) {
+	vector<vector<int>> moveV;
+
+	for (int i = n; i < SIZE; ++i) 
+		moveV.push_back(v[i]);
+	
+	for(int i = 0; i<n; ++i)
+		moveV.push_back(vector<int>(SIZE, 0));
+
+	return moveV;
+}
+
+vector<vector<int>> moveDown(vector<vector<int>> v, int n) {
+	vector<vector<int>> moveV;
+
+	for (int i = 0; i < n; ++i)
+		moveV.push_back(vector<int>(SIZE, 0));
+
+	for (int i = 0; i < SIZE - n; ++i)
+		moveV.push_back(v[i]);
+
+	return moveV;
+}
+
+vector<vector<int>> moveRight(vector<vector<int>> v, int n) {
+	vector<vector<int>> moveV(SIZE, vector<int>());
+
+	for (int i = 0; i < SIZE; ++i) {
+		for (int j = 0; j < n; ++j) 
+			moveV[i].push_back(0);
+
+		for (int j = 0; j < SIZE - n; ++j) 
+			moveV[i].push_back(v[i][j]);
+	}
+
+	return moveV;
+}
+
+vector<vector<int>> moveLeft(vector<vector<int>> v, int n) {
+	vector<vector<int>> moveV(SIZE, vector<int>());
+
+	for (int i = 0; i < SIZE; ++i) {
+		for (int j = n; j < SIZE; ++j) {
+			moveV[i].push_back(v[i][j]);
+		}
+
+		for (int j = 0; j < n; ++j)
+			moveV[i].push_back(0);
+	}
+
+	return moveV;
+}
+
+bool xorVec(vector<vector<int>> k, vector<vector<int>> l) {
+	
 	for (int i = 0; i < SIZE; ++i) {
 		for (int j = 0; j < SIZE; ++j) {
-			if (intVec[i][j] == 1) 
-				llVec[i] = llVec[i] | (1 << j);
+			if (k[i][j] == 0 && l[i][j]) return false;
+			if (k[i][j] == 1 && l[i][j]) return false;
 		}
-	}
-
-	return llVec;
-}
-
-vector<ll> bitmaskMoveUpDown(vector<ll> v, int flag) {
-	vector<ll> moveV;
-
-	//up
-	if (flag == 0) {
-		for (int i = 1; i < SIZE; ++i) {
-			moveV.push_back(v[i]);
-		}
-		moveV.push_back(0LL);
-	}
-	//down
-	else {
-		moveV.push_back(0LL);
-		for (int i = 0; i < SIZE - 1; ++i) {
-			moveV.push_back(v[i]);
-		}
-	}
-	return moveV;
-}
-
-vector<ll> toBitmaskMoveRightLeft(vector<ll> v, int flag) {
-	vector<ll> moveV;
-
-	for (int i = 0; i < SIZE; ++i) {
-		//right
-		if (flag == 0)
-			moveV.push_back(v[i] >> 1);	
-		//left
-		else 
-			moveV.push_back(v[i] << 1);
-	}
-
-	return moveV;
-}
-
-bool keyXorLock(vector<ll> k, vector<ll> l) {
-	ll correct = (1 << SIZE) - 1;
-
-	for (int i = 0; i < SIZE; ++i) {
-		if ((k[i] ^ l[i]) & correct != correct) 
-			return false;
 	}
 	return true;
 }
@@ -103,51 +110,37 @@ bool solution(vector<vector<int>> key, vector<vector<int>> lock) {
 		}
 	}
 
-
+	vector<vector<int>> tmp = key;
 	for (int rotate = 0; rotate < 4; ++rotate) {
-		if (rotate != 0) key = rotateVec(key);
-		vector<ll> lockBitmask = toBitmask(lock);
+		tmp = rotateVec(tmp);
 
-		vector<ll> tmpKey = toBitmask(key);
-		vector<ll> tmpTmpKey;
-
-		for (int up = 0; up < SIZE; ++up) {
-			if(up != 0) tmpKey = bitmaskMoveUpDown(tmpKey, 0);
-
-			tmpTmpKey = tmpKey;
-			for (int left = 0; left < SIZE; ++left) {
-				if (left != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 1);
-
-				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
+		vector<vector<int>> tmptmp = tmp;
+		for (int up = 0; up <= SIZE; ++up) {
+			for (int left = 0; left <= SIZE; ++left) {
+				tmptmp = moveLeft(moveUp(tmp, up), left);
+				if (xorVec(tmptmp, lock)) return true;
 			}
-			
-			tmpTmpKey = tmpKey;
-			for (int right = 0; right < SIZE; ++right) {
-				if (right != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 0);
-
-				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
+			for (int right = 0; right <= SIZE; ++right) {
+				tmptmp = moveRight(moveUp(tmp, up), right);
+				if (xorVec(tmptmp, lock)) return true;
 			}
 		}
 
-		tmpKey = toBitmask(key);
-		for (int down = 0; down < SIZE; ++down) {
-			if (down != 0) tmpKey = bitmaskMoveUpDown(tmpKey, 0);
-
-			tmpTmpKey = tmpKey;
-			for (int left = 0; left < SIZE; ++left) {
-				if (left != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 1);
-
-				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
+		for (int down = 0; down <= SIZE; ++down) {
+			for (int left = 0; left <= SIZE; ++left) {
+				tmptmp = moveLeft(moveDown(tmp, down), left);
+				if (xorVec(tmptmp, lock)) return true;
 			}
-
-			tmpTmpKey = tmpKey;
-			for (int right = 0; right < SIZE; ++right) {
-				if (right != 0) tmpTmpKey = toBitmaskMoveRightLeft(tmpTmpKey, 0);
-
-				if (keyXorLock(tmpTmpKey, lockBitmask)) return true;
+			for (int right = 0; right <= SIZE; ++right) {
+				tmptmp = moveRight(moveDown(tmp, down), right);
+				if (xorVec(tmptmp, lock)) return true;
 			}
 		}
 	}
 
 	return false;
+}
+
+int main() {
+	solution({ {0, 0, 0},{1, 0, 0},{0, 1, 1} }, { {1, 1, 1},{1, 1, 0},{1, 0, 1} });
 }
