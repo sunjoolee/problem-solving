@@ -1,50 +1,73 @@
 #include <string>
 #include <vector>
+#include <stack>
 #include <algorithm>
 
 using namespace std;
 
-int solution(string s) {
-
-	int answer = s.length();
-
-	for (int len = 1; len <= s.length(); ++len) {
-		string res = "";
-
-		int cnt = 1;
-		int pos = 0;
-		while (pos + len <= s.length()) {
-			//현재 문자열 조각
-			string now = s.substr(pos, len);
-
-			//다음 문자열 조각 없는 경우
-			if (pos + (2 * len) > s.length()) {
-				if (cnt == 1) res += now;
-				else res += (to_string(cnt) + now);
-
-				//남은 문자열 붙이기
-				res += s.substr(pos + len);
-				break;
-			}
-
-			//다음 문자열 조각
-			string next = s.substr(pos + len, len);
-
-			if (now == next) cnt++;
-			else {
-				if (cnt == 1) res += now;
-				else res += (to_string(cnt) + now);
-				cnt = 1;
-			}
-			pos += len;
-		}
-
-		if (res.length() < answer) answer = res.length();
+bool checkBalance(string s) {
+	int cnt1 = 0;
+	int cnt2 = 0;
+	for (int i = 0; i < s.length(); ++i) {
+		if (s[i] == '(') cnt1++;
+		else cnt2++;
 	}
-
-	return answer;
+	return cnt1 == cnt2;
 }
 
-int main() {
-	solution("aabbaccc");
+bool checkCorrect(string s) {
+	//빈 문자열인경우 참
+	if (s == "") return true;
+
+	stack<char> buffer;
+	for (int i = 0; i < s.length(); ++i) {
+		if (buffer.empty()) {
+			buffer.push(s[i]);
+			continue;
+		}
+		if (buffer.top() == '(' && s[i] == ')') buffer.pop();
+		else buffer.push(s[i]);
+	}
+	return buffer.empty();
+}
+
+string correctU(string s) {
+	// u가 올바른 괄호 문자열인 경우
+	if (checkCorrect(s)) return s;
+
+	// u의 맨 앞 & 맨 뒤 제거, 괄호 방향 바꾸기 
+	string correct = "";
+	for (int i = 1; i + 1 < s.length(); ++i) {
+		if (s[i] == '(') correct += ")";
+		else correct += "(";
+	}
+
+	return correct;
+}
+
+string correctString(string s) {
+	if (checkCorrect(s)) return s;
+
+	string u = "";
+	string v = "";
+	for (int i = 0; i < s.length(); ++i) {
+		u += s[i];
+		if (checkBalance(u)) {
+			if (i + 1 < s.length())
+				v = s.substr(i + 1);
+			break;
+		}
+	}
+	if(checkCorrect(u)) return u + correctString(v);
+	else {
+		string res = "(";
+		res += correctString(v);
+		res += ")";
+
+	}
+}
+
+string solution(string p) {
+	string answer = correctString(p);
+	return answer;
 }
