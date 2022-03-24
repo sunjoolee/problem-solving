@@ -1,146 +1,84 @@
 #include <string>
 #include <vector>
-#include <map>
 #include <algorithm>
-
 using namespace std;
 
-typedef double db;
-
-struct page {
-	int index;
-	string content;
-	vector<string> linkedPages;
-
-	db kibonScore;
-	db linkCnt;
-	db linkScore;
-
-	page() : index(-1), content(""), kibonScore(0), linkCnt(0), linkScore(0) {
-		linkedPages.clear();
-	}
-	page(int index, string content, vector<string> linkedPages) : index(index), content(content), kibonScore(0), linkCnt(0), linkScore(0){
-		linkedPages = linkedPages;
-	}
+struct TreeNode{
+	int idx;
+	int x;
+	int y;
+	TreeNode *Left;
+	TreeNode *Right;
 };
 
-int solution(string word, vector<string> pages) {
-	
-	int N = pages.size();
-	transform(word.begin(), word.end(), word.begin(), ::tolower);
-
-	//index를 가진 페이지의 주소
-	map<int, string> pageContent;
-
-	//string 주소를 가진 페이지의 정보 저장 맵
-	map<string, page> pageMap;
-
-	//HTML 형식으로부터 페이지 주소 & 연결된 페이지 주소 추출 
-	//해당 페이지의 기본 점수 계산
-	for (int index = 0; index < pages.size(); ++index) {
-		string content;
-		db kibon = 0;
-		vector<string> links;
-
-		//페이지 주소 & 연결된 페이지 주소용 버퍼
-		string buffer = "";
-		//기본 점수 계산용 버퍼
-		string buffer2 = "";
-
-		for (int j = 0; j < pages[index].length(); ++j) {
-			char ch = pages[index][j];
-
-			if (ch == ' ' || ch == '\n') {
-				transform(buffer2.begin(), buffer2.end(), buffer2.begin(), ::tolower);
-				if (buffer2 == word) ++kibon;
-				buffer2 = "";
-
-				buffer = "";
-				continue;
-			}
-
-			buffer += ch;
-
-			if (!('a' <= ch && ch <= 'z') && !('A' <= ch && ch <= 'Z')) {
-				transform(buffer2.begin(), buffer2.end(), buffer2.begin(), ::tolower);
-				if (buffer2 == word) ++kibon;
-				buffer2 = "";
-			}
-			else buffer2 += ch;
-
-
-			//해당 페이지 주소 입력받기
-			if (buffer == "content=\"") {
-				int k = j+1;
-				while(true) {
-					char ch1 = pages[index][k];
-					if (ch1 == '\"') break;
-					content += ch1;
-					k++;
-				}
-				j = k;
-				buffer = "";
-				continue;
-			}
-
-			//해당 페이지로부터 연결된 외부 페이지 주소 입력받기
-			if (buffer == "href=\"") {
-				int k = j + 1;
-				string href = "";
-				while (true) {
-					char ch1 = pages[index][k];
-					if (ch1 == '\"') break;
-					href += ch1;
-					k++;
-				}
-				links.push_back(href);
-				j = k;
-				buffer = "";
-				continue;
-			}			
-		}
-
-		pageContent[index] = content;
-		page pageInfo = page(index, content, links);
-		pageInfo.kibonScore = kibon;
-
-		pageMap.insert({ content, pageInfo });
-	}
-
-
-	//외부 링크수, 링크 점수 계산하기
-	for (int index = 0; index < N; ++index) {
-		
-		page* pageInfo = &pageMap[pageContent[index]];
-
-		//외부 링크수 계산
-		pageInfo->linkCnt = pageInfo->linkedPages.size();
-
-		//해당 페이지와 연결된 외부 페이지의 링크 점수 계산
-		for (int j = 0; j < pageInfo->linkedPages.size(); ++j) {
-			string href = pageInfo->linkedPages[j];
-			if (pageMap.find(href) == pageMap.end()) continue;
-
-			page linkedPageInfo = pageMap[href];
-			pageInfo->linkScore += (linkedPageInfo.kibonScore / linkedPageInfo.linkCnt);
-		}
-	}
-
-	int answer = 0;
-	db maxMatchScore = 0;
-
-	for (int index = 0; index < N; ++index) {
-		db matchScore = pageMap[pageContent[index]].kibonScore + pageMap[pageContent[index]].linkScore;
-		if (matchScore > maxMatchScore) {
-			maxMatchScore = matchScore;
-			answer = index;
-		}
-	}
-
-	return answer;
+bool cmp(TreeNode A, TreeNode B){
+	if (A.y > B.y) return true;
+	else if (A.y == B.y) return(A.x < B.x);
+	else return false;
 }
 
-int main() {
+void makeTree(TreeNode *root, TreeNode * child){
+	//left child
+	if (root->x > child->x){
+		if (root->Left == NULL){
+			root->Left = child;
+			return;
+		}
+		makeTree(root->Left, child);
+	}
+	//right child
+	else{
+		if (root->Right == NULL){
+			root->Right = child;
+			return;
+		}
+		makeTree(root->Right, child);
+	}
+}
 
-	solution("Muzi", { "<html lang=\"ko\" xml:lang=\"ko\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta property=\"og:url\" content=\"https://careers.kakao.com/interview/list\"/>\n</head>  \n<body>\n<a href=\"https://programmers.co.kr/learn/courses/4673\"></a>#!MuziMuzi!)jayg07con&&\n\n</body>\n</html>", "<html lang=\"ko\" xml:lang=\"ko\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta property=\"og:url\" content=\"https://www.kakaocorp.com\"/>\n</head>  \n<body>\ncon%\tmuzI92apeach&2<a href=\"https://hashcode.co.kr/tos\"></a>\n\n\t^\n</body>\n</html>" });
+void PreOrder(TreeNode *root, vector<int> &answer){
+	if (root == NULL) return;
+	
+	answer.push_back(root->idx);
+	PreOrder(root->Left, answer);
+	PreOrder(root->Right, answer);
+}
+
+void PostOrder(TreeNode *root, vector<int> &answer){
+	if (root == NULL) return;
+	
+	PostOrder(root->Left, answer);
+	PostOrder(root->Right, answer);
+	answer.push_back(root->Idx);
+}
+
+vector<vector<int>> solution(vector<vector<int>> nodeinfo){
+	vector<vector<int>> answer;
+	
+	vector<TreeNode> Tree;
+
+	for (int i = 0; i < nodeinfo.size(); i++){
+		int x = nodeinfo[i][0];
+		int y = nodeinfo[i][1];
+		int idx = i + 1;
+		Tree.push_back({ idx, x, y, NULL, NULL });
+	}
+
+	sort(Tree.begin(), Tree.end(), cmp);
+	TreeNode *root = &Tree[0];
+
+	//모든 노드를 root를 루트로하는 이진 트리에 삽입
+	for (int i = 1; i < Tree.size(); i++) {
+		makeTree(root, &Tree[i]);
+	}
+
+	vector<int> Pre_V; 
+	PreOrder(root, Pre_V);
+	
+	vector<int> Post_V;    
+	PostOrder(root, Post_V);
+	
+	answer.push_back(Pre_V);
+	answer.push_back(Post_V);
+	return answer;
 }
