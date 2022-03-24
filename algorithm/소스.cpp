@@ -1,84 +1,50 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+
 using namespace std;
 
-struct TreeNode{
-	int idx;
-	int x;
-	int y;
-	TreeNode *Left;
-	TreeNode *Right;
-};
+int solution(string s) {
 
-bool cmp(TreeNode A, TreeNode B){
-	if (A.y > B.y) return true;
-	else if (A.y == B.y) return(A.x < B.x);
-	else return false;
-}
+	int answer = s.length();
 
-void makeTree(TreeNode *root, TreeNode * child){
-	//left child
-	if (root->x > child->x){
-		if (root->Left == NULL){
-			root->Left = child;
-			return;
+	for (int len = 1; len <= s.length(); ++len) {
+		string res = "";
+
+		int cnt = 1;
+		int pos = 0;
+		while (pos + len <= s.length()) {
+			//현재 문자열 조각
+			string now = s.substr(pos, len);
+
+			//다음 문자열 조각 없는 경우
+			if (pos + (2 * len) > s.length()) {
+				if (cnt == 1) res += now;
+				else res += (to_string(cnt) + now);
+
+				//남은 문자열 붙이기
+				res += s.substr(pos + len);
+				break;
+			}
+
+			//다음 문자열 조각
+			string next = s.substr(pos + len, len);
+
+			if (now == next) cnt++;
+			else {
+				if (cnt == 1) res += now;
+				else res += (to_string(cnt) + now);
+				cnt = 1;
+			}
+			pos += len;
 		}
-		makeTree(root->Left, child);
-	}
-	//right child
-	else{
-		if (root->Right == NULL){
-			root->Right = child;
-			return;
-		}
-		makeTree(root->Right, child);
-	}
-}
 
-void PreOrder(TreeNode *root, vector<int> &answer){
-	if (root == NULL) return;
-	
-	answer.push_back(root->idx);
-	PreOrder(root->Left, answer);
-	PreOrder(root->Right, answer);
-}
-
-void PostOrder(TreeNode *root, vector<int> &answer){
-	if (root == NULL) return;
-	
-	PostOrder(root->Left, answer);
-	PostOrder(root->Right, answer);
-	answer.push_back(root->Idx);
-}
-
-vector<vector<int>> solution(vector<vector<int>> nodeinfo){
-	vector<vector<int>> answer;
-	
-	vector<TreeNode> Tree;
-
-	for (int i = 0; i < nodeinfo.size(); i++){
-		int x = nodeinfo[i][0];
-		int y = nodeinfo[i][1];
-		int idx = i + 1;
-		Tree.push_back({ idx, x, y, NULL, NULL });
+		if (res.length() < answer) answer = res.length();
 	}
 
-	sort(Tree.begin(), Tree.end(), cmp);
-	TreeNode *root = &Tree[0];
-
-	//모든 노드를 root를 루트로하는 이진 트리에 삽입
-	for (int i = 1; i < Tree.size(); i++) {
-		makeTree(root, &Tree[i]);
-	}
-
-	vector<int> Pre_V; 
-	PreOrder(root, Pre_V);
-	
-	vector<int> Post_V;    
-	PostOrder(root, Post_V);
-	
-	answer.push_back(Pre_V);
-	answer.push_back(Post_V);
 	return answer;
+}
+
+int main() {
+	solution("aabbaccc");
 }
