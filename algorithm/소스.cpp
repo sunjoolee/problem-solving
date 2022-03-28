@@ -16,7 +16,7 @@ struct qNode {
 	int dir;
 
 	bool operator<(const qNode node) const {
-		return this->cost > node.cost;
+		return this->cost < node.cost;
 	}
 };
 
@@ -29,7 +29,7 @@ bool inRange(int r, int w) {
 
 int solution(vector<vector<int>> board) {
 	N = board.size();
-	int answer =0;
+	int answer = 987654321;
 
 	//BFS
 	//(0,0),(0,1) 에서 시작
@@ -45,18 +45,21 @@ int solution(vector<vector<int>> board) {
 		int curDir = q.top().dir;
 		q.pop();
 
+		//지금까지 구한 경로보다 더 긴 경로인 경우 무시
+		if (curCost > answer) continue;
+
 		//종점인지 확인
 		//가로
 		if (curDir == 0){
 			if (curR == N - 1 && curW == N - 2) {
-				answer = -curCost;
-				break;
+				answer = min(answer, -curCost);
+				continue;
 			}
 		}
 		//세로
 		else if (curR == N - 2 && curW == N - 1){
-			answer = -curCost;
-			break;
+			answer = min(answer, -curCost);
+			continue;
 		}
 
 		//이미 방문한 노드
@@ -77,16 +80,16 @@ int solution(vector<vector<int>> board) {
 			//위로 회전
 			if (inRange(curR - 1, curW ) && inRange(curR - 1, curW + 1) && !board[curR-1][curW] && !board[curR-1][curW + 1]){
 				if(!visited[curR-1][curW + 1][1]) 
-					q.push({ curR - 1, curW + 1, 1, curCost + 1 });
+					q.push({ curCost - 1, curR - 1, curW + 1, 1});
 				if (!visited[curR - 1][curW][1])
 					q.push({ curCost - 1, curR - 1, curW, 1});
 			}
 			//아래로 회전
 			if (inRange(curR + 1, curW) && inRange(curR + 1, curW + 1) && !board[curR + 1][curW] && !board[curR + 1][curW + 1]) {
 				if (!visited[curR + 1][curW + 1][1])
-					q.push({ curCost - 1, curR + 1, curW + 1, 1 });
+					q.push({ curCost - 1, curR , curW + 1, 1 });
 				if (!visited[curR + 1][curW][1])
-					q.push({ curCost - 1, curR + 1, curW, 1});
+					q.push({ curCost - 1, curR , curW, 1});
 			}
 		}
 		//세로
@@ -96,22 +99,22 @@ int solution(vector<vector<int>> board) {
 				q.push({ curCost - 1, curR - 1, curW, 1});
 			}
 			//아래로 이동
-			if (inRange(curR + 2, curW) && !board[curR + 2][curW ] && !visited[curR + 2][curW][0]) {
-				q.push({ curCost - 1, curR + 2, curW, 1});
+			if (inRange(curR + 2, curW) && !board[curR + 2][curW ] && !visited[curR + 2][curW][1]) {
+				q.push({ curCost - 1, curR + 1, curW, 1});
 			}
 			//좌로 회전
-			if (inRange(curR, curW-1) && inRange(curR - 1, curW -1) && !board[curR][curW - 1] && !board[curR-1][curW - 1]) {
+			if (inRange(curR, curW-1) && inRange(curR + 1, curW -1) && !board[curR][curW - 1] && !board[curR+1][curW - 1]) {
 				if (!visited[curR][curW - 1][0])
 					q.push({ curCost - 1, curR, curW - 1, 0});
-				if (!visited[curR - 1][curW - 1][0])
-					q.push({ curCost - 1, curR - 1, curW - 1, 0});
+				if (!visited[curR + 1][curW - 1][0])
+					q.push({ curCost - 1, curR + 1, curW - 1, 0});
 			}
 			//우로 회전
-			if (inRange(curR, curW + 1) && inRange(curR - 1, curW + 1)&& !board[curR][curW + 1] && !board[curR-1][curW + 1]) {
+			if (inRange(curR, curW + 1) && inRange(curR + 1, curW + 1)&& !board[curR][curW + 1] && !board[curR+1][curW + 1]) {
 				if (!visited[curR][curW ][0])
 					q.push({ curCost - 1, curR , curW , 0 });
-				if (!visited[curR - 1][curW][0])
-					q.push({ curCost - 1, curR - 1, curW, 0});
+				if (!visited[curR + 1][curW][0])
+					q.push({ curCost - 1, curR + 1, curW, 0});
 			}
 		}
 	}
@@ -121,5 +124,12 @@ int solution(vector<vector<int>> board) {
 }
 
 int main() {
-	solution({ {0, 0, 0, 0, 0, 0, 1},{1, 1, 1, 1, 0, 0, 1},{0, 0, 0, 0, 0, 0, 0},{0, 0, 1, 1, 1, 1, 0},{0, 1, 1, 1, 1, 1, 0},{0, 0, 0, 0, 0, 1, 1},{0, 0, 1, 0, 0, 0, 0} });
+	solution({
+		{0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 0, 0, 1},
+		{0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 1, 1, 1, 1, 0},
+		{0, 1, 1, 1, 1, 1, 0},
+		{0, 0, 0, 0, 0, 1, 1},
+		{0, 0, 1, 0, 0, 0, 0} });
 }
