@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int N = 100;
+int N = 105;
 
 const int pillarStart = 0;
 const int pillarEnd = 1;
@@ -18,7 +18,7 @@ vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
 	//map[x][y][1] = 1:  (x,y)가 기둥의 끝 좌표
 	//map[x][y][2] = 1 : (x,y)가 보의 시작 좌표
 	//map[x][y][3] = 1 : (x,y)가 보의 끝 좌표
-	vector<vector<vector<int>>> map(100, vector<vector<int>>(100, vector<int>(4, 0)));
+	vector<vector<vector<int>>> map(N, vector<vector<int>>(N, vector<int>(4, 0)));
 
 	for (int i = 0; i < build_frame.size(); ++i) {
 		int y = build_frame[i][0]; 
@@ -110,15 +110,5 @@ vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
 }
 
 int main() {
-	solution(5, {
-		{0, 0, 0, 1},
-		{2, 0, 0, 1},
-		{4, 0, 0, 1},
-		{0, 1, 1, 1},
-		{1, 1, 1, 1},
-		{2, 1, 1, 1},
-		{3, 1, 1, 1},
-		{2, 0, 0, 0},
-		{1, 1, 1, 0},
-		{2, 2, 0, 1} });
+	solution(100, { {2, 0, 0, 1},{100, 0, 0, 1},{100, 1, 1, 1},{99, 1, 1, 1},{99, 1, 0, 1},{99, 0, 0, 1} });
 }
