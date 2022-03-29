@@ -6,8 +6,10 @@ using namespace std;
 
 int N = 105;
 
+//기둥은 위로 지어짐
 const int pillarStart = 0;
 const int pillarEnd = 1;
+//보는 오른쪽으로 지어짐
 const int boStart = 2;
 const int boEnd = 3;
 
@@ -19,32 +21,35 @@ vector<vector<vector<int>>> map(N, vector<vector<int>>(N, vector<int>(4, 0)));
 
 
 //map에 설치된 모든 구조물들이 잘 설치되었는지 확인
-bool check(int n) {
+bool check() {
 
-	for (int x = 0; x <=n ; ++x) {
-		for (int y = 0; y <= n; ++y) {
+	for (int x = 0; x < N ; ++x) {
+		for (int y = 0; y < N; ++y) {
 
 			//기둥
+			bool flag = false;
 			if (map[x][y][pillarStart] == 1) {
 				//바닥 위에 설치되어있는 경우
-				if (x == 0) continue;
+				if (x == 0) flag = true;
 				//보의 한쪽 끝에 설치되어있는 경우
-				else if (map[x][y][boStart] == 1 || map[x][y][boEnd] == 1) continue;
+				if (map[x][y][boStart] == 1 || map[x][y][boEnd] == 1) flag = true;
 				//기둥 위에 설치되어있는 경우
-				else if (map[x][y][pillarEnd] == 1) continue;
+				if (map[x][y][pillarEnd] == 1) flag = true;
 
 				//조건 만족 못함 
-				return false;
+				if (flag != true) return false;
 			}
+
 			//보
-			else if(map[x][y][boStart] == 1) {
+			flag = false;
+			if(map[x][y][boStart] == 1) {
 				//한쪽 끝이 기둥 위인 경우
-				if (map[x][y][pillarEnd] == 1 || map[x][y + 1][pillarEnd] == 1) continue;
+				if (map[x][y][pillarEnd] == 1 || map[x][y + 1][pillarEnd] == 1) flag = true;
 				//양쪽 끝부분이 다른 보와 동시에 연결된 경우
-				else if (map[x][y][boEnd] == 1 && map[x][y + 1][boStart] == 1) continue;
+				if (map[x][y][boEnd] == 1 && map[x][y + 1][boStart] == 1) flag = true;
 
 				//조건 만족 못함
-				return false;
+				if (flag != true) return false;
 			}
 		}
 	}
@@ -68,7 +73,7 @@ vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
 			if (a == 0) {
 				map[x][y][pillarStart] = 1;
 				map[x+1][y][pillarEnd] = 1;
-				if (check(n)) continue;
+				if (check()) continue;
 				map[x][y][pillarStart] = 0;
 				map[x + 1][y][pillarEnd] = 0;
 			}
@@ -76,7 +81,7 @@ vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
 			else {
 				map[x][y][boStart] = 1;
 				map[x][y + 1][boEnd] = 1;
-				if (check(n)) continue;
+				if (check()) continue;
 				map[x][y][boStart] = 0;
 				map[x][y + 1][boEnd] = 0;
 			}
@@ -88,25 +93,25 @@ vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
 			if (a == 0 && map[x][y][pillarStart] == 1){
 				map[x][y][pillarStart] = 0;
 				map[x + 1][y][pillarEnd] = 0;
-				if (check(n)) continue;
+				if (check()) continue;
 				map[x][y][pillarStart] = 1;
 				map[x + 1][y][pillarEnd] = 1;
 			}
 			//삭제할 보가 있는 경우
-			else if(a == 1 && map[x][y][boStart] == 1) {
+			if(a == 1 && map[x][y][boStart] == 1) {
 				map[x][y][boStart] = 0;
 				map[x][y + 1][boEnd] = 0;
-				if (check(n)) continue;
+				if (check()) continue;
 				map[x][y][boStart] = 1;
 				map[x][y + 1][boEnd] = 1;
 			}
 		}
 	}
 
-	for (int x = 0; x <= n; ++x) {
-		for (int y = 0; y <= n; ++y) {
-			if (map[y][x][pillarStart] == 1) answer.push_back({ x, y, 0 });
-			if (map[y][x][boStart] == 1) answer.push_back({ x,y, 1 });
+	for (int y = 0; y < N; ++y) {
+		for (int x = 0; x < N; ++x) {
+			if (map[x][y][pillarStart] == 1) answer.push_back({ y, x, 0 });
+			if (map[x][y][boStart] == 1) answer.push_back({ y,x, 1 });
 		}
 	}
 
