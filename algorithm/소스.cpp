@@ -1,123 +1,100 @@
+#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 
 using namespace std;
 
-int N = 105;
+// C++ implementation of search and insert
+// operations on Trie
 
-//기둥은 위로 지어짐
-const int pillarStart = 0;
-const int pillarEnd = 1;
-//보는 오른쪽으로 지어짐
-const int boStart = 2;
-const int boEnd = 3;
+const int ALPHABET_SIZE = 26;
 
-//map[x][y][0] = 1 : (x,y)가 기둥의 시작 좌표
-//map[x][y][1] = 1:  (x,y)가 기둥의 끝 좌표
-//map[x][y][2] = 1 : (x,y)가 보의 시작 좌표
-//map[x][y][3] = 1 : (x,y)가 보의 끝 좌표
-vector<vector<vector<int>>> map(N, vector<vector<int>>(N, vector<int>(4, 0)));
+// trie node
+struct TrieNode {
+	struct TrieNode *children[ALPHABET_SIZE];
 
+	// isEndOfWord is true if the node represents
+	// end of a word
+	bool isEndOfWord;
+};
 
-//map에 설치된 모든 구조물들이 잘 설치되었는지 확인
-bool check() {
+// Returns new trie node (initialized to NULLs)
+struct TrieNode *getNode(void) {
+	struct TrieNode *pNode = new TrieNode;
 
-	for (int x = 0; x < N ; ++x) {
-		for (int y = 0; y < N; ++y) {
+	pNode->isEndOfWord = false;
 
-			//기둥
-			bool flag = false;
-			if (map[x][y][pillarStart] == 1) {
-				//바닥 위에 설치되어있는 경우
-				if (x == 0) flag = true;
-				//보의 한쪽 끝에 설치되어있는 경우
-				if (map[x][y][boStart] == 1 || map[x][y][boEnd] == 1) flag = true;
-				//기둥 위에 설치되어있는 경우
-				if (map[x][y][pillarEnd] == 1) flag = true;
+	for (int i = 0; i < ALPHABET_SIZE; i++)
+		pNode->children[i] = NULL;
 
-				//조건 만족 못함 
-				if (flag != true) return false;
-			}
-
-			//보
-			flag = false;
-			if(map[x][y][boStart] == 1) {
-				//한쪽 끝이 기둥 위인 경우
-				if (map[x][y][pillarEnd] == 1 || map[x][y + 1][pillarEnd] == 1) flag = true;
-				//양쪽 끝부분이 다른 보와 동시에 연결된 경우
-				if (map[x][y][boEnd] == 1 && map[x][y + 1][boStart] == 1) flag = true;
-
-				//조건 만족 못함
-				if (flag != true) return false;
-			}
-		}
-	}
-	return true;
+	return pNode;
 }
 
-vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
-	vector<vector<int>> answer;
+// If not present, inserts key into trie
+// If the key is prefix of trie node, just
+// marks leaf node
+void insert(struct TrieNode *root, string key) {
+	struct TrieNode *pCrawl = root;
 
-	for (int i = 0; i < build_frame.size(); ++i) {
-		int y = build_frame[i][0]; 
-		int x = build_frame[i][1];
-		//a = 0 기둥, 1 보
-		int a = build_frame[i][2]; 
-		//b = 0 삭제, 1 설치
-		int b = build_frame[i][3];
+	for (int i = 0; i < key.length(); i++)
+	{
+		int index = key[i] - 'a';
+		if (!pCrawl->children[index])
+			pCrawl->children[index] = getNode();
 
-		//설치
-		if (b == 1) {
-			//기둥 설치
-			if (a == 0) {
-				map[x][y][pillarStart] = 1;
-				map[x+1][y][pillarEnd] = 1;
-				if (check()) continue;
-				map[x][y][pillarStart] = 0;
-				map[x + 1][y][pillarEnd] = 0;
-			}
-			//보 설치
-			else {
-				map[x][y][boStart] = 1;
-				map[x][y + 1][boEnd] = 1;
-				if (check()) continue;
-				map[x][y][boStart] = 0;
-				map[x][y + 1][boEnd] = 0;
-			}
-			
-		}
-		//삭제
-		else {
-			//삭제할 기둥이 있는 경우
-			if (a == 0 && map[x][y][pillarStart] == 1){
-				map[x][y][pillarStart] = 0;
-				map[x + 1][y][pillarEnd] = 0;
-				if (check()) continue;
-				map[x][y][pillarStart] = 1;
-				map[x + 1][y][pillarEnd] = 1;
-			}
-			//삭제할 보가 있는 경우
-			if(a == 1 && map[x][y][boStart] == 1) {
-				map[x][y][boStart] = 0;
-				map[x][y + 1][boEnd] = 0;
-				if (check()) continue;
-				map[x][y][boStart] = 1;
-				map[x][y + 1][boEnd] = 1;
-			}
-		}
+		pCrawl = pCrawl->children[index];
 	}
 
-	for (int y = 0; y < N; ++y) {
-		for (int x = 0; x < N; ++x) {
-			if (map[x][y][pillarStart] == 1) answer.push_back({ y, x, 0 });
-			if (map[x][y][boStart] == 1) answer.push_back({ y,x, 1 });
+	// mark last node as leaf
+	pCrawl->isEndOfWord = true;
+}
+
+
+int search(struct TrieNode *root, string key) {
+	
+	int cnt = 0;
+	if (key[0] == '?') {
+		for (int i = 0; i < ALPHABET_SIZE; ++i) {
+			if (root->children[i]) {
+				if (key.length() == 1) cnt += root->children[i]->isEndOfWord;
+				else cnt += search(root->children[i], key.substr(1));
+			}
 		}
+		if (key.length() == 1) return cnt;
+	}
+	else {
+		int i = key[0] - 'a';
+		if (root->children[i]) {
+			if (key.length() == 1) return root->children[i]->isEndOfWord;
+			cnt += search(root->children[i], key.substr(1));
+		}
+	}
+	return cnt;
+}
+
+vector<int> solution(vector<string> words, vector<string> queries) {
+	
+	struct TrieNode *root = getNode();
+
+	// Construct trie
+	for (int i = 0; i < words.size(); i++) {
+		insert(root, words[i]);
+	}
+	
+	vector<int> answer;
+
+	// Search
+	for (int i = 0; i < queries.size(); ++i) {
+		answer.push_back(search(root, queries[i]));
 	}
 
 	return answer;
 }
 
 int main() {
-	solution(100, { {2, 0, 0, 1},{100, 0, 0, 1},{100, 1, 1, 1},{99, 1, 1, 1},{99, 1, 0, 1},{99, 0, 0, 1} });
+	solution({ "frodo", "front", "frost", "frozen", "frame", "kakao" }, { "fro??", "????o", "fr???", "fro???", "pro?" });
 }
+
+
+
