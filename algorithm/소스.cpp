@@ -17,10 +17,6 @@ const int boEnd = 3;
 //map[x][y][3] = 1 : (x,y)가 보의 끝 좌표
 vector<vector<vector<int>>> map(N, vector<vector<int>>(N, vector<int>(4, 0)));
 
-//잘 설치되었는지 확인하는 조건은 문제에 나와있대로 하면 됨
-//그러나, 삭제해도 되는 구조물인지 확인하는 조건은 직접 생각해야함 & 경우의 수가 많아 짜기 어려움
-//따라서, 삭제해도 되는지 안되는지 확인하려 하지 말고, 일단 삭제하고 나머지 구조물들이 잘 설치되었는지 확인하자
-
 
 //map에 설치된 모든 구조물들이 잘 설치되었는지 확인
 bool check(int n) {
@@ -97,7 +93,7 @@ vector<vector<int>> solution(int n, vector<vector<int>> build_frame) {
 				map[x + 1][y][pillarEnd] = 1;
 			}
 			//삭제할 보가 있는 경우
-			else if(map[x][y][boStart] == 1) {
+			else if(a == 1 && map[x][y][boStart] == 1) {
 				map[x][y][boStart] = 0;
 				map[x][y + 1][boEnd] = 0;
 				if (check(n)) continue;
