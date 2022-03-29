@@ -34,7 +34,7 @@ int solution(vector<vector<int>> board) {
 	//BFS
 	//(0,0),(0,1) 에서 시작
 
-	vector<vector<vector<int>>> visited(N, vector<vector<int>> (N, vector<int>(2, 0)));
+	vector<vector<vector<int>>> visited(N, vector<vector<int>>(N, vector<int>(2, 0)));
 	priority_queue<qNode> q;
 	q.push({ 0, 0, 0, 0 });
 
@@ -50,14 +50,14 @@ int solution(vector<vector<int>> board) {
 
 		//종점인지 확인
 		//가로
-		if (curDir == 0){
+		if (curDir == 0) {
 			if (curR == N - 1 && curW == N - 2) {
 				answer = min(answer, -curCost);
 				continue;
 			}
 		}
 		//세로
-		else if (curR == N - 2 && curW == N - 1){
+		else if (curR == N - 2 && curW == N - 1) {
 			answer = min(answer, -curCost);
 			continue;
 		}
@@ -70,51 +70,75 @@ int solution(vector<vector<int>> board) {
 		//가로
 		if (curDir == 0) {
 			//좌로 이동
-			if (inRange(curR, curW - 1) && !board[curR][curW-1] && !visited[curR][curW - 1][0]){
-				q.push({ curCost -1, curR, curW - 1, 0});
+			if (inRange(curR, curW - 1) && !board[curR][curW - 1] && !visited[curR][curW - 1][0]) {
+				q.push({ curCost - 1, curR, curW - 1, 0 });
 			}
 			//우로 이동
-			if (inRange(curR, curW + 2) && !board[curR][curW +2] && !visited[curR][curW + 2][0]) {
-				q.push({ curCost - 1, curR, curW + 1, 0});
+			if (inRange(curR, curW + 2) && !board[curR][curW + 2] && !visited[curR][curW + 2][0]) {
+				q.push({ curCost - 1, curR, curW + 1, 0 });
+			}
+			//아래로 평행 이동
+			if (inRange(curR + 1, curW) && inRange(curR + 1, curW + 1) && !board[curR + 1][curW] && !board[curR + 1][curW + 1]) {
+				if (!visited[curR + 1][curW][0]) {
+					q.push({ curCost - 1, curR + 1, curW, 0 });
+				}
+			}
+			//위로 평행 이동
+			if (inRange(curR - 1, curW) && inRange(curR - 1, curW + 1) && !board[curR - 1][curW] && !board[curR - 1][curW + 1]) {
+				if (!visited[curR - 1][curW][0]) {
+					q.push({ curCost - 1, curR - 1, curW , 0 });
+				}
 			}
 			//위로 회전
-			if (inRange(curR - 1, curW ) && inRange(curR - 1, curW + 1) && !board[curR-1][curW] && !board[curR-1][curW + 1]){
-				if(!visited[curR-1][curW + 1][1]) 
-					q.push({ curCost - 1, curR - 1, curW + 1, 1});
+			if (inRange(curR - 1, curW) && inRange(curR - 1, curW + 1) && !board[curR - 1][curW] && !board[curR - 1][curW + 1]) {
+				if (!visited[curR - 1][curW + 1][1])
+					q.push({ curCost - 1, curR - 1, curW + 1, 1 });
 				if (!visited[curR - 1][curW][1])
-					q.push({ curCost - 1, curR - 1, curW, 1});
+					q.push({ curCost - 1, curR - 1, curW, 1 });
 			}
 			//아래로 회전
 			if (inRange(curR + 1, curW) && inRange(curR + 1, curW + 1) && !board[curR + 1][curW] && !board[curR + 1][curW + 1]) {
 				if (!visited[curR + 1][curW + 1][1])
 					q.push({ curCost - 1, curR , curW + 1, 1 });
 				if (!visited[curR + 1][curW][1])
-					q.push({ curCost - 1, curR , curW, 1});
+					q.push({ curCost - 1, curR , curW, 1 });
 			}
 		}
 		//세로
 		else {
 			//위로 이동
-			if (inRange(curR - 1, curW) && !board[curR - 1][curW] &&!visited[curR - 1][curW][1]) {
-				q.push({ curCost - 1, curR - 1, curW, 1});
+			if (inRange(curR - 1, curW) && !board[curR - 1][curW] && !visited[curR - 1][curW][1]) {
+				q.push({ curCost - 1, curR - 1, curW, 1 });
 			}
 			//아래로 이동
-			if (inRange(curR + 2, curW) && !board[curR + 2][curW ] && !visited[curR + 2][curW][1]) {
-				q.push({ curCost - 1, curR + 1, curW, 1});
+			if (inRange(curR + 2, curW) && !board[curR + 2][curW] && !visited[curR + 2][curW][1]) {
+				q.push({ curCost - 1, curR + 1, curW, 1 });
+			}
+			//좌로 평행하여 이동
+			if (inRange(curR, curW - 1) && inRange(curR + 1, curW - 1) && !board[curR][curW - 1] && !board[curR + 1][curW - 1]) {
+				if (!visited[curR][curW - 1][1]) {
+					q.push({ curCost - 1, curR, curW - 1, 1 });
+				}
+			}
+			//우로 평행하여 이동
+			if (inRange(curR, curW + 1) && inRange(curR + 1, curW + 1) && !board[curR][curW + 1] && !board[curR + 1][curW + 1]) {
+				if (!visited[curR][curW + 1][1]) {
+					q.push({ curCost - 1, curR, curW + 1, 1 });
+				}
 			}
 			//좌로 회전
-			if (inRange(curR, curW-1) && inRange(curR + 1, curW -1) && !board[curR][curW - 1] && !board[curR+1][curW - 1]) {
+			if (inRange(curR, curW - 1) && inRange(curR + 1, curW - 1) && !board[curR][curW - 1] && !board[curR + 1][curW - 1]) {
 				if (!visited[curR][curW - 1][0])
-					q.push({ curCost - 1, curR, curW - 1, 0});
+					q.push({ curCost - 1, curR, curW - 1, 0 });
 				if (!visited[curR + 1][curW - 1][0])
-					q.push({ curCost - 1, curR + 1, curW - 1, 0});
+					q.push({ curCost - 1, curR + 1, curW - 1, 0 });
 			}
 			//우로 회전
-			if (inRange(curR, curW + 1) && inRange(curR + 1, curW + 1)&& !board[curR][curW + 1] && !board[curR+1][curW + 1]) {
-				if (!visited[curR][curW ][0])
+			if (inRange(curR, curW + 1) && inRange(curR + 1, curW + 1) && !board[curR][curW + 1] && !board[curR + 1][curW + 1]) {
+				if (!visited[curR][curW][0])
 					q.push({ curCost - 1, curR , curW , 0 });
 				if (!visited[curR + 1][curW][0])
-					q.push({ curCost - 1, curR + 1, curW, 0});
+					q.push({ curCost - 1, curR + 1, curW, 0 });
 			}
 		}
 	}
