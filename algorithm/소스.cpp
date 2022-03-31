@@ -1,25 +1,23 @@
 #include <iostream>
 #include <string>
+#include <map>
 #include <vector>
 #include <algorithm>
 
 using namespace std;
 
-// C++ implementation of search and insert
-// operations on Trie
-
 const int ALPHABET_SIZE = 26;
 
-// trie node
 struct TrieNode {
-	struct TrieNode *children[ALPHABET_SIZE];
-
-	// isEndOfWord is true if the node represents
-	// end of a word
 	bool isEndOfWord;
+	struct TrieNode *children[ALPHABET_SIZE];
+	
+	//현재 트라이 노드 아래 리프 노드의 수 저장
+	int numOfLeaf;
 };
 
-// Returns new trie node (initialized to NULLs)
+
+//새로운 트라이 노드 생성
 struct TrieNode *getNode(void) {
 	struct TrieNode *pNode = new TrieNode;
 
@@ -28,21 +26,24 @@ struct TrieNode *getNode(void) {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 		pNode->children[i] = NULL;
 
+	pNode->numOfLeaf = 0;
+
 	return pNode;
 }
 
 // If not present, inserts key into trie
-// If the key is prefix of trie node, just
-// marks leaf node
+// If the key is prefix of trie node, just marks leaf node
+
 void insert(struct TrieNode *root, string key) {
 	struct TrieNode *pCrawl = root;
 
-	for (int i = 0; i < key.length(); i++)
-	{
+	for (int i = 0; i < key.length(); i++){
 		int index = key[i] - 'a';
 		if (!pCrawl->children[index])
 			pCrawl->children[index] = getNode();
 
+		//자식 노드로 내려가기 전, 자신의 리프 노드의 수++
+		pCrawl->numOfLeaf++;
 		pCrawl = pCrawl->children[index];
 	}
 
@@ -52,41 +53,63 @@ void insert(struct TrieNode *root, string key) {
 
 
 int search(struct TrieNode *root, string key) {
-	
-	int cnt = 0;
-	if (key[0] == '?') {
-		for (int i = 0; i < ALPHABET_SIZE; ++i) {
-			if (root->children[i]) {
-				if (key.length() == 1) cnt += root->children[i]->isEndOfWord;
-				else cnt += search(root->children[i], key.substr(1));
-			}
+	struct TrieNode *pCrawl = root;
+
+	for (int i = 0; i < key.length(); i++){
+		//query의 다음 문자가 ?인 경우 현재 트라이 노드 아래 리프 노드의 개수 반환
+		if (i+1 < key.length() && key[i] == '?') {
+			return pCrawl->numOfLeaf;
 		}
-		if (key.length() == 1) return cnt;
+
+		int index = key[i] - 'a';
+		if (!pCrawl->children[index]) return 0;
+		pCrawl = pCrawl->children[index];
 	}
-	else {
-		int i = key[0] - 'a';
-		if (root->children[i]) {
-			if (key.length() == 1) return root->children[i]->isEndOfWord;
-			cnt += search(root->children[i], key.substr(1));
-		}
-	}
-	return cnt;
+	return (pCrawl->isEndOfWord);
 }
 
 vector<int> solution(vector<string> words, vector<string> queries) {
 	
-	struct TrieNode *root = getNode();
+	//단어의 길이, 같은 길이의 단어로만 만든 트라이 
+	map<int, TrieNode*> trieRoot;
 
+	//단어의 길이, 같은 길이의 뒤집은 단어로만 만든 트라이 
+	map<int, TrieNode*> reverseTrieRoot;
+	
 	// Construct trie
 	for (int i = 0; i < words.size(); i++) {
-		insert(root, words[i]);
+		int len = words[i].length();
+
+		if (trieRoot.find(len) == trieRoot.end()) {
+			struct TrieNode *root = getNode();
+			trieRoot[len] = root;
+
+			struct TrieNode *reverseRoot = getNode();
+			reverseTrieRoot[len] = reverseRoot;
+		}
+
+		insert(trieRoot[len], words[i]);
+		reverse(words[i].begin(), words[i].end());
+		insert(reverseTrieRoot[len], words[i]);
 	}
 	
 	vector<int> answer;
 
 	// Search
 	for (int i = 0; i < queries.size(); ++i) {
-		answer.push_back(search(root, queries[i]));
+		int len = queries[i].length();
+		if (trieRoot.find(len) == trieRoot.end()) {
+			answer.push_back(0);
+			continue;
+		}
+
+		if (queries[i][0] == '?') {
+			reverse(queries[i].begin(), queries[i].end());
+			answer.push_back(search(reverseTrieRoot[len], queries[i]));
+		}
+		else {
+			answer.push_back(search(trieRoot[len], queries[i]));
+		}
 	}
 
 	return answer;
