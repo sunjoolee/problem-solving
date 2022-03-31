@@ -9,10 +9,12 @@ using namespace std;
 const int ALPHABET_SIZE = 26;
 
 struct TrieNode {
-	bool isEndOfWord;
+	//길이가 같은 단어들끼리 트라이 생성 -> string 끝 표시할 필요 X
+	//bool isEndOfWord;
+	
 	struct TrieNode *children[ALPHABET_SIZE];
 	
-	//현재 트라이 노드 아래 리프 노드의 수 저장
+	//현재 트라이 노드의 부모 아래 리프 노드의 수 저장
 	int numOfLeaf;
 };
 
@@ -20,8 +22,6 @@ struct TrieNode {
 //새로운 트라이 노드 생성
 struct TrieNode *getNode(void) {
 	struct TrieNode *pNode = new TrieNode;
-
-	pNode->isEndOfWord = false;
 
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 		pNode->children[i] = NULL;
@@ -38,17 +38,15 @@ void insert(struct TrieNode *root, string key) {
 	struct TrieNode *pCrawl = root;
 
 	for (int i = 0; i < key.length(); i++){
+		//자신의 리프 노드의 수 증가
+		pCrawl->numOfLeaf++;
+
 		int index = key[i] - 'a';
 		if (!pCrawl->children[index])
 			pCrawl->children[index] = getNode();
 
-		//자식 노드로 내려가기 전, 자신의 리프 노드의 수++
-		pCrawl->numOfLeaf++;
 		pCrawl = pCrawl->children[index];
 	}
-
-	// mark last node as leaf
-	pCrawl->isEndOfWord = true;
 }
 
 
@@ -56,8 +54,9 @@ int search(struct TrieNode *root, string key) {
 	struct TrieNode *pCrawl = root;
 
 	for (int i = 0; i < key.length(); i++){
-		//query의 다음 문자가 ?인 경우 현재 트라이 노드 아래 리프 노드의 개수 반환
-		if (i+1 < key.length() && key[i] == '?') {
+
+		//query의 문자가 ?인 경우 현재 트라이 노드의 부모의 numOfLeaf 반환
+		if (key[i] == '?') {
 			return pCrawl->numOfLeaf;
 		}
 
@@ -65,11 +64,14 @@ int search(struct TrieNode *root, string key) {
 		if (!pCrawl->children[index]) return 0;
 		pCrawl = pCrawl->children[index];
 	}
-	return (pCrawl->isEndOfWord);
+	return 1;
 }
 
 vector<int> solution(vector<string> words, vector<string> queries) {
 	
+	//words 벡터 중복 원소 제거
+	words.erase(unique(words.begin(), words.end()), words.end());
+
 	//단어의 길이, 같은 길이의 단어로만 만든 트라이 
 	map<int, TrieNode*> trieRoot;
 
@@ -116,7 +118,7 @@ vector<int> solution(vector<string> words, vector<string> queries) {
 }
 
 int main() {
-	solution({ "frodo", "front", "frost", "frozen", "frame", "kakao" }, { "fro??", "????o", "fr???", "fro???", "pro?" });
+	solution({ "frodo", "front", "frost", "frozen", "frame", "kakao" }, { "frod?", "????o", "fr???", "fro???", "pro?", "?????" });
 }
 
 
