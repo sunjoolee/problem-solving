@@ -1,70 +1,75 @@
 #include <string>
 #include <vector>
+#include <set>
 #include <algorithm>
 
 using namespace std;
 
 typedef long long ll;
 
-ll orderToBitmask(string order) {
-	ll bitmask = 0LL;
-	for (int i = 0; i < order.length(); ++i) {
-		bitmask |= (1 << (order[i]-'A'));
-	}
-	return bitmask;
-}
+vector<int> solution(vector<string> info, vector<string> query) {
 
-string bitmaskToOrder(ll bitmask) {
-	string order = "";
-	for (int i = 0; i < 26; ++i) {
-		if (bitmask & (1 << i)) order += (char)('A' + i);
-	}
-	return order;
-}
+	ll cppBitmask = 0LL;
+	ll javaBitmask = 0LL; 
+	ll pythonBitmask = 0LL; 
+	ll backendBitmask = 0LL;
+	ll frontendBitmask = 0LL;
+	ll juniorBitmask = 0LL;
+	ll seniorBitmask = 0LL;
+	ll chickenBitmask = 0LL;
+	ll pizzaBitmask = 0LL;
+	vector<int> score(info.size());
 
-int bitCount(int x) {
-	if (x == 0) return 0;
-	return (x % 2) + bitCount(x / 2);
-}
-
-vector<string> solution(vector<string> orders, vector<int> course) {
-
-	vector<ll> orderBitmasks;
-	for (int i = 0; i < orders.size(); ++i) {
-		orderBitmasks.push_back(orderToBitmask(orders[i]));
-	}
-
-	vector<string> answer;
-
-	//courseBitmasks[코스에 포함된 단품 개수][코스 비트마스크 표현]
-	vector<vector<ll>> courseBitmasks(11, vector<ll>());
-	vector<int> maxCnt(11, 2);
-
-	for (ll subset = 0LL; subset < (1 << 26); subset++) {
-		int courseSize = bitCount(subset);
-
-		int cnt = 0;
-		for (int j = 0; j < orderBitmasks.size(); ++j) {
-			if ((subset & orderBitmasks[j]) == subset) cnt++;
+	for (int i = 0; i < info.size(); ++i) {
+		string buffer = "";
+		for (int j = 0; j < info[i].length(); ++j) {
+			if (info[i][j] == ' ') {
+				if(buffer == "cpp") cppBitmask |= (1 << i);
+				else if (buffer == "java") javaBitmask |= (1 << i);
+				else if (buffer == "python") pythonBitmask |= (1 << i);
+				else if (buffer == "backend") backendBitmask |= (1 << i);
+				else if (buffer == "frontend") frontendBitmask |= (1 << i);
+				else if (buffer == "senior") seniorBitmask |= (1 << i);
+				else if (buffer == "junior") juniorBitmask |= (1 << i);
+				else if (buffer == "chicken") chickenBitmask |= (1 << i);
+				else if (buffer == "pizza") pizzaBitmask |= (1 << i);
+				buffer = "";
+			}
+			else buffer += info[i][j];
 		}
-			
-		if (cnt == maxCnt[courseSize]) 
-			courseBitmasks[courseSize].push_back(subset);
+		score[i] = stoi(buffer);
+	}
+
+	vector<int> answer;
+	for (int i = 0; i < query.size(); ++i) {
 		
-		else if (cnt > maxCnt[courseSize]) {
-				maxCnt[courseSize] = cnt;
-				courseBitmasks[courseSize].clear();
-				courseBitmasks[courseSize].push_back(subset);
-	}
-	
-	for(int i = 0; i<course.size(); ++i){
-		int courseSize = course[i];
+		int cnt = 0;
+		ll bitmask = (1 << (info.size())) - 1;
 
-		for (int j = 0; j < courseBitmasks[courseSize].size(); ++j) {
-			answer.push_back(bitmaskToOrder(courseBitmasks[courseSize][j]));
+		string buffer = "";
+		for (int j = 0; j < query[i].length(); ++j) {
+			if (query[i][j] == ' ') {
+				if (buffer == "cpp") bitmask &= cppBitmask;
+				else if (buffer == "java") bitmask &= javaBitmask;
+				else if (buffer == "python") bitmask &= pythonBitmask;
+				else if (buffer == "backend")bitmask &= backendBitmask;
+				else if (buffer == "frontend") bitmask &= frontendBitmask;
+				else if (buffer == "senior")bitmask &= seniorBitmask;
+				else if (buffer == "junior") bitmask &= juniorBitmask;
+				else if (buffer == "chicken") bitmask &= chickenBitmask;
+				else if (buffer == "pizza") bitmask &= pizzaBitmask;
+				buffer = "";
+			}
+			else buffer += query[i][j];
 		}
-	}
+		int X = stoi(buffer);
+		for (int j = 0; j < info.size(); ++j) {
+			if (bitmask & (1 << j)) {
+				if (score[j] >= X) cnt++;
+			}
+		}
 
-	sort(answer.begin(), answer.end());
+		answer.push_back(cnt);
+	}
 	return answer;
 }
