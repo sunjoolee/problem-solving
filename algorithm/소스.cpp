@@ -4,58 +4,63 @@
 
 using namespace std;
 
-string solution(string new_id) {
-	
-	//1
-	transform(new_id.begin(), new_id.end(), new_id.begin(), ::tolower);
-	//2
-	string tmp = "";
-	for (int i = 0; i < new_id.length(); ++i) {
-		if ('a' <= new_id[i] && new_id[i] <= 'z') 
-			tmp += new_id[i];
-		else if(new_id[i] == '.' || new_id[i] == '-' || new_id[i] == '_')
-			tmp += new_id[i];
-	}
-	new_id = tmp;
-	//3
-	tmp = "";
-	bool period = false;
-	for (int i = 0; i < new_id.length(); ++i) {
-		if (new_id[i] == '.') {
-			if (!period) tmp += '.';
-			period = true;
-		}
-		else {
-			tmp += new_id[i];
-			period = false;
-		}
-	}
-	new_id = tmp;
-	//4
-	if (new_id != "" && new_id[0] == '.') {
-		if(new_id.length() > 1) new_id = new_id.substr(1);
-		else new_id = "";
-	}
-	if (new_id != "" && new_id[new_id.length() - 1]=='.') {
-		if (new_id.length() > 1) new_id = new_id.substr(0, new_id.length() - 1);
-		else new_id = "";
-	}
-	//5
-	if (new_id == "") new_id = "a";
-	//6
-	if(new_id.length() > 15) new_id = new_id.substr(0, 15);
-	if (new_id != "" && new_id[new_id.length() - 1]== '.') {
-		if (new_id.length() > 1) new_id = new_id.substr(0, new_id.length() - 1);
-		else new_id = "";
-	}
-	//7
-	while (new_id.length() < 3) {
-		new_id += new_id[new_id.length() - 1];
-	}
+typedef long long ll;
 
-	return new_id;
+ll orderToBitmask(string order) {
+	ll bitmask = 0LL;
+	for (int i = 0; i < order.length(); ++i) {
+		bitmask |= (1 << (order[i]-'A'));
+	}
+	return bitmask;
 }
 
-int main() {
-	solution("...!@BaT#*..y.abcdefghijklm");
+string bitmaskToOrder(ll bitmask) {
+	string order = "";
+	for (int i = 0; i < 26; ++i) {
+		if (bitmask & (1 << i)) order += (char)('A' + i);
+	}
+	return order;
+}
+
+int bitCount(int x) {
+	if (x == 0) return 0;
+	return (x % 2) + bitCount(x / 2);
+}
+
+vector<string> solution(vector<string> orders, vector<int> course) {
+
+	vector<ll> orderBitmasks;
+	for (int i = 0; i < orders.size(); ++i) {
+		orderBitmasks.push_back(orderToBitmask(orders[i]));
+	}
+
+	vector<string> answer;
+
+	for (int i = 0; i < course.size(); ++i) {
+		int courseSize = course[i];
+
+		vector<ll> courseBitmasks;
+		int maxCnt = 2;
+		for (ll subset = 0LL; subset < (1 << 26); subset++) {
+			if (bitCount(subset) != courseSize) continue;
+
+			int cnt = 0;
+			for (int j = 0; j < orderBitmasks.size(); ++j) {
+				if ((subset & orderBitmasks[j]) == subset) cnt++;
+			}
+			
+			if (cnt == maxCnt) courseBitmasks.push_back(subset);
+			else if (cnt > maxCnt) {
+				maxCnt = cnt;
+				courseBitmasks.clear();
+				courseBitmasks.push_back(subset);
+			}
+		}
+
+		for (int j = 0; j < courseBitmasks.size(); ++j) {
+			answer.push_back(bitmaskToOrder(courseBitmasks[j]));
+		}
+	}
+
+	return answer;
 }
