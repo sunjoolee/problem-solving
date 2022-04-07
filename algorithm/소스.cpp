@@ -36,31 +36,35 @@ vector<string> solution(vector<string> orders, vector<int> course) {
 
 	vector<string> answer;
 
-	for (int i = 0; i < course.size(); ++i) {
+	//courseBitmasks[코스에 포함된 단품 개수][코스 비트마스크 표현]
+	vector<vector<ll>> courseBitmasks(11, vector<ll>());
+	vector<int> maxCnt(11, 2);
+
+	for (ll subset = 0LL; subset < (1 << 26); subset++) {
+		int courseSize = bitCount(subset);
+
+		int cnt = 0;
+		for (int j = 0; j < orderBitmasks.size(); ++j) {
+			if ((subset & orderBitmasks[j]) == subset) cnt++;
+		}
+			
+		if (cnt == maxCnt[courseSize]) 
+			courseBitmasks[courseSize].push_back(subset);
+		
+		else if (cnt > maxCnt[courseSize]) {
+				maxCnt[courseSize] = cnt;
+				courseBitmasks[courseSize].clear();
+				courseBitmasks[courseSize].push_back(subset);
+	}
+	
+	for(int i = 0; i<course.size(); ++i){
 		int courseSize = course[i];
 
-		vector<ll> courseBitmasks;
-		int maxCnt = 2;
-		for (ll subset = 0LL; subset < (1 << 26); subset++) {
-			if (bitCount(subset) != courseSize) continue;
-
-			int cnt = 0;
-			for (int j = 0; j < orderBitmasks.size(); ++j) {
-				if ((subset & orderBitmasks[j]) == subset) cnt++;
-			}
-			
-			if (cnt == maxCnt) courseBitmasks.push_back(subset);
-			else if (cnt > maxCnt) {
-				maxCnt = cnt;
-				courseBitmasks.clear();
-				courseBitmasks.push_back(subset);
-			}
-		}
-
-		for (int j = 0; j < courseBitmasks.size(); ++j) {
-			answer.push_back(bitmaskToOrder(courseBitmasks[j]));
+		for (int j = 0; j < courseBitmasks[courseSize].size(); ++j) {
+			answer.push_back(bitmaskToOrder(courseBitmasks[courseSize][j]));
 		}
 	}
 
+	sort(answer.begin(), answer.end());
 	return answer;
 }
