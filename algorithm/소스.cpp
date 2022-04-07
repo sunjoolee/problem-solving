@@ -1,125 +1,93 @@
-#include <iostream>
 #include <string>
-#include <map>
 #include <vector>
+#include <memory.h>
 #include <algorithm>
 
 using namespace std;
 
-const int ALPHABET_SIZE = 26;
+typedef long long int ll;
 
-struct TrieNode {
-	//길이가 같은 단어들끼리 트라이 생성 -> string 끝 표시할 필요 X
-	//bool isEndOfWord;
-	
-	struct TrieNode *children[ALPHABET_SIZE];
-	
-	//현재 트라이 노드의 부모 아래 리프 노드의 수 저장
-	int numOfLeaf;
-};
+const int INF = 987654321;
 
+int N;
+vector<int> weakG;
+vector<int> distG;
 
-//새로운 트라이 노드 생성
-struct TrieNode *getNode(void) {
-	struct TrieNode *pNode = new TrieNode;
+//cache[2^15 + 1][2^8 + 1]
+//cache[방문된 weak 비트마스크] = 사용된 친구의 수
+int cache[32769];
 
-	for (int i = 0; i < ALPHABET_SIZE; i++)
-		pNode->children[i] = NULL;
+//w 지점에서 출발하여 시계방향으로 이동했을 때
+//방문할 수 있는 취약 지점들의 비트마스크 반환
+ll cw(int w, int fIdx) {
+	ll res = 0LL;
+	int pos = w;
+	for (int d = 0; d < distG[fIdx]; ++d) {
+		pos = w + d;
+		if (pos > N) pos = N - pos;
 
-	pNode->numOfLeaf = 0;
-
-	return pNode;
+		for (int i = 0; i < weakG.size(); ++i) {
+			if(weakG[i] == pos) res |= (1 << i);
+		}
+	}
+	return res;
 }
 
-// If not present, inserts key into trie
-// If the key is prefix of trie node, just marks leaf node
+//w 지점에서 출발하여 반시계방향으로 이동했을 때
+//방문할 수 있는 취약 지점들의 비트마스크 반환
+ll ccw(int w, int fIdx) {
+	ll res = 0LL;
+	int pos = w;
+	for (int d = 0; d < distG[fIdx]; ++d) {
+		pos = w - d;
+		if (pos == 0) pos = N;
 
-void insert(struct TrieNode *root, string key) {
-	struct TrieNode *pCrawl = root;
+		for (int i = 0; i < weakG.size(); ++i) {
+			if (weakG[i] == pos) res |= (1 << i);
+		}
+	}
+	return res;
+}
 
-	for (int i = 0; i < key.length(); i++){
-		//자신의 리프 노드의 수 증가
-		pCrawl->numOfLeaf++;
+int bitCnt(ll x) {
+	if (x == 0) return 0;
+	return (x % 2) + bitCnt(x / 2);
+}
 
-		int index = key[i] - 'a';
-		if (!pCrawl->children[index])
-			pCrawl->children[index] = getNode();
+void solve(ll weaks, ll friends) {
+	cache[weaks] = min(cache[weaks], bitCnt(friends));
 
-		pCrawl = pCrawl->children[index];
+	for (int wIdx = 0; wIdx < weakG.size(); ++wIdx) {
+		if (weaks & (1 << wIdx)) continue;
+
+		int w = weakG[wIdx];
+		for (int fIdx = 0; fIdx < distG.size(); ++fIdx) {
+			if (friends & (1 << fIdx)) continue;
+
+			if(cw(w, fIdx) != 0LL)
+				solve(weaks | cw(w, fIdx), friends | (1 << fIdx));
+			if(ccw(w, fIdx) != 0LL)
+				solve(weaks | ccw(w, fIdx), friends | (1 << fIdx));
+		}
 	}
 }
 
-
-int search(struct TrieNode *root, string key) {
-	struct TrieNode *pCrawl = root;
-
-	for (int i = 0; i < key.length(); i++){
-
-		//query의 문자가 ?인 경우 현재 트라이 노드의 부모의 numOfLeaf 반환
-		if (key[i] == '?') {
-			return pCrawl->numOfLeaf;
-		}
-
-		int index = key[i] - 'a';
-		if (!pCrawl->children[index]) return 0;
-		pCrawl = pCrawl->children[index];
-	}
-	return 1;
-}
-
-vector<int> solution(vector<string> words, vector<string> queries) {
-	
-	//words 벡터 중복 원소 제거
-	words.erase(unique(words.begin(), words.end()), words.end());
-
-	//단어의 길이, 같은 길이의 단어로만 만든 트라이 
-	map<int, TrieNode*> trieRoot;
-
-	//단어의 길이, 같은 길이의 뒤집은 단어로만 만든 트라이 
-	map<int, TrieNode*> reverseTrieRoot;
-	
-	// Construct trie
-	for (int i = 0; i < words.size(); i++) {
-		int len = words[i].length();
-
-		if (trieRoot.find(len) == trieRoot.end()) {
-			struct TrieNode *root = getNode();
-			trieRoot[len] = root;
-
-			struct TrieNode *reverseRoot = getNode();
-			reverseTrieRoot[len] = reverseRoot;
-		}
-
-		insert(trieRoot[len], words[i]);
-		reverse(words[i].begin(), words[i].end());
-		insert(reverseTrieRoot[len], words[i]);
-	}
-	
-	vector<int> answer;
-
-	// Search
-	for (int i = 0; i < queries.size(); ++i) {
-		int len = queries[i].length();
-		if (trieRoot.find(len) == trieRoot.end()) {
-			answer.push_back(0);
-			continue;
-		}
-
-		if (queries[i][0] == '?') {
-			reverse(queries[i].begin(), queries[i].end());
-			answer.push_back(search(reverseTrieRoot[len], queries[i]));
-		}
-		else {
-			answer.push_back(search(trieRoot[len], queries[i]));
-		}
+int solution(int n, vector<int> weak, vector<int> dist) {
+	//cache 초기화
+	for (int i = 0; i < (1 << weak.size()) - 1; ++i) {
+		cache[i]= INF;
 	}
 
-	return answer;
+	N = n;
+	weakG = weak;
+	distG = dist;
+
+	solve(0LL, 0LL);
+
+	if (cache[(1 << weak.size()) - 1] != INF) return cache[(1 << weak.size()) - 1];
+	return -1;
 }
 
 int main() {
-	solution({ "frodo", "front", "frost", "frozen", "frame", "kakao" }, { "frod?", "????o", "fr???", "fro???", "pro?", "?????" });
+	solution(12, { 1, 5, 6, 10 }, {1, 2, 3, 4});
 }
-
-
-
