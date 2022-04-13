@@ -1,75 +1,61 @@
 #include <string>
 #include <vector>
-#include <set>
+#include <queue>
 #include <algorithm>
 
 using namespace std;
 
-typedef long long ll;
+const int INF = 987654321;
 
-vector<int> solution(vector<string> info, vector<string> query) {
+int N;
 
-	ll cppBitmask = 0LL;
-	ll javaBitmask = 0LL; 
-	ll pythonBitmask = 0LL; 
-	ll backendBitmask = 0LL;
-	ll frontendBitmask = 0LL;
-	ll juniorBitmask = 0LL;
-	ll seniorBitmask = 0LL;
-	ll chickenBitmask = 0LL;
-	ll pizzaBitmask = 0LL;
-	vector<int> score(info.size());
+vector<vector<int>>dist(200, vector<int>(200, INF));
 
-	for (int i = 0; i < info.size(); ++i) {
-		string buffer = "";
-		for (int j = 0; j < info[i].length(); ++j) {
-			if (info[i][j] == ' ') {
-				if(buffer == "cpp") cppBitmask |= (1 << i);
-				else if (buffer == "java") javaBitmask |= (1 << i);
-				else if (buffer == "python") pythonBitmask |= (1 << i);
-				else if (buffer == "backend") backendBitmask |= (1 << i);
-				else if (buffer == "frontend") frontendBitmask |= (1 << i);
-				else if (buffer == "senior") seniorBitmask |= (1 << i);
-				else if (buffer == "junior") juniorBitmask |= (1 << i);
-				else if (buffer == "chicken") chickenBitmask |= (1 << i);
-				else if (buffer == "pizza") pizzaBitmask |= (1 << i);
-				buffer = "";
-			}
-			else buffer += info[i][j];
-		}
-		score[i] = stoi(buffer);
+//플로이드-와샬 알고리즘
+void floyd() {
+	for (int i = 0; i < N; ++i) {
+		dist[i][i] = 0;
 	}
 
-	vector<int> answer;
-	for (int i = 0; i < query.size(); ++i) {
-		
-		int cnt = 0;
-		ll bitmask = (1 << (info.size())) - 1;
-
-		string buffer = "";
-		for (int j = 0; j < query[i].length(); ++j) {
-			if (query[i][j] == ' ') {
-				if (buffer == "cpp") bitmask &= cppBitmask;
-				else if (buffer == "java") bitmask &= javaBitmask;
-				else if (buffer == "python") bitmask &= pythonBitmask;
-				else if (buffer == "backend")bitmask &= backendBitmask;
-				else if (buffer == "frontend") bitmask &= frontendBitmask;
-				else if (buffer == "senior")bitmask &= seniorBitmask;
-				else if (buffer == "junior") bitmask &= juniorBitmask;
-				else if (buffer == "chicken") bitmask &= chickenBitmask;
-				else if (buffer == "pizza") bitmask &= pizzaBitmask;
-				buffer = "";
-			}
-			else buffer += query[i][j];
-		}
-		int X = stoi(buffer);
-		for (int j = 0; j < info.size(); ++j) {
-			if (bitmask & (1 << j)) {
-				if (score[j] >= X) cnt++;
+	//i지점 -> j지점으로 이동할 때 거쳐가는 지점 K
+	for (int k = 0; k < N; ++k) {
+		for (int i = 0; i < N; ++i) {
+			for (int j = 0; j < N; ++j) {
+				dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+				dist[j][i] = dist[i][j];
 			}
 		}
-
-		answer.push_back(cnt);
 	}
+}
+
+int solution(int n, int s, int a, int b, vector<vector<int>> fares) {
+
+	N = n;
+
+	s--;
+	a--;
+	b--;
+
+	for (int i = 0; i < fares.size(); ++i) {
+		int c = --fares[i][0];
+		int d = --fares[i][1];
+		int f = fares[i][2];
+
+		dist[c][d] = f;
+		dist[d][c] = f;
+	}
+
+	floyd();
+
+	int answer = dist[s][a] + dist[s][b];
+
+	for (int i = 0; i < N; ++i) {
+		answer = min(answer, dist[s][i] + dist[i][a] + dist[i][b]);
+	}
+
 	return answer;
+}
+
+int main() {
+	solution(7, 3, 4, 1, { {5, 7, 9},{4, 6, 4},{3, 6, 1},{3, 2, 3},{2, 1, 6} });
 }
