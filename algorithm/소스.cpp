@@ -8,7 +8,6 @@ using namespace std;
 typedef long long ll;
 
 
-
 vector<int> solution(vector<string> info, vector<string> query) {
 	vector<int> answer;
 
@@ -30,20 +29,55 @@ vector<int> solution(vector<string> info, vector<string> query) {
 		score = stoi(buffer);
 
 		//m에 삽입 
-
-		//key값 재귀 X 반복 O
+		//조건의 첫 글자만 이용하여 m 검색 key 만들기
 		vector<string> keys;
-		keys.push_back("");
-
-		vector<string> keysTmp;
-		for (int i = 0; i < jogun.size(); ++i) {
-			keysTmp.clear();
-			for (int j = 0; j < keys.size(); ++j) {
-				keysTmp.push_back(keys[j] + jogun[i]);
-				keysTmp.push_back(keys[j] + "-");
-			}
-			keys = keysTmp;
-		}
+		string key = "----";
+			key[0] = jogun[0][0];
+				key[1] = jogun[1][0];
+					key[2] = jogun[2][0];
+						key[3] = jogun[3][0];
+						keys.push_back(key); //0123
+						key[3] = '-';
+						keys.push_back(key); //012-
+					key[2] = '-';
+						key[3] = jogun[3][0];
+						keys.push_back(key); //01-3
+						key[3] = '-';
+						keys.push_back(key); //01--
+				key[1] = '-';
+					key[2] = jogun[2][0];
+						key[3] = jogun[3][0];
+						keys.push_back(key); //0-12
+						key[3] = '-';
+						keys.push_back(key); //0-1-
+					key[2] = '-';
+						key[3] = jogun[3][0];
+						keys.push_back(key); //0--3
+						key[3] = '-';
+						keys.push_back(key); //0---
+			key[0] = '-';
+				key[1] = jogun[1][0];
+					key[2] = jogun[2][0];
+						key[3] = jogun[3][0];
+						keys.push_back(key); //-123
+						key[3] = '-';
+						keys.push_back(key); //-12-
+					key[2] = '-';
+						key[3] = jogun[3][0];
+						keys.push_back(key); //-1-3
+						key[3] = '-';
+						keys.push_back(key); //-1--
+				key[1] = '-';
+					key[2] = jogun[2][0];
+						key[3] = jogun[3][0];
+						keys.push_back(key); //--23
+						key[3] = '-';
+						keys.push_back(key); //--2-
+					key[2] = '-';
+						key[3] = jogun[3][0];
+						keys.push_back(key); //---3
+						key[3] = '-';
+						keys.push_back(key); //----
 
 		for (int i = 0; i < keys.size(); ++i) {
 			if (m.find(keys[i]) == m.end())
@@ -62,7 +96,8 @@ vector<int> solution(vector<string> info, vector<string> query) {
 		string buffer = "";
 		for (int j = 0; j < query[i].length(); ++j) {
 			if (query[i][j] == ' ') {
-				if(buffer != "and") jogun = jogun + buffer;
+				//m 검색을 위해 조건의 첫 글자만 저장
+				if(buffer != "and") jogun = jogun + buffer[0];
 				buffer = "";
 			}
 			else buffer += query[i][j];
