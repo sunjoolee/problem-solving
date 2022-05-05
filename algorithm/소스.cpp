@@ -7,24 +7,12 @@ using namespace std;
 
 typedef long long ll;
 
-map<string, vector<int>> m;
 
-void insertInMap(string key, int idx, vector<string> jogun, int score) {
-	if (idx == jogun.size()) {
-		if (m.find(key) == m.end()) 
-			m[key] = vector<int>(1, score);
-		else 
-			m[key].push_back(score);
-		
-		return;
-	}
-
-	insertInMap(key + jogun[idx], idx+1, jogun, score);
-	insertInMap(key + "-", idx+1, jogun, score);
-}
 
 vector<int> solution(vector<string> info, vector<string> query) {
 	vector<int> answer;
+
+	map<string, vector<int>> m;
 
 	//"java backend junior pizza 150"
 	for (int i = 0; i < info.size(); ++i) {
@@ -41,8 +29,28 @@ vector<int> solution(vector<string> info, vector<string> query) {
 		}
 		score = stoi(buffer);
 
-		//m¿¡ »ðÀÔ
-		insertInMap("", 0, jogun, score);
+		//m¿¡ »ðÀÔ 
+
+		//key°ª Àç±Í X ¹Ýº¹ O
+		vector<string> keys;
+		keys.push_back("");
+
+		vector<string> keysTmp;
+		for (int i = 0; i < jogun.size(); ++i) {
+			keysTmp.clear();
+			for (int j = 0; j < keys.size(); ++j) {
+				keysTmp.push_back(keys[j] + jogun[i]);
+				keysTmp.push_back(keys[j] + "-");
+			}
+			keys = keysTmp;
+		}
+
+		for (int i = 0; i < keys.size(); ++i) {
+			if (m.find(keys[i]) == m.end())
+				m[keys[i]] = vector<int>(1, score);
+			else
+				m[keys[i]].push_back(score);
+		}
 	}
 
 	
