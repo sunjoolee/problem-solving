@@ -60,17 +60,19 @@ void bfs(int startR, int startC, vector<vector<int>> board) {
 		if (visited.find(curState) != visited.end() && visited[curState] <= curMove) continue;
 		visited[curState] = curMove;
 		
-		//base case 
-		if (boardEmpty(curState.board)) {
-			answer = min(answer, curMove);
-			return;
-		}
+		
 		
 		//카드를 뒤집지 않는 경우
 
 		vector<vector<int>> curBoard = curState.board;
 		int curR = curState.r; 
 		int curC = curState.c;
+
+		//base case 
+		if (boardEmpty(curBoard)) {
+			answer = min(answer, curMove);
+			return;
+		}
 
 		//다음 칸으로 이동
 		for (int d = 0; d < 4; ++d) {
@@ -120,6 +122,7 @@ void bfs(int startR, int startC, vector<vector<int>> board) {
 		
 		//앞면으로 뒤집기 (+10)
 		curBoard[curR][curC] += 10;
+		curMove++;
 
 		//앞면인 카드가 두 개인 경우 카드 제거
 		vector<pair<int, int>> card;
@@ -144,6 +147,12 @@ void bfs(int startR, int startC, vector<vector<int>> board) {
 				curBoard[r1][c1] -= 10;
 				curBoard[r2][c2] -= 10;
 			}
+		}
+
+		//base case 
+		if (boardEmpty(curBoard)) {
+			answer = min(answer, curMove);
+			return;
 		}
 
 		//다음 칸으로 이동
