@@ -1,173 +1,172 @@
 #include <string>
 #include <vector>
-#include <queue>
-#include <map>\
-#include <math.h>
+#include <map>
+#include <climits>
 #include <algorithm>
 
 using namespace std;
 
-const string emptyBoard = "0000000000000000";
+const int SIZE = 4;
 
-int dirR[4] = { 0, 0, 1, -1 };
+int answer = 987654321;
+
+int dirR[4] = { 0,0,1,-1};
 int dirC[4] = { 1, -1, 0, 0 };
 
-struct qNode {
-	int r;
-	int c;
-	int moves;
-	string board;
-	pair<int, int> select;
-};
-
-struct mapNode {
-	int r, c;
-	string board;
-
-	bool operator ==(const mapNode &var) const {
-		if (r == var.r && c == var.c && board == var.board) return true;
-		return false;
-	}
-
-	bool operator <(const mapNode &var) const{
-		if (r < var.r) return true;
-		if (r > var.r) return false;
-
-		if (c < var.c) return true;
-		if (c > var.c) return false;
-
-		return board < var.board;
-	}
-};
-
-//(r, c) -> (i, j) 이동 최소 조작 횟수
-int getMoves(int r, int c, int i, int j) {
-	if (r == i && c == j) return 0;
-	else if (r == i || c == j) return 1;
-	else if (i == 0 || i == 3 || j == 0 || j == 3) return 2;
-	return min(abs(r - i), abs(c - j)) + 1;
-}
-
-bool inRange(int i, int j) {
-	if (0 > i || i >= 4) return false;
-	if (0 > j || j >= 4) return false;
+bool inRange(int r, int c) {
+	if (r < 0 || r >= SIZE) return false;
+	if (c < 0 || c >= SIZE) return false;
 	return true;
 }
 
-int BFS(string board, int r, int c) {
-	map <mapNode, int> visited;
-	queue<qNode> q;
-
-	q.push({ r, c, 0, board, {-1, -1}});
-
-	int answer = 987654321;
-
-	while (!q.empty()) {
-		int r = q.front().r;
-		int c = q.front().c;
-		int moves = q.front().moves;
-		string curBoard= q.front().board;
-		pair<int, int> select = q.front().select;
-		q.pop();
-
-		if (visited.find({ r, c, curBoard }) != visited.end()) {
-			if (visited[{ r, c, curBoard }] < moves) continue;
-		}
-		visited[{r, c, curBoard}] = moves;
-
-		if (curBoard == emptyBoard) {
-			answer = min(answer, moves);
-			continue;
-		}
-		
-		//현재 좌표 카드인 경우 현재 좌표 선택
-		if (curBoard[(4 * r) + c] != '0') {
-			if (select.first == -1) {
-				q.push({ r, c, moves +1, curBoard, {r, c} });
-			}
-			else {
-				if (r == select.first && c == select.second) continue;
-
-				if (curBoard[(4 * r) + c] == curBoard[(4 * select.first) + select.second]) {
-					char tmp = curBoard[(4 * r) + c];
-					curBoard[(4 * r) + c] = curBoard[(4 * select.first) + select.second] = '0';
-					q.push({ r,c, moves + 1, curBoard, {-1, -1} });
-					curBoard[(4 * r) + c] = curBoard[(4 * select.first) + select.second] = tmp;
-				}
+bool boardEmpty(vector<vector<int>> board) {
+	bool flag = true;
+	for (int i = 0; i < SIZE; ++i) {
+		for (int j = 0; j < SIZE; ++j) {
+			if (board[i][j] != 0) {
+				flag = false;
+				break;
 			}
 		}
-
-		//다음으로 이동할 좌표
-		//방향키
-		for (int i = 0; i < 4; ++i) {
-			int nextR = r + dirR[i];
-			int nextC = c + dirC[i];
-			if (!inRange(nextR, nextC)) continue;
-			
-
-			//다음 좌표 카드이든 아니든 다음 좌표로 이동
-			if (visited.find({ nextR, nextC, curBoard }) != visited.end()) {
-				if (visited[{nextR, nextC, curBoard }] > moves + getMoves(r, c, nextR, nextC)) {
-					q.push({ nextR, nextC, moves + getMoves(r, c, nextR, nextC), curBoard, {-1, -1} });
-				}
-			}
-
-			//다음 좌표 카드인 경우
-			if (curBoard[(4 * nextR) + nextC] != '0') {
-
-				//다음 좌표로 이동 후 카드 선택
-				//처음 선택하는 경우
-				if (select.first == -1) {
-					q.push({ nextR, nextC, moves + getMoves(r, c, nextR, nextC) + 1, curBoard, {nextR, nextC} });
-				}
-
-				//두번째로 선택하는 경우
-				else {
-					if (curBoard[(4 * nextR) + nextC] == curBoard[(4 * select.first) + select.second]) {
-						char tmp = curBoard[(4 * nextR) + nextC];
-						curBoard[(4 * nextR) + nextC] = curBoard[(4 * select.first) + select.second] = '0';
-						q.push({ nextR, nextC, moves + getMoves(r, c, nextR, nextC) + 1, curBoard, {-1, -1} });
-						curBoard[(4 * nextR) + nextC] = curBoard[(4 * select.first) + select.second] = tmp;
-					}
-				}
-			}
-		}
-
-		//Ctrl + 방향키
-		for (int i = 0; i < 4; ++i) {
-			int nextR = r + dirR[i];
-			int nextC = c + dirC[i];
-			if (!inRange(nextR, nextC))continue;
-
-			while (true) {
-				//다음 좌표 카드아닌 경우 계속 이동
-				if (curBoard[(4 * nextR) + nextC] == '0') continue;
-				//다음 좌표 카드인 경우 이동 멈춤
-				if (curBoard[(4 * nextR) + nextC] != '0') break;
-
-				nextR += dirR[i];
-				nextC += c + dirC[i];
-			}
-		}
-
 	}
-	
-	return answer;
+	return flag;
 }
 
-int solution(vector<vector<int>> board, int r, int c) {
-
-	string boardStr = "";
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			boardStr += to_string(board[i][j]);
+struct state {
+	vector<vector<int>> board;
+	int curR;
+	int curC; 
+	
+	state(vector<vector<int>> _board, int _curR, int _curC){
+		for (int i = 0; i < SIZE; ++i) {
+			board.push_back(_board[i]);
 		}
+		curR = _curR;
+		curC = _curC;
 	}
 
-	int answer = BFS(boardStr, r, c);
+	bool operator<(const state& rhs) const{
+		if (curR != rhs.curR) return curR < rhs.curR;
+		if (curC != rhs.curC) return curC < rhs.curC;
+		return board < rhs.board;
+	}
+};
+
+map<state, int> cache;
+
+void solve(int curR, int curC, vector<vector<int>> curBoard, int moveCnt) {
+	
+	//가지치기
+	state curState = state(curBoard, curR, curC);
+
+	if (cache.find(curState) == cache.end()) {
+		cache[curState] = moveCnt;
+	}
+	else {
+		if (cache[curState] < moveCnt) return;
+		else cache[curState] = moveCnt;
+	}
+
+	//base case - 모든 카드 제거된 경우 종료
+	if (boardEmpty(curBoard)) {
+		answer = min(answer, moveCnt);
+		return;
+	}
+
+	//현재 커서 카드 위에 있고 카드가 뒷면인 경우
+	if (curBoard[curR][curC] != 0 && curBoard[curR][curC] < 10) {
+		//앞면으로 뒤집기 (+10)
+		curBoard[curR][curC] += 10;
+		solve(curR, curC, curBoard, moveCnt + 1);
+		curBoard[curR][curC] -= 10;
+
+		//뒤집지 않는다
+		//no action
+	}
+
+	//앞면인 카드가 두 개인 경우 카드 제거
+	vector<pair<int, int>> card;
+	for (int i = 0; i < SIZE; ++i) {
+		for (int j = 0; j < SIZE; ++j) {
+			if (curBoard[i][j] > 10) {
+				card.push_back({ i, j });
+			}
+		}
+	}
+	if (card.size() == 2) {
+		int r1 = card[0].first; int c1 = card[0].second;
+		int r2 = card[1].first; int c2 = card[1].second;
+
+		//카드 제거
+		if (curBoard[r1][c1] == curBoard[r2][c2]) {
+			curBoard[r1][c1] = curBoard[r2][c2] = 0;
+
+			//base case - 모든 카드 제거된 경우 종료
+			if (boardEmpty(curBoard)) {
+				answer = min(answer, moveCnt);
+				return;
+			}
+		}
+		//도로 뒷면으로 뒤집기 (-10)
+		else {
+			curBoard[r1][c1] -= 10;
+			curBoard[r2][c2] -= 10;
+		}
+	}
+	
+	//다음 칸으로 이동
+	for (int d = 0; d < 4; ++d) {
+
+		//다음 칸으로 이동할 수 있는지 나타냄
+		bool flag = false;
+
+		//방향키
+		int nextR = curR + dirR[d];
+		int nextC = curC + dirC[d];
+		if (inRange(nextR, nextC)) {
+			flag = true;
+
+			//가지치기
+			state nextState = state(curBoard, nextR, nextC);
+
+			if (cache.find(nextState) == cache.end() || cache[nextState] > moveCnt) {
+				solve(nextR, nextC, curBoard, moveCnt + 1);
+			}
+		}
+
+		if (flag) {
+			//ctrl + 빙향키
+			nextR = curR + dirR[d];
+			nextC = curC + dirC[d];
+
+			while (inRange(nextR, nextC)) {
+				if ((curBoard[nextR][nextC] != 0) || (!inRange(nextR + dirR[d], nextC + dirC[d]))) {
+					
+					//가지치기
+					state nextState = state(curBoard, nextR, nextC);
+
+					if (cache.find(nextState) == cache.end() || cache[nextState] > moveCnt) {
+						solve(nextR, nextC, curBoard, moveCnt + 1);
+					}
+					break;
+				}
+				nextR += dirR[d];
+				nextC += dirC[d];
+			}
+		}
+	}
+}
+
+
+int solution(vector<vector<int>> board, int r, int c) {
+	
+	solve(r, c, board, 0);
+
 	return answer;
 }
 
 int main() {
-	solution({ {1, 0, 0, 3},{2, 0, 0, 0},{0, 0, 0, 2},{3, 0, 1, 0} }, 1, 0);
+	solution({ {1, 0, 0, 3},{2, 0, 0, 0},{0, 0, 0, 2},{3, 0, 1, 0} },1,	0);
 }
+
+
