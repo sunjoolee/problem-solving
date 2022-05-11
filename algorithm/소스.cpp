@@ -87,6 +87,12 @@ vector<int> solution(vector<string> info, vector<string> query) {
 		}
 	}
 
+
+	//오름차순 정렬
+	//query를 처리하는 반복문 바깥에서 정렬해야 시간초과가 나지 않는다!!
+	for (auto it = m.begin(); it != m.end(); ++it) {
+		sort(it->second.begin(), it->second.end());
+	}
 	
 	//"cpp and - and senior and pizza 250"
 	for (int i = 0; i < query.size(); ++i) {
@@ -106,9 +112,6 @@ vector<int> solution(vector<string> info, vector<string> query) {
 
 		//query 조건에 맞는 후보들의 점수
 		vector<int> hoobo = m[jogun];
-		
-		//오름차순 정렬
-		sort(hoobo.begin(), hoobo.end());
 
 		//lower_bound = 찾으려는 key 값보다 같거나 큰 숫자가 배열 몇 번째에서 처음 등장하는지 
 		answer.push_back(hoobo.size() - (lower_bound(hoobo.begin(), hoobo.end(), score) - hoobo.begin()));
