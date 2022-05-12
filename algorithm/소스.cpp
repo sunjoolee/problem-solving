@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <queue>
 #include <set>
 #include <string>
 #include <algorithm>
@@ -117,38 +116,40 @@ bool finished(vector<vector<int>> board) {
 	return true;
 }
 
-vector<vector<int>> bfs(vector<vector<int>> board) {
 
-	queue <vector<vector<int>>> q;
-	q.push(board);
+set<vector<vector<int>>> visited;
 
-	set<vector<vector<int>>> visited;
+void dfs(vector<vector<int>> curBoard) {
 
-	while (!q.empty()) {
-		vector< vector<int>> curBoard = q.front();
-		q.pop();
-
-		if (finished(curBoard))
-			return curBoard;
-
-		if (visited.find(curBoard) != visited.end()) continue;
-		visited.insert(curBoard);
-
-		bool change = false;
+	if (finished(curBoard)) {
 		for (int i = 0; i < 9; ++i) {
-			if (change) break;
 			for (int j = 0; j < 9; ++j) {
-				if (change) break;
+				cout << curBoard[i][j];
+			}
+			cout << "\n";
+		}
 
-				if (curBoard[i][j] == 0) {
-					for (int k = 0; k < 9; ++k) {
-						curBoard[i][j] = k;
-						if (correct(curBoard)) {
-							q.push(curBoard);
-						}
+		exit(0);
+	}
+
+	if (visited.find(curBoard) != visited.end()) 
+		return;
+	visited.insert(curBoard);
+
+	bool change = false;
+	for (int i = 0; i < 9; ++i) {
+		if (change) return;
+		for (int j = 0; j < 9; ++j) {
+			if (change) return;
+
+			if (curBoard[i][j] == 0) {
+				for (int k = 0; k < 9; ++k) {
+					curBoard[i][j] = k;
+					if (correct(curBoard)) {
+						dfs(curBoard);
 					}
-					change = true;
 				}
+				change = true;
 			}
 		}
 	}
@@ -171,13 +172,7 @@ int main() {
 		board.push_back(v);
 	}
 
-	vector<vector<int>> answer = bfs(board);
-	for (int i = 0; i < 9; ++i) {
-		for (int j = 0; j < 9; ++j) {
-			cout << answer[i][j];
-		}
-		cout << "\n";
-	}
+	dfs(board);
 
 	return 0;
 }
