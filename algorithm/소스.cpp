@@ -1,59 +1,183 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <set>
+#include <string>
 #include <algorithm>
 using namespace std;
 
-const int INF = 987654321;
+bool correct(vector<vector<int>> board) {
+	
+	for (int i = 0; i < 9; ++i) {
+		//한 행에 같은 숫자 중복되지 않는지 확인
+		string maskRow = "000000000";
 
-vector<int> bfs(int n) {
+		//한 열에 같은 숫자 중복되지 않는지 확인	
+		string maskCol = "000000000";
 
-	queue<pair<int, vector<int>>> q;
-	vector<int> visited(n + 1, INF);
+		for (int j = 0; j < 9; ++j) {
+			if (board[i][j] != 0) {
+				if (maskRow[board[i][j] - 1] != '0') return false;
+				maskRow[board[i][j] - 1] = '1';
+			}
 
-	q.push({ n, vector<int>(1, n)});
+			if (board[j][i] != 0) {
+				if (maskCol[board[j][i] - 1] != '0') return false;
+				maskCol[board[j][i] - 1] = '1';
+			}
+		}
+	}
+
+	//한 칸에 같은 숫자 중복되지 않는지 확인
+	for (int i = 0; i < 3; ++i) {
+		string mask = "000000000";
+		for (int j = 0; j < 3; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+
+		mask = "000000000";
+		for (int j = 3; j < 6; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+
+		mask = "000000000"; 
+		for (int j = 6; j < 9; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+	}
+	for (int i = 3; i < 6; ++i) {
+		string mask = "000000000";
+		for (int j = 0; j < 3; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+
+		mask = "000000000";
+		for (int j = 3; j < 6; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+
+		mask = "000000000";
+		for (int j = 6; j < 9; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+	}
+	for (int i = 6; i < 9; ++i) {
+		string mask = "000000000";
+		for (int j = 0; j < 3; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+
+		mask = "000000000";
+		for (int j = 3; j < 6; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+
+		mask = "000000000";
+		for (int j = 6; j < 9; ++j) {
+			if (board[i][j] != 0) {
+				if (mask[board[i][j] - 1] != '0') return false;
+				mask[board[i][j] - 1] = '1';
+			}
+		}
+	}
+	return true;
+}
+
+
+bool finished(vector<vector<int>> board) {
+	for (int i = 0; i < 9; ++i) {
+		for (int j = 0; j < 9; ++j) {
+			if (board[i][j] == 0) return false;
+		}
+	}
+	return true;
+}
+
+vector<vector<int>> bfs(vector<vector<int>> board) {
+
+	queue <vector<vector<int>>> q;
+	q.push(board);
+
+	set<vector<vector<int>>> visited;
 
 	while (!q.empty()) {
-		int num = q.front().first;
-		vector<int> v = q.front().second;
+		vector< vector<int>> curBoard = q.front();
 		q.pop();
 
-		if (visited[num] < v.size() - 1) continue;
-		visited[num] = v.size() - 1;
+		if (finished(curBoard))
+			return curBoard;
 
-		if (num == 1) {
-			return v;
-		}
+		if (visited.find(curBoard) != visited.end()) continue;
+		visited.insert(curBoard);
 
-		//X가 3으로 나누어 떨어지면, 3으로 나눈다.
-		if (num % 3 == 0) {
-			v.push_back(num / 3);
-			q.push({ num / 3, v });
-			v.pop_back();
+		bool change = false;
+		for (int i = 0; i < 9; ++i) {
+			if (change) break;
+			for (int j = 0; j < 9; ++j) {
+				if (change) break;
+
+				if (curBoard[i][j] == 0) {
+					for (int k = 0; k < 9; ++k) {
+						curBoard[i][j] = k;
+						if (correct(curBoard)) {
+							q.push(curBoard);
+						}
+					}
+					change = true;
+				}
+			}
 		}
-		//X가 2로 나누어 떨어지면, 2로 나눈다.
-		if (num % 2 == 0) {
-			v.push_back(num / 2);
-			q.push({ num / 2, v });
-			v.pop_back();
-		}
-		//1을 뺀다.
-		v.push_back(num - 1);
-		q.push({ num - 1, v });
 	}
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
+	
+	vector<vector<int>> board;
+	for (int i = 0; i < 9; ++i) {
+		string str;
+		vector<int> v;
 
-	int n;
-	cin >> n;
-	vector<int> answer = bfs(n);
+		cin >> str;
+		
+		for (int j = 0; j < 9; ++j) {
+			v.push_back(str[j] - '0');
+		}
+		board.push_back(v);
+	}
 
-	cout << answer.size() - 1<<"\n";
-	for (int i = 0; i < answer.size(); ++i)
-		cout << answer[i] << " ";
+	vector<vector<int>> answer = bfs(board);
+	for (int i = 0; i < 9; ++i) {
+		for (int j = 0; j < 9; ++j) {
+			cout << answer[i][j];
+		}
+		cout << "\n";
+	}
 
 	return 0;
 }
