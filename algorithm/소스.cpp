@@ -5,8 +5,9 @@
 #include <algorithm>
 using namespace std;
 
-bool correct(vector<vector<int>> board) {
-	
+vector<vector<int>> board;
+
+bool correct() {
 	for (int i = 0; i < 9; ++i) {
 		//한 행에 같은 숫자 중복되지 않는지 확인
 		string maskRow = "000000000";
@@ -28,86 +29,23 @@ bool correct(vector<vector<int>> board) {
 	}
 
 	//한 칸에 같은 숫자 중복되지 않는지 확인
-	for (int i = 0; i < 3; ++i) {
-		string mask = "000000000";
-		for (int j = 0; j < 3; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-
-		mask = "000000000";
-		for (int j = 3; j < 6; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-
-		mask = "000000000"; 
-		for (int j = 6; j < 9; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-	}
-	for (int i = 3; i < 6; ++i) {
-		string mask = "000000000";
-		for (int j = 0; j < 3; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-
-		mask = "000000000";
-		for (int j = 3; j < 6; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-
-		mask = "000000000";
-		for (int j = 6; j < 9; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-	}
-	for (int i = 6; i < 9; ++i) {
-		string mask = "000000000";
-		for (int j = 0; j < 3; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-
-		mask = "000000000";
-		for (int j = 3; j < 6; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
-			}
-		}
-
-		mask = "000000000";
-		for (int j = 6; j < 9; ++j) {
-			if (board[i][j] != 0) {
-				if (mask[board[i][j] - 1] != '0') return false;
-				mask[board[i][j] - 1] = '1';
+	for (int k1 = 0; k1 < 9; k1 += 3) {
+		for (int i = 0 + k1; i < 3 + k1; ++i) {
+			for (int k2 = 0; k2 < 9; k2 += 3) {
+				string mask = "000000000";
+				for (int j = 0 + k2; j < 3 + k2; ++j) {
+					if (board[i][j] != 0) {
+						if (mask[board[i][j] - 1] != '0') return false;
+						mask[board[i][j] - 1] = '1';
+					}
+				}
 			}
 		}
 	}
 	return true;
 }
 
-
-bool finished(vector<vector<int>> board) {
+bool finished() {
 	for (int i = 0; i < 9; ++i) {
 		for (int j = 0; j < 9; ++j) {
 			if (board[i][j] == 0) return false;
@@ -116,15 +54,11 @@ bool finished(vector<vector<int>> board) {
 	return true;
 }
 
-
-set<vector<vector<int>>> visited;
-
-void dfs(vector<vector<int>> curBoard) {
-
-	if (finished(curBoard)) {
+void dfs() {
+	if (finished()) {
 		for (int i = 0; i < 9; ++i) {
 			for (int j = 0; j < 9; ++j) {
-				cout << curBoard[i][j];
+				cout << board[i][j];
 			}
 			cout << "\n";
 		}
@@ -132,22 +66,19 @@ void dfs(vector<vector<int>> curBoard) {
 		exit(0);
 	}
 
-	if (visited.find(curBoard) != visited.end()) 
-		return;
-	visited.insert(curBoard);
-
 	bool change = false;
 	for (int i = 0; i < 9; ++i) {
 		if (change) return;
 		for (int j = 0; j < 9; ++j) {
 			if (change) return;
 
-			if (curBoard[i][j] == 0) {
+			if (board[i][j] == 0) {
 				for (int k = 0; k < 9; ++k) {
-					curBoard[i][j] = k;
-					if (correct(curBoard)) {
-						dfs(curBoard);
+					board[i][j] = k;
+					if (correct()) {
+						dfs();
 					}
+					board[i][j] = 0;
 				}
 				change = true;
 			}
@@ -159,7 +90,6 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 	
-	vector<vector<int>> board;
 	for (int i = 0; i < 9; ++i) {
 		string str;
 		vector<int> v;
@@ -172,7 +102,6 @@ int main() {
 		board.push_back(v);
 	}
 
-	dfs(board);
-
+	dfs();
 	return 0;
 }
