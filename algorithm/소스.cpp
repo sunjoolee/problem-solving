@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
-#include <map>
+#include <queue>
+#include <set>
 #include <algorithm>
 using namespace std;
 
@@ -17,24 +18,40 @@ bool isPalindrome(string str) {
 	return true;
 }
 
-int maxCnt = -1;
-map<string, int> cache;
+int bfs(string A) {
 
-void dp(string tmp, string A, int cnt) {
-	if (A == "") {
-		if (tmp == "") maxCnt = max(maxCnt,cnt);
-		return;
+	priority_queue<pair<int, pair<string, string>>> q;
+	q.push({ 0,{ "", A } });
+
+	set<pair<string, string>> visited;
+
+	while (!q.empty()) {
+		int cnt = q.top().first;
+		string tmp = q.top().second.first;
+		string a = q.top().second.second;
+		q.pop();
+
+		//visited
+		if (visited.find({ tmp, a }) != visited.end()) continue;
+		visited.insert({ tmp, a });
+
+		//base case
+		if (a == "") {
+			if (tmp == "") return cnt;
+			else continue;
+		}
+
+		if (isPalindrome(tmp + a[0])) {
+			if (visited.find({ "", a.substr(1) }) == visited.end()) {
+				q.push({ cnt + 1,{"", a.substr(1)} });
+			}
+		}
+
+		if (visited.find({ tmp + a[0], a.substr(1) }) == visited.end()) {
+			q.push({ cnt,{tmp + a[0], a.substr(1)} });
+		}
 	}
-
-	if (cache.find(A) != cache.end()) {
-		if (cache[A] > cnt) return;
-	}
-	else cache[A] = cnt;
-
-	if (isPalindrome(tmp + A[0])) 
-		dp("", A.substr(1), cnt + 1);
-
-	dp(tmp + A[0], A.substr(1), cnt);
+	return -1;
 }
 
 int main() {
@@ -51,10 +68,7 @@ int main() {
 		A += to_string(a);
 	}
 
-	dp("", A, 0);
-
-	if (maxCnt == 0) cout << -1;
-	else cout << maxCnt;
+	cout <<  bfs(A);
 
 	return 0;
 }
