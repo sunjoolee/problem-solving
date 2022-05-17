@@ -1,57 +1,45 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include <queue>
-#include <set>
+#include <map>
 #include <algorithm>
 using namespace std;
 
 
-bool isPalindrome(string str) {
-	if (str == "") return true;
+bool isPalindrome(vector<int> v) {
+	if (v.empty()) return true;
 
-	int len = str.length();
-	if (len % 2 != 0) return false;
+	int size = v.size();
+	if (size % 2 != 0) return false;
 
-	for (int i = 0; i < len/ 2; ++i) {
-		if (str[i] != str[len - i-1]) return false;
+	for (int i = 0; i < size / 2; ++i) {
+		if (v[i] != v[size - i - 1]) return false;
 	}
 	return true;
 }
 
-int bfs(string A) {
+int maxCnt = -1;
+map<queue<int>, int> cache;
 
-	priority_queue<pair<int, pair<string, string>>> q;
-	q.push({ 0,{ "", A } });
-
-	set<pair<string, string>> visited;
-
-	while (!q.empty()) {
-		int cnt = q.top().first;
-		string tmp = q.top().second.first;
-		string a = q.top().second.second;
-		q.pop();
-
-		//visited
-		if (visited.find({ tmp, a }) != visited.end()) continue;
-		visited.insert({ tmp, a });
-
-		//base case
-		if (a == "") {
-			if (tmp == "") return cnt;
-			else continue;
-		}
-
-		if (isPalindrome(tmp + a[0])) {
-			if (visited.find({ "", a.substr(1) }) == visited.end()) {
-				q.push({ cnt + 1,{"", a.substr(1)} });
-			}
-		}
-
-		if (visited.find({ tmp + a[0], a.substr(1) }) == visited.end()) {
-			q.push({ cnt,{tmp + a[0], a.substr(1)} });
-		}
+void dp(vector<int> v, queue<int> q, int cnt) {
+	if (q.empty()) {
+		if (v.empty()) maxCnt = max(maxCnt, cnt);
+		return;
 	}
-	return -1;
+
+	if (cache.find(q) != cache.end()) {
+		if (cache[q] > cnt) return;
+	}
+	else cache[q] = cnt;
+
+	v.push_back(q.front());
+	q.pop();
+	
+	if (isPalindrome(v)) {
+		dp(vector<int>(), q, cnt + 1);
+	}
+	dp(v, q, cnt);
 }
 
 int main() {
@@ -61,14 +49,17 @@ int main() {
 	int n;
 	cin >> n;
 
-	string A = "";
+	queue<int> q;
 	for (int i = 0; i < n; ++i) {
 		int a;
 		cin >> a;
-		A += to_string(a);
+		q.push(a);
 	}
 
-	cout <<  bfs(A);
+	dp(vector<int>(), q, 0);
+
+	if (maxCnt == 0) cout << -1;
+	else cout << maxCnt;
 
 	return 0;
 }
