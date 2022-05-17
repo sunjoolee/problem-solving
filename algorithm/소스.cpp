@@ -10,20 +10,20 @@ vector<vector<int>> board;
 bool correct() {
 	for (int i = 0; i < 9; ++i) {
 		//한 행에 같은 숫자 중복되지 않는지 확인
-		string maskRow = "000000000";
+		int maskRow[9] = { 0 };
 
 		//한 열에 같은 숫자 중복되지 않는지 확인	
-		string maskCol = "000000000";
+		int maskCol[9] = { 0 };
 
 		for (int j = 0; j < 9; ++j) {
 			if (board[i][j] != 0) {
-				if (maskRow[board[i][j] - 1] != '0') return false;
-				maskRow[board[i][j] - 1] = '1';
+				if (maskRow[board[i][j] - 1] != 0) return false;
+				maskRow[board[i][j] - 1] = 1;
 			}
 
 			if (board[j][i] != 0) {
-				if (maskCol[board[j][i] - 1] != '0') return false;
-				maskCol[board[j][i] - 1] = '1';
+				if (maskCol[board[j][i] - 1] != 0) return false;
+				maskCol[board[j][i] - 1] = 1;
 			}
 		}
 	}
@@ -32,11 +32,11 @@ bool correct() {
 	for (int k1 = 0; k1 < 9; k1 += 3) {
 		for (int i = 0 + k1; i < 3 + k1; ++i) {
 			for (int k2 = 0; k2 < 9; k2 += 3) {
-				string mask = "000000000";
+				int mask[9] = { 0 };
 				for (int j = 0 + k2; j < 3 + k2; ++j) {
 					if (board[i][j] != 0) {
-						if (mask[board[i][j] - 1] != '0') return false;
-						mask[board[i][j] - 1] = '1';
+						if (mask[board[i][j] - 1] != 0) return false;
+						mask[board[i][j] - 1] = 1;
 					}
 				}
 			}
@@ -78,7 +78,6 @@ void dfs() {
 					if (correct()) {
 						dfs();
 					}
-					board[i][j] = 0;
 				}
 				change = true;
 			}
