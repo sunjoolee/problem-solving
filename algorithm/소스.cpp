@@ -1,106 +1,60 @@
 #include <iostream>
-#include <vector>
-#include <set>
 #include <string>
+#include <map>
 #include <algorithm>
 using namespace std;
 
-vector<vector<int>> board;
 
-bool correct() {
-	for (int i = 0; i < 9; ++i) {
-		//한 행에 같은 숫자 중복되지 않는지 확인
-		int maskRow[9] = { 0 };
+bool isPalindrome(string str) {
+	if (str == "") return true;
 
-		//한 열에 같은 숫자 중복되지 않는지 확인	
-		int maskCol[9] = { 0 };
+	int len = str.length();
+	if (len % 2 != 0) return false;
 
-		for (int j = 0; j < 9; ++j) {
-			if (board[i][j] != 0) {
-				if (maskRow[board[i][j] - 1] != 0) return false;
-				maskRow[board[i][j] - 1] = 1;
-			}
-
-			if (board[j][i] != 0) {
-				if (maskCol[board[j][i] - 1] != 0) return false;
-				maskCol[board[j][i] - 1] = 1;
-			}
-		}
-	}
-
-	//한 칸에 같은 숫자 중복되지 않는지 확인
-	for (int k1 = 0; k1 < 9; k1 += 3) {
-		for (int i = 0 + k1; i < 3 + k1; ++i) {
-			for (int k2 = 0; k2 < 9; k2 += 3) {
-				int mask[9] = { 0 };
-				for (int j = 0 + k2; j < 3 + k2; ++j) {
-					if (board[i][j] != 0) {
-						if (mask[board[i][j] - 1] != 0) return false;
-						mask[board[i][j] - 1] = 1;
-					}
-				}
-			}
-		}
+	for (int i = 0; i < len/ 2; ++i) {
+		if (str[i] != str[len - i-1]) return false;
 	}
 	return true;
 }
 
-bool finished() {
-	for (int i = 0; i < 9; ++i) {
-		for (int j = 0; j < 9; ++j) {
-			if (board[i][j] == 0) return false;
-		}
-	}
-	return true;
-}
+int maxCnt = -1;
+map<string, int> cache;
 
-void dfs() {
-	if (finished()) {
-		for (int i = 0; i < 9; ++i) {
-			for (int j = 0; j < 9; ++j) {
-				cout << board[i][j];
-			}
-			cout << "\n";
-		}
-
-		exit(0);
+void dp(string tmp, string A, int cnt) {
+	if (A == "") {
+		if (tmp == "") maxCnt = max(maxCnt,cnt);
+		return;
 	}
 
-	bool change = false;
-	for (int i = 0; i < 9; ++i) {
-		if (change) return;
-		for (int j = 0; j < 9; ++j) {
-			if (change) return;
-
-			if (board[i][j] == 0) {
-				for (int k = 0; k < 9; ++k) {
-					board[i][j] = k;
-					if (correct()) {
-						dfs();
-					}
-				}
-				change = true;
-			}
-		}
+	if (cache.find(A) != cache.end()) {
+		if (cache[A] > cnt) return;
 	}
+	else cache[A] = cnt;
+
+	if (isPalindrome(tmp + A[0])) 
+		dp("", A.substr(1), cnt + 1);
+
+	dp(tmp + A[0], A.substr(1), cnt);
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-	
-	for (int i = 0; i < 9; ++i) {
-		string str;
-		vector<int> v;
 
-		cin >> str;
-		
-		for (int j = 0; j < 9; ++j) {
-			v.push_back(str[j] - '0');
-		}
-		board.push_back(v);
+	int n;
+	cin >> n;
+
+	string A = "";
+	for (int i = 0; i < n; ++i) {
+		int a;
+		cin >> a;
+		A += to_string(a);
 	}
 
-	dfs();
+	dp("", A, 0);
+
+	if (maxCnt == 0) cout << -1;
+	else cout << maxCnt;
+
 	return 0;
 }
