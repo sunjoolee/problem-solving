@@ -1,106 +1,91 @@
-#include <iostream>
-#include <vector>
+#include <algorithm>
 #include <queue>
+#include <set>
+#include <iostream>
+#include <string>
+#include <vector>
+
 using namespace std;
 
-typedef long long ll;
+const int MAXN = 18;
 
-const int MAXN = 1001;
-
-//건물을 짓는데 걸리는 시간
-ll delay[MAXN] = { 0 };
-
-//건물을 짓기 시작하는 시점
-ll construct[MAXN] = { 0 };
-
-//inDegree[i]: 정점i에 들어가는 간선의 수
-int inDegree[MAXN] = { 0 };
-
-//vector<int> child[i]: 노드i를 선행 노드로 하는 노드들의 집합
-vector<int> child[MAXN];
+//bfs를 위한 그래프
+vector<vector<int>> adj(vector<vector<int>>(MAXN, vector<int>()));
 
 
-//위상 정렬 함수
-int topologySort(int n, int w) {
-	
-	queue<int> q;
+//info 0: 양, 1: 늑대, 2: 현재 위치, -1: 빈 노드(=방문한 노드)
+const int SHEEP = 0;
+const int WOLF = 1;
+const int VISITED = -1;
 
-	//진입 차수 0인 정점 큐에 삽입
-	for (int i = 1; i <= n; ++i) {
-		if (inDegree[i] == 0) q.push(i);
-	}
+int bfs(vector<int> info) {
 
-	//정렬이 완전히 수행되기까지 n개의 정점을 방문한다
-	for (int i = 1; i <= n; ++i) {
+	//중복된 상태 진입 방지 <curNode, curInfo>
+	set<pair<int, vector<int>>> visited;
 
-		//n개의 정점을 방문하기 전에 큐가 비어버리면 사이클이 발생한 것
-		if (q.empty()) return -1;
-		
+	//<<curNode, <curSheep, curWolf>>, info>
+	queue<pair<pair<int, pair<int, int>>, vector<int>>> q;
 
-		//진입 차수가 0인 정점 선택
-		int parent = q.front();
+	//bfs 무조건 0번 노드(info[0] = 0)부터 시작
+	info[0] = VISITED;
+	q.push({ {0, {1, 0}}, info });
 
-		//승리하기 위해 건설해야하는 건물인 경우
-		if (parent == w) return construct[w] + delay[w];
-
-		//선택된 정점과 여기에 부속된 모든 간선들 삭제
+	int answer = 1;
+	while (!q.empty()) {
+		int curNode = q.front().first.first;
+		int curSheep = q.front().first.second.first;
+		int curWolf = q.front().first.second.second;
+		vector<int> curInfo = q.front().second;
 		q.pop();
-		for (int i = 0; i < child[parent].size(); ++i) {
-			int childnode = child[parent][i];
-			inDegree[childnode]--;
 
-			//child 건물을 짓기 시작하는 시점
-			construct[childnode] = max(construct[childnode], construct[parent] + delay[parent]);
+		if (visited.find({ curNode, curInfo }) != visited.end()) continue;
+		visited.insert({ curNode, curInfo });
 
-			//새롭게 진입차수가 0이 된 정점을 큐에 삽입
-			if (inDegree[childnode] == 0) {
-				q.push(childnode);
-			}
+		answer = max(answer, curSheep);
+
+		cout << curNode <<" " << curSheep << " " << curWolf << "\n";
+
+		for (int i = 0; i < adj[curNode].size(); ++i) {
+				int nextNode = adj[curNode][i];
+				int nextSheep = curSheep;
+				int nextWolf = curWolf;
+				
+				if (curInfo[nextNode] == SHEEP) {
+					nextSheep++;
+				}
+				else if (curInfo[nextNode] == WOLF) {
+					nextWolf++;
+				}
+				//curInfo[nextNode] == VISITED 인 경우 no action
+
+				//이동할 수 없는 노드인 경우
+				if (nextWolf >= nextSheep) continue;
+
+				//다음 이동할 노드 큐에 넣기
+				int tmp = curInfo[nextNode];
+				curInfo[nextNode] = VISITED;
+				if (visited.find({ nextNode, curInfo }) == visited.end()) {
+					q.push({ {nextNode, {nextSheep, nextWolf}}, curInfo });
+				}
+				curInfo[nextNode] = tmp;
 		}
 	}
-	return -1;
+	return answer;
 }
 
+int solution(vector<int> info, vector<vector<int>> edges) {
+	for (int i = 0; i < edges.size(); ++i) {
+		int parent = edges[i][0];
+		int child = edges[i][1];
+
+		adj[parent].push_back(child);
+		adj[child].push_back(parent);
+	}
+
+	int answer = bfs(info);
+	return answer;
+}
 
 int main() {
-	
-	//테스트 케이스 수
-	int t;
-	cin >> t;
-	while(t--){
-		//초기화
-		for (int i = 0; i < MAXN; ++i) {
-			delay[i] = 0;
-			construct[i] = 0;
-			inDegree[i] = { 0 };
-			child[i].clear();
-
-		}
-		//건물 수
-		int n;
-		cin >> n;
-		//건물 규칙 수
-		int k;
-		cin >> k;
-
-		for (int i = 1; i <= n; ++i) {
-			ll d;
-			cin >> d;
-			delay[i] = d;
-		}
-
-		for (int i = 0; i < k; ++i) {
-			int x, y;
-			cin >> x >> y;
-			child[x].push_back(y);
-			inDegree[y]++;
-		}
-
-		//승리하기 위해 건설해야하는 건물 번호
-		int w;
-		cin >> w;
-
-		cout << topologySort(n,w) <<"\n";
-	}
-	return 0;
+	solution({ 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0 }, { {0, 1},{0, 2},{1, 3},{1, 4},{2, 5},{2, 6},{3, 7},{4, 8},{6, 9},{9, 10} });
 }
