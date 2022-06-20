@@ -1,91 +1,62 @@
-#include <algorithm>
-#include <queue>
-#include <set>
-#include <iostream>
 #include <string>
 #include <vector>
 
 using namespace std;
+typedef long long ll;
 
-const int MAXN = 18;
+int rSize;
+int cSize;
+vector<vector<ll>> Board;
 
-//bfs를 위한 그래프
-vector<vector<int>> adj(vector<vector<int>>(MAXN, vector<int>()));
+//skill {type, r1, c1, r2, c2, degree}
+void useSkill(vector<int> skill) {
+	int type = skill[0];
+	int r1 = skill[1];
+	int c1 = skill[2];
+	int r2 = skill[3];
+	int c2 = skill[4];
+	ll degree = skill[5];
+	
+	for (int r = r1; r <= r2; ++r) {
+		for (int c = c1; c <= c2; ++c) {
+			if (type == 1) Board[r][c] -= degree;
+			else Board[r][c] += degree;
+		}
+	}
+}
 
+int solution(vector<vector<int>> board, vector<vector<int>> skill) {
+	rSize = board.size();
+	cSize = board[0].size();
 
-//info 0: 양, 1: 늑대, 2: 현재 위치, -1: 빈 노드(=방문한 노드)
-const int SHEEP = 0;
-const int WOLF = 1;
-const int VISITED = -1;
+	for (int i = 0; i < rSize; ++i) {
+		vector<ll> tmp;
+		for (int j = 0; j < cSize; ++j) {
+			tmp.push_back(board[i][j]);
+		}
+		Board.push_back(tmp);
+	}
 
-int bfs(vector<int> info) {
-
-	//중복된 상태 진입 방지 <curNode, curInfo>
-	set<pair<int, vector<int>>> visited;
-
-	//<<curNode, <curSheep, curWolf>>, info>
-	queue<pair<pair<int, pair<int, int>>, vector<int>>> q;
-
-	//bfs 무조건 0번 노드(info[0] = 0)부터 시작
-	info[0] = VISITED;
-	q.push({ {0, {1, 0}}, info });
-
-	int answer = 1;
-	while (!q.empty()) {
-		int curNode = q.front().first.first;
-		int curSheep = q.front().first.second.first;
-		int curWolf = q.front().first.second.second;
-		vector<int> curInfo = q.front().second;
-		q.pop();
-
-		if (visited.find({ curNode, curInfo }) != visited.end()) continue;
-		visited.insert({ curNode, curInfo });
-
-		answer = max(answer, curSheep);
-
-		cout << curNode <<" " << curSheep << " " << curWolf << "\n";
-
-		for (int i = 0; i < adj[curNode].size(); ++i) {
-				int nextNode = adj[curNode][i];
-				int nextSheep = curSheep;
-				int nextWolf = curWolf;
-				
-				if (curInfo[nextNode] == SHEEP) {
-					nextSheep++;
-				}
-				else if (curInfo[nextNode] == WOLF) {
-					nextWolf++;
-				}
-				//curInfo[nextNode] == VISITED 인 경우 no action
-
-				//이동할 수 없는 노드인 경우
-				if (nextWolf >= nextSheep) continue;
-
-				//다음 이동할 노드 큐에 넣기
-				int tmp = curInfo[nextNode];
-				curInfo[nextNode] = VISITED;
-				if (visited.find({ nextNode, curInfo }) == visited.end()) {
-					q.push({ {nextNode, {nextSheep, nextWolf}}, curInfo });
-				}
-				curInfo[nextNode] = tmp;
+	for (int i = 0; i < skill.size(); ++i) {
+		useSkill(skill[i]);
+	}
+	
+	int answer = 0;
+	for (int i = 0; i <rSize; ++i) {
+		for (int j = 0; j < cSize; ++j) {
+			if (Board[i][j] <= 0) ++answer;
 		}
 	}
 	return answer;
 }
 
-int solution(vector<int> info, vector<vector<int>> edges) {
-	for (int i = 0; i < edges.size(); ++i) {
-		int parent = edges[i][0];
-		int child = edges[i][1];
-
-		adj[parent].push_back(child);
-		adj[child].push_back(parent);
-	}
-
-	int answer = bfs(info);
-	return answer;
-}
-
 int main() {
-	solution({ 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0 }, { {0, 1},{0, 2},{1, 3},{1, 4},{2, 5},{2, 6},{3, 7},{4, 8},{6, 9},{9, 10} });
+	solution({ {5, 5, 5, 5, 5},
+		{5, 5, 5, 5, 5},
+		{5, 5, 5, 5, 5},
+		{5, 5, 5, 5, 5} }
+		, { {1, 0, 0, 3, 4, 4},
+		{1, 2, 0, 2, 3, 2},
+		{2, 1, 0, 3, 1, 2},
+		{1, 0, 1, 3, 3, 1} });
 }
