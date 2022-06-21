@@ -1,73 +1,158 @@
-#include <string>
+#include <iostream>
 #include <algorithm>
 #include <vector>
-
+#include <cmath>
 using namespace std;
 
-const int IMPOSSIBLE = 987654321;
+int N;
+int K;
+int board[101][101] = { 0 };
 
-int R;
-int C;
+const int TOP = 0;
+const int BOTTOM = 100;
+const int LEFT = 0;
+const int RIGHT = 100;
 
-int rMove[4] = { 0, 0, 1, -1 };
-int cMove[4] = { 1, -1, 0, 0 };
+//idx: 공중부양시킬 어항 블록의 좌측 하단 위치
+//blockH: 공중부양시킬 어항 블록의 높이
+//blockW: 공중부양시킬 어항 블록의 너비
+void rotateFishTank1(int idx, int blockH, int blockW) {
+	
+}
 
-bool inRange(int r, int c) {
-	if (r < 0 || r >= R) return false;
-	if (c < 0 || c >= C) return false;
+int rDir[4] = { 0,0,1,-1 };
+int wDir[4] = { 1, -1, 0, 0 };
+
+bool inRange(int r, int w) {
+	if (r > 0 || r > 100) return false;
+	if (w > 0 || w > 100) return false;
 	return true;
 }
 
+void calcFish() {
+	int calcBoard[101][101] = { 0 };
 
-//<win, moves>
-pair<int,int> game(vector<vector<int>> board, pair<int, int> aloc, pair<int, int> bloc) {
-	//움직일 차례인데 캐릭터의 상하좌우 주변 4칸이 모두 발판이 없거나 보드 밖이라서 이동할 수 없는 경우, 패배
-	//두 캐릭터가 같은 발판 위에 있을 때, 상대 캐릭터가 다른 발판으로 이동하여 자신의 캐릭터가 서있던 발판이 사라지게 되면 패배
+	for (int r = BOTTOM; r >= TOP; --r) {
+		for (int w = LEFT; w <= RIGHT; ++w) {
+			if (board[r][w] == 0) continue;
+			//인접한 어항과의 물고기 수 차이 계산
+			for (int k = 0; k < 4; ++k) {
+				int adjR = r + rDir[k];
+				int adjW = w + wDir[k];
+				if (!inRange(adjR, adjW)) continue;
+				if (board[adjR][adjW] == 0) continue;
 
-	bool cantMove = true;
+				int d;
+				if (board[r][w] > board[adjR][adjW]) {
+					d = (board[r][w] - board[adjR][adjW]) / 5;
+					if (d > 0) {
+						calcBoard[r][w] -= d;
+						calcBoard[adjR][adjW] += d;
+					}
+				}
+				else {
+					d = (board[adjR][adjW] - board[r][w]) / 5;
+					if (d > 0) {
+						calcBoard[r][w] += d;
+						calcBoard[adjR][adjW] -= d;
+					}
+				}
 
-	int minRet = IMPOSSIBLE;
-	int maxRet = -1;
-
-	for (int i = 0; i < 4; ++i) {
-		int nextR = aloc.first + rMove[i];
-		int nextC = aloc.second + cMove[i];
-
-		if (!inRange(nextR, nextC)) continue;
-		if (board[nextR][nextC] == 0) continue;
-		cantMove = false;
-
-		//무조건 이기는 경우 발생한 경우
-		if (aloc.first == bloc.first && aloc.second == bloc.second)
-			return { 1, 1 };
-
-		board[aloc.first][aloc.second] = 0;
-		pair<int, int> gameResult = game(board, bloc, { nextR, nextC });
-		//이긴 경우 최대한 빨리 이기기 위해 플레이
-		if (gameResult.first == 0) {
-			minRet = min(minRet, 1 + gameResult.second);
+			}
 		}
-		//진 경우 최대한 느리게 지기 위해 플레이
-		else {
-			maxRet = max(maxRet, 1 + gameResult.second);
-		}
-		board[aloc.first][aloc.second] = 1;
 	}
 
-	if (cantMove) return { 0, 0 };
-
-	//이길 수 있는 경우가 있는 경우
-	if (minRet != IMPOSSIBLE) return { 1, minRet};
-	//이길 수 있는 경우가 없는 경우
-	else return { 0, maxRet };
+	//물고기 옮기기
+	for (int r = BOTTOM; r >= TOP; --r) {
+		for (int w = LEFT; w <= RIGHT; ++w) {
+			board[r][w] += calcBoard[r][w];
+		}
+	}
 }
 
-int solution(vector<vector<int>> board, vector<int> aloc, vector<int> bloc) {
-	R = board.size();
-	C = board[0].size();
+void arrangeFishTank() {
+	vector<int> newBoard;
 
-	pair<int, int> gameResult = game(board, { aloc[0], aloc[1] }, { bloc[0], bloc[1] });
+	for (int w = LEFT; w <= RIGHT; ++w) {
+		for (int r = BOTTOM; r >= TOP; --r) {
+			if (board[r][w] == 0) continue;
+			newBoard.push_back(board[r][w]);
+			board[r][w] = 0;
+		}
+	}
 
-	int answer = gameResult.second;
-	return answer;
+	for (int i = 0; i < N; ++i) {
+		board[BOTTOM][i] = newBoard[i];
+	}
+}
+
+
+//idx: 공중부양시킬 어항 블록의 좌측 하단 위치
+//blockH: 공중부양시킬 어항 블록의 높이
+//blockW: 공중부양시킬 어항 블록의 너비
+void rotateFishTank2(int idx, int blockH, int blockW) {
+	vector<vector<int>> block(blockH, vector<int>(blockW, 0));
+	for (int r = blockH - 1; r >= 0; --r) {
+		for (int w = 0; w < blockW; ++w) {
+			block[r][w] = board[BOTTOM + ][]
+		}
+	}
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL); cout.tie(NULL);
+
+	cin >> N >> K;
+	for (int i = 0; i < N; ++i) {
+		//보드 바닥에 어항 일렬로 배치
+		cin >> board[BOTTOM][i];
+	}
+
+	int arrangeCnt = 0;
+	while (true) {
+		int minFish = 987654321;
+		int maxFish = 0;
+		for (int i = 0; i < N; ++i) {
+			minFish = min(minFish, board[BOTTOM][i]);
+			maxFish = max(maxFish, board[BOTTOM][i]);
+		}
+		if (maxFish - minFish <= K) break;
+
+		//물고기 수 가장 적은 어항에 물고기 한마리 넣기
+		vector<int> minFishTank;
+		minFish = 987654321;
+		for (int i = 0; i < N; ++i) {
+			if (minFish > board[BOTTOM][i]) {
+				minFish = board[BOTTOM][i];
+				minFishTank.clear();
+				minFishTank.push_back(i);
+			}
+			else if (minFish == board[BOTTOM][i]) {
+				minFishTank.push_back(i);
+			}
+		}
+		for (int i = 0; i < minFishTank.size(); ++i) {
+			board[BOTTOM][minFishTank[i]]++;
+		}
+
+		//어항 쌓기
+		board[BOTTOM - 1][1] = board[BOTTOM][0];
+		board[BOTTOM][0] = 0;
+
+		//2개이상 쌓여있는 어항 공중 부양 후 90도 회전하여 쌓기
+		rotateFishTank1(1,2,1);
+		//
+		calcFish();
+		arrangeFishTank();
+
+		rotateFishTank2();
+		calcFish();
+		arrangeFishTank();
+
+		arrangeCnt++;
+	}
+
+	cout << arrangeCnt;
+	return 0;
 }
