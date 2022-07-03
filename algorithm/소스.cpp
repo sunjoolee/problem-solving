@@ -1,158 +1,282 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <cmath>
+#include <stack>
 using namespace std;
 
-int N;
-int K;
-int board[101][101] = { 0 };
+int dirR[4] = { 0, 0, 1, -1 };
+int dirC[4] = { 1, -1, 0, 0 };
 
-const int TOP = 0;
-const int BOTTOM = 100;
-const int LEFT = 0;
-const int RIGHT = 100;
-
-//idx: 공중부양시킬 어항 블록의 좌측 하단 위치
-//blockH: 공중부양시킬 어항 블록의 높이
-//blockW: 공중부양시킬 어항 블록의 너비
-void rotateFishTank1(int idx, int blockH, int blockW) {
-	
-}
-
-int rDir[4] = { 0,0,1,-1 };
-int wDir[4] = { 1, -1, 0, 0 };
-
-bool inRange(int r, int w) {
-	if (r > 0 || r > 100) return false;
-	if (w > 0 || w > 100) return false;
+bool inRange(int R, int C, int r, int c) {
+	if (r < 0 || r >= R) return false;
+	if (c < 0 || c >= C) return false;
 	return true;
 }
 
-void calcFish() {
-	int calcBoard[101][101] = { 0 };
+vector<vector<int>> moveFish(int R, int C, vector<vector<int>>fishTankBoard) {
 
-	for (int r = BOTTOM; r >= TOP; --r) {
-		for (int w = LEFT; w <= RIGHT; ++w) {
-			if (board[r][w] == 0) continue;
-			//인접한 어항과의 물고기 수 차이 계산
-			for (int k = 0; k < 4; ++k) {
-				int adjR = r + rDir[k];
-				int adjW = w + wDir[k];
-				if (!inRange(adjR, adjW)) continue;
-				if (board[adjR][adjW] == 0) continue;
+	vector<vector<int>> movedFish(R, vector<int>(C, 0));
+	
+	vector<vector<int>> visited(R, vector<int>(C, 0));
+	
+	for (int r = 0; r < R; ++r) {
+		for (int c = 0; c < C; ++c) {
+			if (fishTankBoard[r][c] == 0) continue;
+
+			visited[r][c] = 1;
+			for (int dir = 0; dir < 4; ++dir) {
+				int adjR = r + dirR[dir];
+				int adjC = c + dirC[dir];
+				
+				if (!inRange(R, C, adjR, adjC) || fishTankBoard[adjR][adjC] == 0 || visited[adjR][adjC]) continue;
 
 				int d;
-				if (board[r][w] > board[adjR][adjW]) {
-					d = (board[r][w] - board[adjR][adjW]) / 5;
+				if (fishTankBoard[r][c] > fishTankBoard[adjR][adjC]) {
+					d = (fishTankBoard[r][c] - fishTankBoard[adjR][adjC]) / 5;
 					if (d > 0) {
-						calcBoard[r][w] -= d;
-						calcBoard[adjR][adjW] += d;
+						movedFish[r][c] -= d;
+						movedFish[adjR][adjC] += d;
 					}
 				}
-				else {
-					d = (board[adjR][adjW] - board[r][w]) / 5;
+				else{
+					d = (fishTankBoard[adjR][adjC] - fishTankBoard[r][c]) / 5;
 					if (d > 0) {
-						calcBoard[r][w] += d;
-						calcBoard[adjR][adjW] -= d;
+						movedFish[r][c] += d;
+						movedFish[adjR][adjC] -= d;
 					}
 				}
-
 			}
 		}
 	}
 
-	//물고기 옮기기
-	for (int r = BOTTOM; r >= TOP; --r) {
-		for (int w = LEFT; w <= RIGHT; ++w) {
-			board[r][w] += calcBoard[r][w];
-		}
-	}
-}
-
-void arrangeFishTank() {
-	vector<int> newBoard;
-
-	for (int w = LEFT; w <= RIGHT; ++w) {
-		for (int r = BOTTOM; r >= TOP; --r) {
-			if (board[r][w] == 0) continue;
-			newBoard.push_back(board[r][w]);
-			board[r][w] = 0;
+	for (int i = 0; i < R; ++i) {
+		for (int j = 0; j < C; ++j) {
+			fishTankBoard[i][j] = fishTankBoard[i][j] + movedFish[i][j];
 		}
 	}
 
-	for (int i = 0; i < N; ++i) {
-		board[BOTTOM][i] = newBoard[i];
-	}
-}
-
-
-//idx: 공중부양시킬 어항 블록의 좌측 하단 위치
-//blockH: 공중부양시킬 어항 블록의 높이
-//blockW: 공중부양시킬 어항 블록의 너비
-void rotateFishTank2(int idx, int blockH, int blockW) {
-	vector<vector<int>> block(blockH, vector<int>(blockW, 0));
-	for (int r = blockH - 1; r >= 0; --r) {
-		for (int w = 0; w < blockW; ++w) {
-			block[r][w] = board[BOTTOM + ][]
-		}
-	}
+	return fishTankBoard;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	cin >> N >> K;
-	for (int i = 0; i < N; ++i) {
-		//보드 바닥에 어항 일렬로 배치
-		cin >> board[BOTTOM][i];
+	//어항의 수
+	int n;
+	//어항의 물고기 수 차이
+	int k;
+
+	//어항
+	vector<stack<int>> fishTank(100, stack<int>());
+
+	cin >> n >> k;
+
+	for (int i = 0; i < n; ++i) {
+		int fish;
+		cin >> fish;
+		fishTank[i].push(fish);
 	}
 
-	int arrangeCnt = 0;
+	int time = 1;
 	while (true) {
-		int minFish = 987654321;
-		int maxFish = 0;
-		for (int i = 0; i < N; ++i) {
-			minFish = min(minFish, board[BOTTOM][i]);
-			maxFish = max(maxFish, board[BOTTOM][i]);
-		}
-		if (maxFish - minFish <= K) break;
-
-		//물고기 수 가장 적은 어항에 물고기 한마리 넣기
+		//1. 물고기 수 가장 적은 어항에 물고기 한마리씩 
 		vector<int> minFishTank;
-		minFish = 987654321;
-		for (int i = 0; i < N; ++i) {
-			if (minFish > board[BOTTOM][i]) {
-				minFish = board[BOTTOM][i];
+		int minFish = 987654321;
+		for (int i = 0; i < n; ++i) {
+			int fish = fishTank[i].top();
+
+			if (fish < minFish) {
+				minFish = fish;
 				minFishTank.clear();
 				minFishTank.push_back(i);
 			}
-			else if (minFish == board[BOTTOM][i]) {
+			else if (fish == minFish) {
 				minFishTank.push_back(i);
 			}
 		}
+
 		for (int i = 0; i < minFishTank.size(); ++i) {
-			board[BOTTOM][minFishTank[i]]++;
+			int idx = minFishTank[i];
+			fishTank[idx].pop();
+			fishTank[idx].push(minFish + 1);
+
 		}
 
-		//어항 쌓기
-		board[BOTTOM - 1][1] = board[BOTTOM][0];
-		board[BOTTOM][0] = 0;
+		//2. 어항 공중부양 & 시계방향 90도 회전 & 쌓기
+		
+		//맨 왼쪽에 있는 어항 오른쪽 어항 위에 쌓기
+		fishTank[1].push(fishTank[0].top());
+		fishTank[0].pop();
 
-		//2개이상 쌓여있는 어항 공중 부양 후 90도 회전하여 쌓기
-		rotateFishTank1(1,2,1);
-		//
-		calcFish();
-		arrangeFishTank();
+		while (true) {
 
-		rotateFishTank2();
-		calcFish();
-		arrangeFishTank();
+			//공중 부양시킨 어항 중 가장 오른쪽에 있는 어항의 아래에 
+			//바닥에 있는 어항이 없을 경우 종료
+			int stackHeight;
+			int startFishTank= - 1;
 
-		arrangeCnt++;
+			for (int i = 0; i < n; ++i) {
+				if (fishTank[i].size() > 1) {
+					stackHeight = fishTank[i].size();
+				}
+				if (fishTank[i].size() == 1) {
+					startFishTank = i;
+					break;
+				}
+			}
+
+			if (startFishTank == -1 || startFishTank + stackHeight - 1 >= n) break;
+
+			//2개 이상 쌓여있는 어항 공중부양
+			stack<int> floatTank;
+
+			for (int i = 0; i < n; ++i) {
+				if (fishTank[i].size() > 1) {
+					while (!fishTank[i].empty()) {
+						floatTank.push(fishTank[i].top());
+						fishTank[i].pop();
+					}
+				}
+				if (fishTank[i].size() == 1) break;
+			}
+
+			//시계방향 90도 회전 & 쌓기
+			while (!floatTank.empty()) {
+				for (int h = 0; h < stackHeight; ++h) {
+					fishTank[startFishTank + h].push(floatTank.top());
+					floatTank.pop();
+				}
+			}
+		}
+
+		//3. 어항에 있는 물고기의 수 조절
+
+		//vector<stack<int>> -> vector<vector<int>>
+		int R = 0;
+		int C = 0;
+		int startFishTank = -1;
+
+		for (int i = 0; i < n; ++i) {
+			if (fishTank[i].empty()) continue;
+			else if (startFishTank == -1) startFishTank = i;
+
+			if(R < fishTank[i].size()) R = fishTank[i].size();
+			C++;
+		}
+
+		vector<vector<int>> fishTankBoard1(R, vector<int>(C, 0));
+		
+		for (int c = 0; c < C; ++c) {
+			if (fishTank[c + startFishTank].size() == 1) {
+				fishTankBoard1[R - 1][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+				continue;
+			}
+
+			for (int r = 0; r < R; ++r) {
+				fishTankBoard1[r][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+			}
+		}
+
+		fishTankBoard1 = moveFish(R, C, fishTankBoard1);
+
+		//4. 다시 어항을 바닥에 일렬로 놓기
+
+		//vector<vector<int>> -> vector<stack<int>>
+		int fishTankIdx = 0;
+		for (int c = 0; c < C; ++c) {
+			for (int r = R - 1; r >= 0; --r) {
+				if (fishTankBoard1[r][c] == 0) break;
+				fishTank[fishTankIdx].push(fishTankBoard1[r][c]);
+				fishTankIdx++;
+			}
+		}
+
+		//5. 가운데를 중심으로 왼쪽 n/2개 공중부양 & 시계방향 180도 회전 & 쌓기
+		//1회
+		stack<int> floatTank1;
+		for (int i = 0; i < n / 2; ++i) {
+			floatTank1.push(fishTank[i].top());
+			fishTank[i].pop();
+		}
+		for (int i = n / 2; i < n; ++i) {
+			fishTank[i].push(floatTank1.top());
+			floatTank1.pop();
+		}
+		//2회
+		stack<int> floatTank2;
+		for (int i = n / 2; i < n / 2 + n / 4; ++i) {
+			floatTank1.push(fishTank[i].top());
+			fishTank[i].pop(); 
+			floatTank2.push(fishTank[i].top());
+			fishTank[i].pop();
+		}
+		for (int i = n / 2 + n / 4; i < n; ++i) {
+			fishTank[i].push(floatTank1.top());
+			floatTank1.pop();
+			fishTank[i].push(floatTank2.top());
+			floatTank2.pop();
+		}
+
+		//6. 어항에 있는 물고기의 수 조절
+
+		//vector<stack<int>> -> vector<vector<int>>
+		R = 0;
+		C = 0;
+		startFishTank = -1;
+
+		for (int i = 0; i < n; ++i) {
+			if (fishTank[i].empty()) continue;
+			if (startFishTank == -1) startFishTank = i;
+
+			if (R < fishTank[i].size()) R = fishTank[i].size();
+			C++;
+		}
+
+		vector<vector<int>> fishTankBoard2(R, vector<int>(C, 0));
+
+		for (int c = 0; c < C; ++c) {
+			if (fishTank[c + startFishTank].size() == 1) {
+				fishTankBoard2[R - 1][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+				continue;
+			}
+
+			for (int r = 0; r < R; ++r) {
+				fishTankBoard2[r][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+			}
+		}
+		fishTankBoard2 = moveFish(R, C, fishTankBoard2);
+
+		//7. 다시 어항을 바닥에 일렬로 놓기
+
+		//vector<vector<int>> -> vector<stack<int>>
+		fishTankIdx = 0;
+		for (int c = 0; c < C; ++c) {
+			for (int r = R - 1; r >= 0; --r) {
+				if (fishTankBoard2[r][c] == 0) break;
+				fishTank[fishTankIdx].push(fishTankBoard2[r][c]);
+				fishTankIdx++;
+			}
+		}
+
+		
+		//8. 어항 속 최대 물고기 수와 최소 물고기 수의 차이 k 이하면 break 
+		minFish = 987654321;
+		int maxFish = 0;
+
+		for (int i = 0; i < n; ++i) {
+			if (minFish > fishTank[i].top()) minFish = fishTank[i].top();
+			if(maxFish < fishTank[i].top()) maxFish = fishTank[i].top();
+		}
+		if (maxFish - minFish <= k) break;
+
+		time++;
 	}
 
-	cout << arrangeCnt;
+	cout << time;
 	return 0;
 }
