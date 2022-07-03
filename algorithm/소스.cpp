@@ -1,29 +1,36 @@
 #include <iostream>
 #include <vector>
-#include <set>
 #include <string>
+#include <queue>
+#include <set>
 #include <algorithm>
+
 using namespace std;
 
-vector<vector<int>> board;
+set<vector<vector<int>>> visited;
 
-bool correct() {
+bool correct(vector<vector<int>> board) {
+
+	//한 행에 같은 숫자 중복되지 않는지 확인
 	for (int i = 0; i < 9; ++i) {
-		//한 행에 같은 숫자 중복되지 않는지 확인
-		int maskRow[9] = { 0 };
-
-		//한 열에 같은 숫자 중복되지 않는지 확인	
-		int maskCol[9] = { 0 };
+		int maskRow[10] = { 0 };
 
 		for (int j = 0; j < 9; ++j) {
 			if (board[i][j] != 0) {
-				if (maskRow[board[i][j] - 1] != 0) return false;
-				maskRow[board[i][j] - 1] = 1;
+				if (maskRow[board[i][j]] != 0) return false;
+				maskRow[board[i][j]] = 1;
 			}
+		}
+	}
 
-			if (board[j][i] != 0) {
-				if (maskCol[board[j][i] - 1] != 0) return false;
-				maskCol[board[j][i] - 1] = 1;
+	//한 열에 같은 숫자 중복되지 않는지 확인
+	for (int j = 0; j < 9; ++j) {
+		int maskCol[10] = { 0 };
+
+		for (int i = 0; i < 9; ++i) {
+			if (board[i][j] != 0) {
+				if (maskCol[board[i][j]] != 0) return false;
+				maskCol[board[i][j]] = 1;
 			}
 		}
 	}
@@ -32,20 +39,21 @@ bool correct() {
 	for (int k1 = 0; k1 < 9; k1 += 3) {
 		for (int i = 0 + k1; i < 3 + k1; ++i) {
 			for (int k2 = 0; k2 < 9; k2 += 3) {
-				int mask[9] = { 0 };
+				int mask[10] = { 0 };
 				for (int j = 0 + k2; j < 3 + k2; ++j) {
 					if (board[i][j] != 0) {
-						if (mask[board[i][j] - 1] != 0) return false;
-						mask[board[i][j] - 1] = 1;
+						if (mask[board[i][j]] != 0) return false;
+						mask[board[i][j]] = 1;
 					}
 				}
 			}
 		}
 	}
+
 	return true;
 }
 
-bool finished() {
+bool finished(vector<vector<int>> board) {
 	for (int i = 0; i < 9; ++i) {
 		for (int j = 0; j < 9; ++j) {
 			if (board[i][j] == 0) return false;
@@ -54,32 +62,42 @@ bool finished() {
 	return true;
 }
 
-void dfs() {
-	if (finished()) {
-		for (int i = 0; i < 9; ++i) {
-			for (int j = 0; j < 9; ++j) {
-				cout << board[i][j];
+bool solve(vector<vector<int>> board) {
+
+	//채워진 칸 수, board 상태
+	queue <vector<vector<int>>> q;
+	q.push(board);
+
+	while (!q.empty()) {
+		vector<vector<int>> curBoard = q.front();
+		q.pop();
+
+		if (visited.find(curBoard) != visited.end()) return;
+		visited.insert(curBoard);
+
+		//base case
+		if (finished(curBoard)) {
+			for (int i = 0; i < 9; ++i) {
+				for (int j = 0; j < 9; ++j) {
+					cout << curBoard[i][j];
+				}
+				cout << "\n";
 			}
-			cout << "\n";
+			return;
 		}
 
-		exit(0);
-	}
+		bool solved = false;
 
-	bool change = false;
-	for (int i = 0; i < 9; ++i) {
-		if (change) return;
-		for (int j = 0; j < 9; ++j) {
-			if (change) return;
-
-			if (board[i][j] == 0) {
-				for (int k = 0; k < 9; ++k) {
-					board[i][j] = k;
-					if (correct()) {
-						dfs();
+		for (int i = 0; i < 9; ++i) {
+			for (int j = 0; j < 9; ++j) {
+				if (curBoard[i][j] == 0) {
+					for (int k = 1; k <= 9; ++k) {
+						curBoard[i][j] = k;
+						if (correct(curBoard) && visited.find(curBoard) == visited.end()){
+							q.push(curBoard);
+						}
 					}
 				}
-				change = true;
 			}
 		}
 	}
@@ -89,6 +107,8 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 	
+	vector<vector<int>> board;
+
 	for (int i = 0; i < 9; ++i) {
 		string str;
 		vector<int> v;
@@ -101,6 +121,6 @@ int main() {
 		board.push_back(v);
 	}
 
-	dfs();
+	solve(board);
 	return 0;
 }
