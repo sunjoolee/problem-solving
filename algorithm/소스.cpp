@@ -1,204 +1,282 @@
+#include <iostream>
 #include <algorithm>
 #include <vector>
-#include <queue>
-#include <vector>
 #include <stack>
-#include <iostream>
 using namespace std;
 
-int fishR[8] = { 0, -1, -1, -1, 0, 1, 1, 1 };
-int fishC[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+int dirR[4] = { 0, 0, 1, -1 };
+int dirC[4] = { 1, -1, 0, 0 };
 
-int sharkR[4] = {-1, 0, 1, 0};
-int sharkC[4] = {0, -1, 0, 1};
-
-bool inRange(int r, int c) {
-	if (r < 0 || r >= 4) return false;
-	if (c < 0 || c >= 4) return false;
+bool inRange(int R, int C, int r, int c) {
+	if (r < 0 || r >= R) return false;
+	if (c < 0 || c >= C) return false;
 	return true;
+}
+
+vector<vector<int>> moveFish(int R, int C, vector<vector<int>>fishTankBoard) {
+
+	vector<vector<int>> movedFish(R, vector<int>(C, 0));
+	
+	vector<vector<int>> visited(R, vector<int>(C, 0));
+	
+	for (int r = 0; r < R; ++r) {
+		for (int c = 0; c < C; ++c) {
+			if (fishTankBoard[r][c] == 0) continue;
+
+			visited[r][c] = 1;
+			for (int dir = 0; dir < 4; ++dir) {
+				int adjR = r + dirR[dir];
+				int adjC = c + dirC[dir];
+				
+				if (!inRange(R, C, adjR, adjC) || fishTankBoard[adjR][adjC] == 0 || visited[adjR][adjC]) continue;
+
+				int d;
+				if (fishTankBoard[r][c] > fishTankBoard[adjR][adjC]) {
+					d = (fishTankBoard[r][c] - fishTankBoard[adjR][adjC]) / 5;
+					if (d > 0) {
+						movedFish[r][c] -= d;
+						movedFish[adjR][adjC] += d;
+					}
+				}
+				else{
+					d = (fishTankBoard[adjR][adjC] - fishTankBoard[r][c]) / 5;
+					if (d > 0) {
+						movedFish[r][c] += d;
+						movedFish[adjR][adjC] -= d;
+					}
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < R; ++i) {
+		for (int j = 0; j < C; ++j) {
+			fishTankBoard[i][j] = fishTankBoard[i][j] + movedFish[i][j];
+		}
+	}
+
+	return fishTankBoard;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-		
-	//4x4 격자 정보
-	//격자 칸의 물고기 방향 저장 큐
-	vector<vector<queue<int>>> fish (vector<vector<queue<int>>>(4, vector<queue<int>>(4, queue<int>())));
-	//격자 칸의 물고기 냄새 발생 시점 저장 큐
-	vector<vector<queue<int>>> fish_smell (vector<vector<queue<int>>>(4, vector<queue<int>>(4, queue<int>())));
 
-	int m; //물고기 수
-	int s; //연습 수
+	//어항의 수
+	int n;
+	//어항의 물고기 수 차이
+	int k;
 
-	//상어의 위치
-	pair<int, int> shark;
+	//어항
+	vector<stack<int>> fishTank(100, stack<int>());
 
-	cin >> m >> s;
+	cin >> n >> k;
 
-	for (int i = 0; i < m; ++i) {
-		int x, y, d;
-		cin >> x >> y >> d;
-
-		fish[x-1][y-1].push(d-1);
+	for (int i = 0; i < n; ++i) {
+		int fish;
+		cin >> fish;
+		fishTank[i].push(fish);
 	}
 
-	cin >> shark.first >> shark.second;
-	shark.first--;
-	shark.second--;
-
-	//연습 시작
 	int time = 1;
-	while (time <= s) {
+	while (true) {
+		//1. 물고기 수 가장 적은 어항에 물고기 한마리씩 
+		vector<int> minFishTank;
+		int minFish = 987654321;
+		for (int i = 0; i < n; ++i) {
+			int fish = fishTank[i].top();
 
-		//1. 물고기 복제
-		vector<vector<queue<int>>> fish_copy;
-		for (int i = 0; i < 4; ++i) {
-			vector<queue<int>> fish_row_copy;
-			for (int j = 0; j < 4; ++j) {
-				fish_row_copy.push_back(fish[i][j]);
+			if (fish < minFish) {
+				minFish = fish;
+				minFishTank.clear();
+				minFishTank.push_back(i);
 			}
-			fish_copy.push_back(fish_row_copy);
+			else if (fish == minFish) {
+				minFishTank.push_back(i);
+			}
 		}
 
-		//2. 물고기 이동
-		vector<vector<queue<int>>> fish_after(vector<vector<queue<int>>>(4, vector<queue<int>>(4, queue<int>())));
+		for (int i = 0; i < minFishTank.size(); ++i) {
+			int idx = minFishTank[i];
+			fishTank[idx].pop();
+			fishTank[idx].push(minFish + 1);
 
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				while (!fish[i][j].empty()) {
-					int fish_dir = fish[i][j].front();
-					fish[i][j].pop();
+		}
 
-					//모든 방향으로 이동 시도
-					bool moved = false;
-					for (int k = 0; k < 8; ++k) {
-						int moveR = i + fishR[fish_dir];
-						int moveC = j + fishC[fish_dir];
+		//2. 어항 공중부양 & 시계방향 90도 회전 & 쌓기
+		
+		//맨 왼쪽에 있는 어항 오른쪽 어항 위에 쌓기
+		fishTank[1].push(fishTank[0].top());
+		fishTank[0].pop();
 
-						//격자 범위 밖 이동 불가
-						//상어칸 이동 불가
-						//물고기 냄새칸 이동 불가
-						if (!inRange(moveR, moveC) || (moveR == shark.first && moveC == shark.second) || !fish_smell[moveR][moveC].empty()) {
-							//물고기 방향 반시계 방향으로 45도 회전 후 재시도
-							if (fish_dir == 0) fish_dir = 7;
-							else fish_dir--;
-							continue;
-						}
-						
-						//이동
-						moved = true;
-						fish_after[moveR][moveC].push(fish_dir);
-						break;
-					}
-					//이동하지 못한 경우 물고기 제자리
-					if (moved == false) fish_after[i][j].push(fish_dir);
+		while (true) {
+
+			//공중 부양시킨 어항 중 가장 오른쪽에 있는 어항의 아래에 
+			//바닥에 있는 어항이 없을 경우 종료
+			int stackHeight;
+			int startFishTank= - 1;
+
+			for (int i = 0; i < n; ++i) {
+				if (fishTank[i].size() > 1) {
+					stackHeight = fishTank[i].size();
+				}
+				if (fishTank[i].size() == 1) {
+					startFishTank = i;
+					break;
 				}
 			}
-		}
 
-		//fish = fish_after
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				while (!fish_after[i][j].empty()) {
-					fish[i][j].push(fish_after[i][j].front());
-					fish_after[i][j].pop();
-				}
-			}
-		}
+			if (startFishTank == -1 || startFishTank + stackHeight - 1 >= n) break;
 
-		//3. 상어 연속 3칸 이동
+			//2개 이상 쌓여있는 어항 공중부양
+			stack<int> floatTank;
 
-		//제외되는 물고기 수의 최대값
-		int maxCntFish = -1;
-		//제외되는 물고기 수가 최대로 될 때 사전순으로 제일 앞서는 상어의 이동 방향
-		vector<int> sharkDir;
-
-		//상어의 이동 방향 구하기
-		for (int d1 = 0; d1 < 4; ++d1) {
-			int firstR = shark.first + sharkR[d1];
-			int firstC = shark.second + sharkC[d1];
-
-			if (!inRange(firstR, firstC)) continue;
-
-			int firstCntFish = fish[firstR][firstC].size();
-
-			for (int d2 = 0; d2 < 4; ++d2) {
-				int secondR = firstR + sharkR[d2];
-				int secondC = firstC+ sharkC[d2];
-
-				if (!inRange(secondR, secondC)) continue;
-				
-				int secondCntFish;
-				//상어가 이동하며 이미 방문한 격자인 경우 격자의 물고기 이미 제외됨
-				if (secondR == firstR && secondC == firstC) secondCntFish = 0;
-				else secondCntFish = fish[secondR][secondC].size();
-
-				for (int d3 = 0; d3 < 4; ++d3) {
-					int thirdR = secondR + sharkR[d3];
-					int thirdC = secondC + sharkC[d3];
-
-					if (!inRange(thirdR, thirdC)) continue;
-
-					int thirdCntFish;
-					//상어가 이동하며 이미 방문한 격자인 경우 격자의 물고기 이미 제외됨
-					if ((thirdR == firstR && thirdC == firstC)|| (thirdR == secondR && thirdC == secondC))
-						thirdCntFish = 0;
-					else thirdCntFish = fish[thirdR][thirdC].size();
-
-					if (maxCntFish < firstCntFish + secondCntFish + thirdCntFish) {
-						sharkDir.clear();
-						sharkDir.push_back(d1); 
-						sharkDir.push_back(d2);
-						sharkDir.push_back(d3);
-						maxCntFish = firstCntFish + secondCntFish + thirdCntFish;
+			for (int i = 0; i < n; ++i) {
+				if (fishTank[i].size() > 1) {
+					while (!fishTank[i].empty()) {
+						floatTank.push(fishTank[i].top());
+						fishTank[i].pop();
 					}
 				}
+				if (fishTank[i].size() == 1) break;
 			}
-		}
 
-		//상어 이동 & 물고기 제외 & 물고기 냄새 추가
-		for (int i = 0; i < 3; ++i) {
-			shark.first = shark.first + sharkR[sharkDir[i]];
-			shark.second = shark.second + sharkC[sharkDir[i]];
-
-			while (!fish[shark.first][shark.second].empty()) {
-				fish[shark.first][shark.second].pop();
-				fish_smell[shark.first][shark.second].push(time);
-			}
-		}
-
-		//4. 2번 전 연습에서 생긴 물고기 냄새 제거
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				while (!fish_smell[i][j].empty()) {
-					if (fish_smell[i][j].front() <= (time - 2)) fish_smell[i][j].pop();
-					else break;
+			//시계방향 90도 회전 & 쌓기
+			while (!floatTank.empty()) {
+				for (int h = 0; h < stackHeight; ++h) {
+					fishTank[startFishTank + h].push(floatTank.top());
+					floatTank.pop();
 				}
 			}
 		}
 
-		//5. 물고기 복제 완료
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				while (!fish_copy[i][j].empty()) {
-					fish[i][j].push(fish_copy[i][j].front());
-					fish_copy[i][j].pop();
-				}
+		//3. 어항에 있는 물고기의 수 조절
+
+		//vector<stack<int>> -> vector<vector<int>>
+		int R = 0;
+		int C = 0;
+		int startFishTank = -1;
+
+		for (int i = 0; i < n; ++i) {
+			if (fishTank[i].empty()) continue;
+			else if (startFishTank == -1) startFishTank = i;
+
+			if(R < fishTank[i].size()) R = fishTank[i].size();
+			C++;
+		}
+
+		vector<vector<int>> fishTankBoard1(R, vector<int>(C, 0));
+		
+		for (int c = 0; c < C; ++c) {
+			if (fishTank[c + startFishTank].size() == 1) {
+				fishTankBoard1[R - 1][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+				continue;
+			}
+
+			for (int r = 0; r < R; ++r) {
+				fishTankBoard1[r][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
 			}
 		}
+
+		fishTankBoard1 = moveFish(R, C, fishTankBoard1);
+
+		//4. 다시 어항을 바닥에 일렬로 놓기
+
+		//vector<vector<int>> -> vector<stack<int>>
+		int fishTankIdx = 0;
+		for (int c = 0; c < C; ++c) {
+			for (int r = R - 1; r >= 0; --r) {
+				if (fishTankBoard1[r][c] == 0) break;
+				fishTank[fishTankIdx].push(fishTankBoard1[r][c]);
+				fishTankIdx++;
+			}
+		}
+
+		//5. 가운데를 중심으로 왼쪽 n/2개 공중부양 & 시계방향 180도 회전 & 쌓기
+		//1회
+		stack<int> floatTank1;
+		for (int i = 0; i < n / 2; ++i) {
+			floatTank1.push(fishTank[i].top());
+			fishTank[i].pop();
+		}
+		for (int i = n / 2; i < n; ++i) {
+			fishTank[i].push(floatTank1.top());
+			floatTank1.pop();
+		}
+		//2회
+		stack<int> floatTank2;
+		for (int i = n / 2; i < n / 2 + n / 4; ++i) {
+			floatTank1.push(fishTank[i].top());
+			fishTank[i].pop(); 
+			floatTank2.push(fishTank[i].top());
+			fishTank[i].pop();
+		}
+		for (int i = n / 2 + n / 4; i < n; ++i) {
+			fishTank[i].push(floatTank1.top());
+			floatTank1.pop();
+			fishTank[i].push(floatTank2.top());
+			floatTank2.pop();
+		}
+
+		//6. 어항에 있는 물고기의 수 조절
+
+		//vector<stack<int>> -> vector<vector<int>>
+		R = 0;
+		C = 0;
+		startFishTank = -1;
+
+		for (int i = 0; i < n; ++i) {
+			if (fishTank[i].empty()) continue;
+			if (startFishTank == -1) startFishTank = i;
+
+			if (R < fishTank[i].size()) R = fishTank[i].size();
+			C++;
+		}
+
+		vector<vector<int>> fishTankBoard2(R, vector<int>(C, 0));
+
+		for (int c = 0; c < C; ++c) {
+			if (fishTank[c + startFishTank].size() == 1) {
+				fishTankBoard2[R - 1][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+				continue;
+			}
+
+			for (int r = 0; r < R; ++r) {
+				fishTankBoard2[r][c] = fishTank[c + startFishTank].top();
+				fishTank[c + startFishTank].pop();
+			}
+		}
+		fishTankBoard2 = moveFish(R, C, fishTankBoard2);
+
+		//7. 다시 어항을 바닥에 일렬로 놓기
+
+		//vector<vector<int>> -> vector<stack<int>>
+		fishTankIdx = 0;
+		for (int c = 0; c < C; ++c) {
+			for (int r = R - 1; r >= 0; --r) {
+				if (fishTankBoard2[r][c] == 0) break;
+				fishTank[fishTankIdx].push(fishTankBoard2[r][c]);
+				fishTankIdx++;
+			}
+		}
+
+		
+		//8. 어항 속 최대 물고기 수와 최소 물고기 수의 차이 k 이하면 break 
+		minFish = 987654321;
+		int maxFish = 0;
+
+		for (int i = 0; i < n; ++i) {
+			if (minFish > fishTank[i].top()) minFish = fishTank[i].top();
+			if(maxFish < fishTank[i].top()) maxFish = fishTank[i].top();
+		}
+		if (maxFish - minFish <= k) break;
 
 		time++;
 	}
-	
-	//격자에 있는 물고기 수 구하기
-	int ans = 0;
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			ans += fish[i][j].size();
-		}
-	}
-	cout << ans;
 
+	cout << time;
 	return 0;
 }
