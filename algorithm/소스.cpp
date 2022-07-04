@@ -1,282 +1,310 @@
-#include <iostream>
 #include <algorithm>
 #include <vector>
-#include <stack>
+#include <set>
+#include <queue>
+#include <iostream>
 using namespace std;
 
-int dirR[4] = { 0, 0, 1, -1 };
+int dirR[4] = { 0, 0, -1, +1 };
 int dirC[4] = { 1, -1, 0, 0 };
 
-bool inRange(int R, int C, int r, int c) {
-	if (r < 0 || r >= R) return false;
-	if (c < 0 || c >= C) return false;
+bool inRange(int R, int C, int x, int y) {
+	if (x < 0 || x >= R) return false;
+	if (y < 0 || y >= C) return false;
 	return true;
-}
-
-vector<vector<int>> moveFish(int R, int C, vector<vector<int>>fishTankBoard) {
-
-	vector<vector<int>> movedFish(R, vector<int>(C, 0));
-	
-	vector<vector<int>> visited(R, vector<int>(C, 0));
-	
-	for (int r = 0; r < R; ++r) {
-		for (int c = 0; c < C; ++c) {
-			if (fishTankBoard[r][c] == 0) continue;
-
-			visited[r][c] = 1;
-			for (int dir = 0; dir < 4; ++dir) {
-				int adjR = r + dirR[dir];
-				int adjC = c + dirC[dir];
-				
-				if (!inRange(R, C, adjR, adjC) || fishTankBoard[adjR][adjC] == 0 || visited[adjR][adjC]) continue;
-
-				int d;
-				if (fishTankBoard[r][c] > fishTankBoard[adjR][adjC]) {
-					d = (fishTankBoard[r][c] - fishTankBoard[adjR][adjC]) / 5;
-					if (d > 0) {
-						movedFish[r][c] -= d;
-						movedFish[adjR][adjC] += d;
-					}
-				}
-				else{
-					d = (fishTankBoard[adjR][adjC] - fishTankBoard[r][c]) / 5;
-					if (d > 0) {
-						movedFish[r][c] += d;
-						movedFish[adjR][adjC] -= d;
-					}
-				}
-			}
-		}
-	}
-
-	for (int i = 0; i < R; ++i) {
-		for (int j = 0; j < C; ++j) {
-			fishTankBoard[i][j] = fishTankBoard[i][j] + movedFish[i][j];
-		}
-	}
-
-	return fishTankBoard;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	//어항의 수
-	int n;
-	//어항의 물고기 수 차이
-	int k;
+	int R, C, K;
+	cin >> R >> C >> K;
 
-	//어항
-	vector<stack<int>> fishTank(100, stack<int>());
+	//방 정보 저장
+	vector<vector<int>> room(R, vector<int>(C, 0));
+	//방 온도 저장
+	vector<vector<int>> roomTemp(R, vector<int>(C, 0));
+	//온풍기 위치
+	vector<pair<int, int>> heaters;
+	//조사해야하는 방 위치 
+	vector<pair<int, int>> checkRooms;
 
-	cin >> n >> k;
+	for (int i = 0; i < R; ++i) {
+		for (int j = 0; j < C; ++j) {
+			cin >> room[i][j];
 
-	for (int i = 0; i < n; ++i) {
-		int fish;
-		cin >> fish;
-		fishTank[i].push(fish);
+			if (room[i][j] > 0 && room[i][j] < 5)
+				heaters.push_back({ i,j });
+			else if (room[i][j] == 5)
+				checkRooms.push_back({ i, j });
+		}
+	}
+	
+	//벽 정보 저장
+	//(x,y) (x-1,y) 벽
+	set<pair<int, int>> upWalls;
+	//(x,y) (x,y+1) 벽
+	set<pair<int, int>> rightWalls;
+	
+	int W;
+	cin >> W;
+	for (int i = 0; i < W; ++i) {
+		int x, y, t;
+		cin >> x >> y >> t;
+
+		if (t == 0) upWalls.insert({ x-1,y-1 });
+		else rightWalls.insert({ x-1,y-1 });
 	}
 
-	int time = 1;
+	int chocolate = 0;
 	while (true) {
-		//1. 물고기 수 가장 적은 어항에 물고기 한마리씩 
-		vector<int> minFishTank;
-		int minFish = 987654321;
-		for (int i = 0; i < n; ++i) {
-			int fish = fishTank[i].top();
+		//1. 모든 온풍기에서 바람 나옴
+		for (int i = 0; i < heaters.size(); ++i) {
+			int hX = heaters[i].first; 
+			int hY = heaters[i].second;
+			int hDir = room[hX][hY];
 
-			if (fish < minFish) {
-				minFish = fish;
-				minFishTank.clear();
-				minFishTank.push_back(i);
-			}
-			else if (fish == minFish) {
-				minFishTank.push_back(i);
-			}
-		}
+			//온풍기 바로 앞 좌표(온도 5 증가)
+			int adjX = hX + dirR[hDir - 1];
+			int adjY = hY + dirC[hDir - 1];
 
-		for (int i = 0; i < minFishTank.size(); ++i) {
-			int idx = minFishTank[i];
-			fishTank[idx].pop();
-			fishTank[idx].push(minFish + 1);
+			//온풍기가 있는 칸과 바람이 나오는 방향에 있는 칸 사이에는 벽이 없다.
+			//온풍기의 바람이 나오는 방향에 있는 칸은 항상 존재한다.
 
-		}
+			/*
+			if (!inRange(R, C, adjX, adjY)) continue;
 
-		//2. 어항 공중부양 & 시계방향 90도 회전 & 쌓기
-		
-		//맨 왼쪽에 있는 어항 오른쪽 어항 위에 쌓기
-		fishTank[1].push(fishTank[0].top());
-		fishTank[0].pop();
+			//온풍기 방향 벽 있는지 검사
+			//오른쪽
+			if (hDir == 1 && rightWalls.find({ hX, hY }) != rightWalls.end()) continue;
+			//왼쪽
+			else if (hDir == 2 && rightWalls.find({ adjX, adjY }) != rightWalls.end()) continue;
+			//위
+			else if (hDir == 3 && (upWalls.find({ hX, hY }) != upWalls.end())) continue;
+			//아래
+			else if (hDir == 4 && (upWalls.find({ adjX, adjY }) != upWalls.end())) continue;
+			*/
 
-		while (true) {
+			vector<vector<int>> tempChange(R, vector<int>(C, 0));
 
-			//공중 부양시킨 어항 중 가장 오른쪽에 있는 어항의 아래에 
-			//바닥에 있는 어항이 없을 경우 종료
-			int stackHeight;
-			int startFishTank= - 1;
+			queue < pair<int, pair<int, int>>> wind;
+			wind.push({ 5, {adjX, adjY} });
 
-			for (int i = 0; i < n; ++i) {
-				if (fishTank[i].size() > 1) {
-					stackHeight = fishTank[i].size();
-				}
-				if (fishTank[i].size() == 1) {
-					startFishTank = i;
-					break;
-				}
-			}
+			while (!wind.empty()) {
+				int curTemp = wind.front().first;
+				int curX = wind.front().second.first;
+				int curY = wind.front().second.second;
+				wind.pop();
 
-			if (startFishTank == -1 || startFishTank + stackHeight - 1 >= n) break;
+				if (tempChange[curX][curY] != 0) continue;
+				tempChange[curX][curY] = curTemp;
 
-			//2개 이상 쌓여있는 어항 공중부양
-			stack<int> floatTank;
+				if (curTemp == 1) continue;
 
-			for (int i = 0; i < n; ++i) {
-				if (fishTank[i].size() > 1) {
-					while (!fishTank[i].empty()) {
-						floatTank.push(fishTank[i].top());
-						fishTank[i].pop();
+				//온풍기 방향에 따른 바람 이동 방향
+				int nextX, nextY;
+				//오른쪽
+				if (hDir == 1) {
+					//x,y -> x-1,y+1
+					nextX = curX - 1;
+					nextY = curY + 1;
+					if (inRange(R, C, nextX,nextY)) {
+						if (upWalls.find({ curX, curY }) == upWalls.end() && rightWalls.find({ curX - 1, curY }) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x,y+1
+					nextX = curX;
+					nextY = curY + 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (rightWalls.find({ curX, curY }) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x+1, y+1
+					nextX = curX + 1;
+					nextY = curY + 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX + 1, curY }) == upWalls.end() && rightWalls.find({ curX + 1, curY }) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
 					}
 				}
-				if (fishTank[i].size() == 1) break;
+				//왼쪽
+				else if (hDir == 2) {
+					//x,y -> x-1,y-1
+					nextX = curX - 1;
+					nextY = curY - 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX, curY }) == upWalls.end() && rightWalls.find({ curX - 1, curY -1}) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x,y-1
+					nextX = curX;
+					nextY = curY - 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (rightWalls.find({ curX, curY -1}) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x+1, y-1
+					nextX = curX + 1;
+					nextY = curY - 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX + 1, curY }) == upWalls.end() && rightWalls.find({ curX + 1, curY -1}) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+				}
+				//위
+				else if (hDir == 3) {
+					//x,y -> x-1,y-1
+					nextX = curX - 1;
+					nextY = curY - 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX, curY -1}) == upWalls.end() && rightWalls.find({ curX, curY -1}) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x-1,y
+					nextX = curX -1;
+					nextY = curY;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX, curY }) == upWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x-1, y+1
+					nextX = curX - 1;
+					nextY = curY + 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX, curY +1}) == upWalls.end() && rightWalls.find({ curX , curY }) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+				}
+				//아래
+				else if (hDir == 4) {
+					//x,y -> x+1,y-1
+					nextX = curX + 1;
+					nextY = curY - 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX +1, curY-1 }) == upWalls.end() && rightWalls.find({ curX , curY-1 }) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x+1,y
+					nextX = curX + 1;
+					nextY = curY;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX +1, curY }) == upWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+
+					//x,y -> x+1, y+1
+					nextX = curX + 1;
+					nextY = curY + 1;
+					if (inRange(R, C, nextX, nextY)) {
+						if (upWalls.find({ curX + 1, curY +1 }) == upWalls.end() && rightWalls.find({ curX , curY }) == rightWalls.end())
+							wind.push({ curTemp - 1, {nextX, nextY} });
+					}
+				}
 			}
 
-			//시계방향 90도 회전 & 쌓기
-			while (!floatTank.empty()) {
-				for (int h = 0; h < stackHeight; ++h) {
-					fishTank[startFishTank + h].push(floatTank.top());
-					floatTank.pop();
+			for (int i = 0; i < R; ++i) {
+				for (int j = 0; j < C; ++j) {
+					roomTemp[i][j] += tempChange[i][j];
 				}
 			}
 		}
+	
 
-		//3. 어항에 있는 물고기의 수 조절
+		//2. 온도 조절됨
+		vector<vector<int>> visited(R, vector<int>(C, 0));
+		vector<vector<int>> tempChange(R, vector<int>(C, 0));
 
-		//vector<stack<int>> -> vector<vector<int>>
-		int R = 0;
-		int C = 0;
-		int startFishTank = -1;
+		for (int r = 0; r < R; ++r) {
+			for (int c = 0; c < C; ++c) {
+				visited[r][c] = 1;
 
-		for (int i = 0; i < n; ++i) {
-			if (fishTank[i].empty()) continue;
-			else if (startFishTank == -1) startFishTank = i;
+				for (int dir = 1; dir <= 4; dir++) {
+					int adjR = r + dirR[dir - 1];
+					int adjC = c + dirC[dir - 1];
 
-			if(R < fishTank[i].size()) R = fishTank[i].size();
-			C++;
-		}
+					if (!inRange(R, C, adjR, adjC) || visited[adjR][adjC]) continue;
 
-		vector<vector<int>> fishTankBoard1(R, vector<int>(C, 0));
-		
-		for (int c = 0; c < C; ++c) {
-			if (fishTank[c + startFishTank].size() == 1) {
-				fishTankBoard1[R - 1][c] = fishTank[c + startFishTank].top();
-				fishTank[c + startFishTank].pop();
-				continue;
+					//방향 벽 있는지 검사
+					//오른쪽
+					if (dir == 1 && (rightWalls.find({ r, c }) != rightWalls.end())) continue;
+					//왼쪽
+					else if (dir == 2 && (rightWalls.find({ adjR, adjC }) != rightWalls.end())) continue;
+					//위
+					else if (dir == 3 && (upWalls.find({ r, c }) != upWalls.end())) continue;
+					//아래
+					else if (dir == 4 && (upWalls.find({ adjR, adjC }) != upWalls.end())) continue;
+
+
+					if (roomTemp[r][c] > roomTemp[adjR][adjC]) {
+						int temp = (roomTemp[r][c] - roomTemp[adjR][adjC]) / 4;
+
+						tempChange[r][c] -= temp;
+						tempChange[adjR][adjC] += temp;
+					}
+					else if (roomTemp[r][c] < roomTemp[adjR][adjC]) {
+						int temp = (roomTemp[adjR][adjC] - roomTemp[r][c]) / 4;
+
+						tempChange[r][c] += temp;
+						tempChange[adjR][adjC] -= temp;
+					}
+				}
 			}
 
-			for (int r = 0; r < R; ++r) {
-				fishTankBoard1[r][c] = fishTank[c + startFishTank].top();
-				fishTank[c + startFishTank].pop();
-			}
 		}
 
-		fishTankBoard1 = moveFish(R, C, fishTankBoard1);
-
-		//4. 다시 어항을 바닥에 일렬로 놓기
-
-		//vector<vector<int>> -> vector<stack<int>>
-		int fishTankIdx = 0;
-		for (int c = 0; c < C; ++c) {
-			for (int r = R - 1; r >= 0; --r) {
-				if (fishTankBoard1[r][c] == 0) break;
-				fishTank[fishTankIdx].push(fishTankBoard1[r][c]);
-				fishTankIdx++;
-			}
-		}
-
-		//5. 가운데를 중심으로 왼쪽 n/2개 공중부양 & 시계방향 180도 회전 & 쌓기
-		//1회
-		stack<int> floatTank1;
-		for (int i = 0; i < n / 2; ++i) {
-			floatTank1.push(fishTank[i].top());
-			fishTank[i].pop();
-		}
-		for (int i = n / 2; i < n; ++i) {
-			fishTank[i].push(floatTank1.top());
-			floatTank1.pop();
-		}
-		//2회
-		stack<int> floatTank2;
-		for (int i = n / 2; i < n / 2 + n / 4; ++i) {
-			floatTank1.push(fishTank[i].top());
-			fishTank[i].pop(); 
-			floatTank2.push(fishTank[i].top());
-			fishTank[i].pop();
-		}
-		for (int i = n / 2 + n / 4; i < n; ++i) {
-			fishTank[i].push(floatTank1.top());
-			floatTank1.pop();
-			fishTank[i].push(floatTank2.top());
-			floatTank2.pop();
-		}
-
-		//6. 어항에 있는 물고기의 수 조절
-
-		//vector<stack<int>> -> vector<vector<int>>
-		R = 0;
-		C = 0;
-		startFishTank = -1;
-
-		for (int i = 0; i < n; ++i) {
-			if (fishTank[i].empty()) continue;
-			if (startFishTank == -1) startFishTank = i;
-
-			if (R < fishTank[i].size()) R = fishTank[i].size();
-			C++;
-		}
-
-		vector<vector<int>> fishTankBoard2(R, vector<int>(C, 0));
-
-		for (int c = 0; c < C; ++c) {
-			if (fishTank[c + startFishTank].size() == 1) {
-				fishTankBoard2[R - 1][c] = fishTank[c + startFishTank].top();
-				fishTank[c + startFishTank].pop();
-				continue;
-			}
-
-			for (int r = 0; r < R; ++r) {
-				fishTankBoard2[r][c] = fishTank[c + startFishTank].top();
-				fishTank[c + startFishTank].pop();
-			}
-		}
-		fishTankBoard2 = moveFish(R, C, fishTankBoard2);
-
-		//7. 다시 어항을 바닥에 일렬로 놓기
-
-		//vector<vector<int>> -> vector<stack<int>>
-		fishTankIdx = 0;
-		for (int c = 0; c < C; ++c) {
-			for (int r = R - 1; r >= 0; --r) {
-				if (fishTankBoard2[r][c] == 0) break;
-				fishTank[fishTankIdx].push(fishTankBoard2[r][c]);
-				fishTankIdx++;
+		for (int i = 0; i < R; ++i) {
+			for (int j = 0; j < C; ++j) {
+				roomTemp[i][j] = roomTemp[i][j] + tempChange[i][j];
 			}
 		}
 
-		
-		//8. 어항 속 최대 물고기 수와 최소 물고기 수의 차이 k 이하면 break 
-		minFish = 987654321;
-		int maxFish = 0;
-
-		for (int i = 0; i < n; ++i) {
-			if (minFish > fishTank[i].top()) minFish = fishTank[i].top();
-			if(maxFish < fishTank[i].top()) maxFish = fishTank[i].top();
+		//3. 온도 1이상인 가장 바깥쪽 칸 온도 1씩 감소
+		//네 모서리 제외 for문으로 계산
+		for (int c = 1; c < C-1; ++c) {
+			//0행
+			if (roomTemp[0][c] > 0) roomTemp[0][c]--;
+			//R-1행
+			if (roomTemp[R - 1][c] > 0) roomTemp[R - 1][c]--;
 		}
-		if (maxFish - minFish <= k) break;
+		for (int r = 1; r < R-1; ++r) {
+			//0열
+			if (roomTemp[r][0] > 0) roomTemp[r][0] --;
+			//C-1열
+			if (roomTemp[r][C - 1] > 0)roomTemp[r][C - 1]--;
+		}
 
-		time++;
+		//네 모서리 계산
+		if (roomTemp[0][0] > 0) roomTemp[0][0]--;
+		if (roomTemp[0][C-1] > 0) roomTemp[0][C-1]--;
+		if (roomTemp[R-1][0] > 0) roomTemp[R-1][0]--;
+		if (roomTemp[R-1][C-1] > 0) roomTemp[R-1][C-1]--;
+
+		//4. 초콜릿 먹음
+		chocolate++;
+		//먹는 초콜릿의 개수가 100을 넘어가면 101을 출력한다
+		if (chocolate > 100) break;
+
+		//5. 조사하는 모든 칸의 온도 K이상 되었는지 검사 
+		bool overK = true;
+		for (int i = 0; i < checkRooms.size(); ++i) {
+			int x = checkRooms[i].first;
+			int y = checkRooms[i].second;
+			if (roomTemp[x][y] < K) {
+				overK = false;
+				break;
+			}
+		}
+		if (overK) break;
 	}
 
-	cout << time;
+	cout << chocolate;
 	return 0;
 }
