@@ -1,6 +1,6 @@
-#include <vector>
+
 #include <algorithm>
-#include <math.h>
+#include <vector>
 #include <iostream>
 using namespace std;
 
@@ -8,21 +8,31 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	int t;
-	cin >> t;
-	while (t--) {
-		vector<int> score;
-		for (int i = 0; i < 5; ++i) {
+	int k;
+	cin >> k;
+	for (int i = 0; i < k; ++i) {
+		cout << "Class " << i + 1<<"\n";
+		int n;
+		cin >> n;
+
+		vector<int> vec;
+		for (int j = 0; j < n; ++j) {
 			int input;
 			cin >> input;
-			score.push_back(input);
+			vec.push_back(input);
+		}
+		sort(vec.begin(), vec.end());
+		
+		int gap = -1;
+		for (int j = 0; j < vec.size() - 1; ++j) {
+			gap = max(gap, vec[j + 1] - vec[j]);
 		}
 
-		sort(score.begin(), score.end());
-
-		if (abs(score[1] - score[3]) >= 4) cout << "KIN\n";
-		else cout << score[1] + score[2] + score[3] << "\n";
+		cout << "Max " << vec[vec.size() - 1];
+		cout << ", ";
+		cout << "Min " << vec[0];
+		cout << ", ";
+		cout << "Largest gap " << gap << "\n";
 	}
-
 	return 0;
 }
