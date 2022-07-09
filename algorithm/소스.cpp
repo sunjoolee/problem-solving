@@ -4,28 +4,22 @@
 using namespace std;
 
 int n, m;
-vector<bool> used;
 vector<int> arr;
 
-void makeArr(int len) {
-	if (len == m) {
-		for (int i = 0; i < len; ++i) {
+void makeArr(int lastNum) {
+	//더 고를 수 있는 수 없음 -> base case
+	if (arr.size() == m) {
+		for (int i = 0; i < m; ++i) {
 			cout << arr[i] << " ";
 		}
 		cout << "\n";
 		return;
 	}
 
-	for (int num = 1; num <= n; ++num) {
-		if (used[num] == true) continue;
-		
-		used[num] = true;
+	for (int num = lastNum + 1; num <= n; ++num) {
 		arr.push_back(num);
-
-		makeArr(len + 1);
-
+		makeArr(num);
 		arr.pop_back();
-		used[num] = false;
 	}
 }
 
@@ -35,10 +29,6 @@ int main() {
 
 	
 	cin >> n >> m;
-
-	for (int i = 0; i <= n; ++i) {
-		used.push_back(false);
-	}
 
 	makeArr(0);
 
