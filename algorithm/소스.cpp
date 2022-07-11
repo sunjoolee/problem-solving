@@ -1,4 +1,3 @@
-
 #include <algorithm>
 #include <queue>
 #include <vector>
@@ -9,29 +8,41 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	int n, k;
-	cin >> n >> k;
+	int n, k, m;
+	cin >> n >> k >> m;
 
-	queue<int> circle;
+	deque<int> circle;
+
 	for (int i = 1; i <= n; ++i) {
-		circle.push(i);
+		circle.push_back(i);
 	}
 
 	vector<int> vec;
+	bool dirRight = true;
+
 	while (!circle.empty()) {
-		for (int i = 0; i < k-1; ++i) {
-			circle.push(circle.front());
-			circle.pop();
+		if (dirRight) {
+			for (int i = 0; i < k - 1; ++i) {
+				circle.push_back(circle.front());
+				circle.pop_front();
+			}
+			vec.push_back(circle.front());
+			circle.pop_front();
 		}
-		vec.push_back(circle.front());
-		circle.pop();
+		else {
+			for (int i = 0; i < k - 1; ++i) {
+				circle.push_front(circle.back());
+				circle.pop_back();
+			}
+			vec.push_back(circle.back());
+			circle.pop_back();
+		}
+		if (vec.size() % m == 0) dirRight = !dirRight;
 	}
 
-	cout << "<";
-	for (int i = 0; i < n-1; ++i) {
-		cout << vec[i] << ", ";
+	for (int i = 0; i < n; ++i) {
+		cout << vec[i] << "\n";
 	}
-	cout << vec[n - 1] << ">";
 
 	return 0;
 }
