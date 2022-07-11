@@ -1,36 +1,46 @@
-#include <algorithm>
-#include <vector>
 #include <iostream>
 using namespace std;
 
-int n, m;
-vector<int> arr;
+typedef long long ll;
+//const int cacheSize = 1000000;
 
-void makeArr(int lastNum) {
-	//더 고를 수 있는 수 없음 -> base case
-	if (arr.size() == m) {
-		for (int i = 0; i < m; ++i) {
-			cout << arr[i] << " ";
-		}
-		cout << "\n";
-		return;
+ll a, b, c;
+
+//ll cache[cacheSize] = { 0 };
+
+ll calc(int n) {
+	if (n == 0) return 1;
+	if (n == 1) return a % c;
+	
+	//if (n < cacheSize) {
+	//	if (cache[n] != 0) return cache[n];
+	//}
+
+	ll res;
+	if (n % 2 == 0) {
+		res = calc(n / 2) * calc(n / 2);
+		res %= c;
+	}
+	else {
+		res = calc((n - 1) / 2) * calc((n - 1) / 2);
+		res %= c;
+		res *= a;
+		res %= c;
 	}
 
-	for (int num = lastNum + 1; num <= n; ++num) {
-		arr.push_back(num);
-		makeArr(num);
-		arr.pop_back();
-	}
+	//if (n < cacheSize) {
+	//	cache[n] = res;
+	//}
+	return res;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-
 	
-	cin >> n >> m;
+	cin >> a >> b >> c;
 
-	makeArr(0);
+	cout << calc(b);
 
 	return 0;
 }
