@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 #include <iostream>
 using namespace std;
@@ -5,72 +6,63 @@ using namespace std;
 typedef long long ll;
 
 int n;
-vector<int> vec;
-vector<int> tmp;
+vector<ll> vec;
 
-//정렬 수행 하며 swap 횟수 카운트
-ll swapCnt(int start, int end) {
-	//버블 정렬하고자 하는 배열의 길이 0
-	if (start == end) return 0;
+ll maxAns = -1;
 
-	//버블 정렬하고자 하는 배열의 길이 1
+void histogram(int start, int end) {
+	if (start > end) return;
+
+	if (start == end) {
+		maxAns = max(maxAns, vec[start]);
+	}
 	if (start + 1 == end) {
-		if (vec[start] > vec[end]) {
-			swap(vec[start], vec[end]);
-			return 1;
-		}
-		else return 0;
+		maxAns = max(maxAns, vec[start]);
+		maxAns = max(maxAns, vec[end]);
+		maxAns = max(maxAns, min(vec[start], vec[end]) * 2);
 	}
 
-
-	//버블 정렬하고자 하는 배열의 길이 2 이상
-	ll cnt = 0;
 	int mid = (start + end) / 2;
 	
-	//배열 반으로 나누어 재귀호출(Divide and Conquer)
-	cnt += swapCnt(start, mid);
-	cnt += swapCnt(mid + 1, end);
+	//vec[mid]를 포함하지 않는 직사각형의 넓이 
+	histogram(start, mid-1);
+	histogram(mid + 1, end);
 
-	//정렬 수행 하며 swap 횟수 카운트 = inversion counting 문제
-	int idx1 = start;
-	int idx2 = mid + 1;
+	//vec[mid]를 포함하는 직사각형의 넓이 
+	maxAns = max(maxAns, vec[mid]);
 
-	//뒤 배열의 숫자가 앞 배열의 숫자보다 앞에 들어가는 경우 1 증가
-	ll inversion = 0;
+	ll height = vec[mid];
+	ll width = 1;
 
-	while ((idx1 != mid + 1) && (idx2 != end + 1)) {
-		if (vec[idx1] > vec[idx2]) {
-			tmp.push_back(vec[idx2]);
-			idx2++;
-			inversion++;
+	int left = mid - 1;
+	int right = mid + 1;
+	while ((start <= left) || (right <= end)) {
+		//두 방향 모두 확장 가능
+		if ((start <= left) && (right <= end)) {
+			if (min(height, vec[left]) > min(height, vec[right])) {
+				height = min(height, vec[left]);
+				left--; 
+			}
+			else {
+				height = min(height, vec[right]);
+				right++; 
+			}
 		}
+		//왼쪽으로만 확장 가능
+		else if (start <= left) {
+			height = min(height, vec[left]);
+			left--; 
+		}
+		//오른쪽으로만 확장 가능
 		else {
-			tmp.push_back(vec[idx1]);
-			idx1++;
-			cnt += inversion;
+			height = min(height, vec[right]);
+			right++; 
 		}
+		
+		width++;
+		maxAns = max(maxAns, height * width);
 	}
-
-	//나머지 앞의 배열이 뒤로 감
-	while (idx1 != mid + 1) {
-		if(vec[idx2-1])
-		tmp.push_back(vec[idx1]);
-		idx1++;
-		cnt += inversion;
-	}
-
-	//나머지 뒤의 배열이 뒤로 감
-	while (idx2 != end + 1) {
-		tmp.push_back(vec[idx2]);
-		idx2++;
-	}
-
-	for (int i = 0; i < tmp.size(); ++i) {
-		vec[start + i] = tmp[i];
-	}
-	tmp.clear();
-
-	return cnt;
+	return;
 }
 
 int main() {
@@ -79,12 +71,13 @@ int main() {
 
 	cin >> n;
 	for (int i = 0; i < n; ++i) {
-		int input;
+		ll input;
 		cin >> input;
 		vec.push_back(input);
 	}
 
-	cout << swapCnt(0, n - 1);
+	histogram(0, n - 1);
+	cout << maxAns;
 
 	return 0;
 }
