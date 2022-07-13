@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <vector>
+#include <numeric>
 #include <iostream>
 using namespace std;
 
@@ -8,61 +9,45 @@ typedef long long ll;
 int n;
 vector<ll> vec;
 
-ll maxAns = -1;
-
-void histogram(int start, int end) {
-	if (start > end) return;
-
-	if (start == end) {
-		maxAns = max(maxAns, vec[start]);
+ll calcGcd(ll a, ll b) {
+	ll c;
+	while (b != 0) {
+		c = a % b;
+		a = b;
+		b = c;
 	}
-	if (start + 1 == end) {
-		maxAns = max(maxAns, vec[start]);
-		maxAns = max(maxAns, vec[end]);
-		maxAns = max(maxAns, min(vec[start], vec[end]) * 2);
+	return a;
+}
+
+ll maxSum(int start, int end) {
+	//배열 크기 1
+	if (start == end) return vec[start];
+	//배열 크기 2 
+	if (start + 1 == end) return vec[start] + vec[end];
+
+	int mid = (end - start + 1) / 2;
+
+	//왼쪽부터 원소를 선택하는 경우
+	ll leftSum = 0;
+	int idx = start;
+	ll gcd = vec[start];
+	while (idx <= (start + mid-1)) {
+		gcd = calcGcd(gcd, vec[idx]);
+		idx++;
 	}
+	leftSum = gcd + maxSum(start + mid, end);
 
-	int mid = (start + end) / 2;
-	
-	//vec[mid]를 포함하지 않는 직사각형의 넓이 
-	histogram(start, mid-1);
-	histogram(mid + 1, end);
+	//오른쪽부터 원소를 선택하는 경우
+	ll rightSum = 0;
 
-	//vec[mid]를 포함하는 직사각형의 넓이 
-	maxAns = max(maxAns, vec[mid]);
-
-	ll height = vec[mid];
-	ll width = 1;
-
-	int left = mid - 1;
-	int right = mid + 1;
-	while ((start <= left) || (right <= end)) {
-		//두 방향 모두 확장 가능
-		if ((start <= left) && (right <= end)) {
-			if (min(height, vec[left]) > min(height, vec[right])) {
-				height = min(height, vec[left]);
-				left--; 
-			}
-			else {
-				height = min(height, vec[right]);
-				right++; 
-			}
-		}
-		//왼쪽으로만 확장 가능
-		else if (start <= left) {
-			height = min(height, vec[left]);
-			left--; 
-		}
-		//오른쪽으로만 확장 가능
-		else {
-			height = min(height, vec[right]);
-			right++; 
-		}
-		
-		width++;
-		maxAns = max(maxAns, height * width);
+	gcd = vec[end];
+	while (idx <= end) {
+		gcd = calcGcd(gcd, vec[idx]);
+		idx++;
 	}
-	return;
+	rightSum = gcd + maxSum(start, start + mid -1);
+
+	return max(leftSum, rightSum);
 }
 
 int main() {
@@ -71,13 +56,11 @@ int main() {
 
 	cin >> n;
 	for (int i = 0; i < n; ++i) {
-		ll input;
+		int input;
 		cin >> input;
 		vec.push_back(input);
 	}
 
-	histogram(0, n - 1);
-	cout << maxAns;
-
+	cout << maxSum(0, n - 1);
 	return 0;
 }
