@@ -1,7 +1,7 @@
 #include <algorithm>
-#include <string>
 #include <stack>
-#include <vector>
+#include <map>
+#include <string>
 #include <iostream>
 using namespace std;
 
@@ -9,66 +9,51 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	int n;
-	cin >> n;
+	//연산자의 rank 클수록 계산 우선순위 높음
+	map<char, int> rank; 
+	rank['('] = 0;
+	rank['+'] = 1; rank['-'] = 1; 
+	rank['*'] = 2; rank['/'] = 2;
 
-	string str;
-	cin >> str;
 
-	vector<double> alpha;
-	for (int i = 0; i < n; ++i) {
-		double input;
-		cin >> input;
-		alpha.push_back(input);
-	}
+	string inorder;
+	//연산자 스택
+	stack <char> st;
 
-	stack<double> st;
-	for (int i = 0; i < str.length(); ++i) {
-		char ch = str[i];
-		//연산자인 경우
-		if (ch == '+') {
-			double db2 = st.top();
-			st.pop();
-			double db1 = st.top();
-			st.pop();
-
-			st.push(db1 + db2);
-
+	cin >> inorder;
+	for (int i = 0; i < inorder.length(); ++i) {
+		char ch = inorder[i];
+		//피연산자
+		if (ch >= 'A' && ch <= 'Z') cout << ch;
+		//여는 괄호
+		else if (ch == '(') st.push('(');
+		//닫는 괄호
+		else if (ch == ')') {
+			//여는 괄호까지 연산자 pop
+			while (true) {
+				if (st.top() == '(') {
+					st.pop();
+					break;
+				}
+				cout << st.top();
+				st.pop();
+			}
 		}
-		else if (ch == '-') {
-			double db2 = st.top();
-			st.pop();
-			double db1 = st.top();
-			st.pop();
-
-			st.push(db1 - db2);
-		}
-		else if (ch == '*') {
-			double db2 = st.top();
-			st.pop();
-			double db1 = st.top();
-			st.pop();
-
-			st.push(db1 * db2);
-		}
-		else if (ch == '/') {
-			double db2 = st.top();
-			st.pop();
-			double db1 = st.top();
-			st.pop();
-			st.push(db1 / db2);
-		}
-		//피연산자인 경우
-		else {
-			//알파벳 -> 대응하는 숫자로 치환하여 스택에 저장
-			st.push(alpha[ch - 'A']);
+		//연산자
+		else{
+			//st에 자신보다 높거나 같은 우선순위의 연산자가 들어있지 않도록 함
+			while (!st.empty()) {
+				if (rank[st.top()] < rank[ch]) break;
+				cout << st.top();
+				st.pop();
+			}
+			st.push(ch);
 		}
 	}
-
-	//소수점 아래 2자리까지 출력
-	cout << fixed;
-	cout.precision(2);
-	cout << st.top();
+	while (!st.empty()) {
+		cout << st.top();
+		st.pop();
+	}
 
 	return 0;
 }
