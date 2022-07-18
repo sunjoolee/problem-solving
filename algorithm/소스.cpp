@@ -9,13 +9,9 @@ vector<int> vec (VEC_SIZE, 0);
 
 const int ROOT = 1;
 
-//이진 트리 구조
-//루트 노드 번호: 1 (ROOT)
-//오른쪽 자식 노드 번호: 부모 노드 * 2
-//왼쪽 자식 노드 번호: (부모 노드 * 2) + 1
 vector<int> segmentTree;
 
-//curNode: curStart ~ curEnd 구간합을 저장하는 노드 번호 
+//curNode: curStart ~ curEnd 구간 최댓값을 저장하는 노드 번호 
 int buildRecursive(int curNode, int curStart, int curEnd) {
 	//리프 노드
 	if (curStart == curEnd) {
@@ -25,7 +21,7 @@ int buildRecursive(int curNode, int curStart, int curEnd) {
 	int mid = (curStart + curEnd) / 2;
 	int rightChildNode = buildRecursive(curNode * 2, curStart, mid);
 	int leftChildNode =buildRecursive((curNode * 2) + 1, mid + 1, curEnd);
-	return segmentTree[curNode] = leftChildNode + rightChildNode;
+	return segmentTree[curNode] = max(leftChildNode,rightChildNode);
 }
 
 
@@ -40,7 +36,7 @@ int queryRecursive(int curNode, int curStart, int curEnd, int qStart, int qEnd) 
 	int mid = (curStart + curEnd) / 2;
 	int rightQuery = queryRecursive(curNode * 2, curStart, mid, qStart, qEnd);
 	int leftQuery = queryRecursive((curNode * 2) + 1, mid + 1, curEnd, qStart, qEnd);
-	return rightQuery + leftQuery;
+	return max(rightQuery,leftQuery);
 }
 
 int updateRecursive(int updateNode, int updateVal, int curNode, int curStart, int curEnd) {
@@ -48,7 +44,7 @@ int updateRecursive(int updateNode, int updateVal, int curNode, int curStart, in
 	if (curStart == curEnd) {
 		//업데이트 할 노드인 경우 값 업데이트
 		if (curStart == updateNode)
-			segmentTree[curNode] += updateVal;
+			segmentTree[curNode] = updateVal;
 
 		return segmentTree[curNode];
 	}
@@ -62,41 +58,37 @@ int updateRecursive(int updateNode, int updateVal, int curNode, int curStart, in
 	int mid = (curStart + curEnd) / 2;
 	int rightUpdate = updateRecursive(updateNode, updateVal, curNode * 2, curStart, mid);
 	int leftUpdate = updateRecursive(updateNode, updateVal, (curNode * 2) + 1, mid + 1, curEnd);
-	return segmentTree[curNode] = rightUpdate + leftUpdate;
+	return segmentTree[curNode] = max(rightUpdate, leftUpdate);
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-
-	segmentTree.resize(VEC_SIZE * 4);
-	buildRecursive(ROOT, 1, VEC_SIZE - 1);
-
+	
 	int n;
 	cin >> n;
-	while (n--) {
-		int A, B, C;
-		cin >> A;
-		if (A == 1) {
-			cin >> B;
-			//순위가 B인 사탕 꺼내기
-			int high = VEC_SIZE - 1;
-			int low = 1;
-			//같은 원소들 중 가장 왼쪽에 있는 원소에 최종적으로 접근하도록 이분탐색
-			while (low  < high) {
-				int mid = (high + low) / 2;
-				if (queryRecursive(ROOT, 1, VEC_SIZE - 1, 1, mid) < B) low = mid + 1;
-				else high = mid;
-			}
-			cout << high << "\n";
-			updateRecursive(high, -1, ROOT, 1, VEC_SIZE - 1);
-		}
-		else {
-			cin >> B >> C;
-			//맛이 B인 사탕 C개 넣기/빼기
-			updateRecursive(B, C, ROOT, 1, VEC_SIZE - 1);
-		}
+	vector<int> A;
+
+	for (int i = 0; i < n; ++i) {
+		int input;
+		cin >> input;
+		A.push_back(input);
 	}
 
+	//LIS 계산
+	//LIS[i]: A[i]부터 시작하는 LIS의 최대 길이
+	vector<int> LIS(n, 0);
+
+	//vec[n]: 숫자 n으로 끝나는 LIS의 최대 길이
+	//n1 ~ n2 구간에 해당하는 segmentTree 값: vec[n1] ~ vec[n2] 중 최댓값 저장 
+	segmentTree.resize(VEC_SIZE * 4);
+	buildRecursive(ROOT, 0, VEC_SIZE - 1);
+
+	for (int i = 0; i < n; ++i) {
+		LIS[i] = queryRecursive(ROOT, 0, VEC_SIZE - 1, 0, A[i] - 1) + 1;
+		updateRecursive(A[i], LIS[i], ROOT, 0, VEC_SIZE - 1);
+	}
+
+	cout << segmentTree[ROOT];
 	return 0;
 }
