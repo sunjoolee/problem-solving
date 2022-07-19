@@ -1,105 +1,50 @@
-#include <vector>
 #include <algorithm>
+#include <vector>
 #include <iostream>
 using namespace std;
 
-typedef long long ll;
+int n; //집의 개수
+int c; //공유기 개수
 
-vector<ll> vec;
+vector<int> house;
 
-const int ROOT = 1;
-vector<ll> segmentTree;
+//가장 인접한 두 공유기 사이의 거리가 dis보다 작아지지 않도록
+//c개의 공유기를 설치할 수 있는가 확인
+bool check(int dis) {
+	int pos = house[0]; //가장 최근에 설치한 공유기 위치
+	int cnt = 1; //현재까지 설치한 공유기 수
 
-ll buildRecursive(int curNode, int curStart, int curEnd) {
-	//리프 노드
-	if (curStart == curEnd) {
-		return segmentTree[curNode] = vec[curStart];
+	for (int i = 1; i < n; ++i) {
+		if ((house[i] - pos) >= dis) {
+			pos = house[i];
+			cnt++;
+		}
+		else continue;
 	}
-
-	int mid = (curStart + curEnd) / 2;
-	ll rightChildNode = buildRecursive(curNode * 2, curStart, mid);
-	ll leftChildNode =buildRecursive((curNode * 2) + 1, mid + 1, curEnd);
-	return segmentTree[curNode] = leftChildNode + rightChildNode;
-}
-
-
-ll queryRecursive(int curNode, int curStart, int curEnd, int qStart, int qEnd) {
-	//쿼리 구간에 포함되지 않음
-	if (curEnd < qStart || qEnd < curStart) return 0LL;
-	
-	//쿼리 구간에 완전히 포함됨
-	if (qStart <= curStart && curEnd <= qEnd) return segmentTree[curNode];
-
-	//쿼리 구간에 부분적으로 포함됨
-	int mid = (curStart + curEnd) / 2;
-	ll rightQuery = queryRecursive(curNode * 2, curStart, mid, qStart, qEnd);
-	ll leftQuery = queryRecursive((curNode * 2) + 1, mid + 1, curEnd, qStart, qEnd);
-	return rightQuery+leftQuery;
-}
-
-ll updateRecursive(int updateNode, ll updateVal, int curNode, int curStart, int curEnd) {
-	//리프노드 
-	if (curStart == curEnd) {
-		//업데이트 할 노드인 경우 값 업데이트
-		if (curStart == updateNode)
-			segmentTree[curNode] += updateVal;
-
-		return segmentTree[curNode];
-	}
-
-	//업데이트 할 노드가 포함되지 않음 -> 구간합 그대로
-	if (curEnd < updateNode || updateNode < curStart) {
-		return segmentTree[curNode];
-	}
-
-	//업데이트 할 노드가 포함됨 -> 구간합 업데이트
-	int mid = (curStart + curEnd) / 2;
-	ll rightUpdate = updateRecursive(updateNode, updateVal, curNode * 2, curStart, mid);
-	ll leftUpdate = updateRecursive(updateNode, updateVal, (curNode * 2) + 1, mid + 1, curEnd);
-	return segmentTree[curNode] = rightUpdate + leftUpdate;
+	return cnt >= c;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
-	
-	int n;
-	cin >> n;
 
-	vector<ll> A;
-	A.push_back(0);
-	vec.push_back(0);
-	for (int i = 1; i <= n; ++i) {
-		ll input;
+	cin >> n >> c;
+	for (int i = 0; i < n; ++i) {
+		int input;
 		cin >> input;
-		A.push_back(input);
-
-		vec.push_back(A[i] - A[i - 1]);
+		house.push_back(input);
 	}
-	A.push_back(0);
-	vec.push_back(0 - A[n]);
+	sort(house.begin(), house.end());
 
-	segmentTree.resize(n * 4);
-	buildRecursive(ROOT, 1, n);
-
-	int m;
-	cin >> m;
-	for (int i = 0; i < m; ++i) {
-		int qType;
-		cin >> qType;
-		if (qType == 1) {
-			int i, j; ll k;
-			cin >> i >> j >> k;
-
-			updateRecursive(i, k, ROOT, 1, n); 
-			updateRecursive(j + 1, -k, ROOT, 1, n);
-		}
-		else {
-			int x;
-			cin >> x;
-			cout << queryRecursive(ROOT, 1, n, 1, x)<<"\n";
-		}
+	//가능한 dis의 최댓값 이분 탐색으로 구하기
+	int maxDis = house.back();
+	int minDis = 1;
+	while (minDis < maxDis) {
+		int midDis = (maxDis + minDis + 1) / 2;
+		if (check(midDis)) minDis = midDis;
+		else maxDis = midDis - 1;
 	}
 
+	cout << maxDis;
 	return 0;
 }
