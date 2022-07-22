@@ -3,48 +3,68 @@
 #include <iostream>
 using namespace std;
 
-int n; //집의 개수
-int c; //공유기 개수
+const int CASE1 = -1;
+const int CASE2 = 0;
+const int CASE3 = 1;
 
-vector<int> house;
+int case1Cnt = 0;
+int case2Cnt = 0;
+int case3Cnt = 0;
 
-//가장 인접한 두 공유기 사이의 거리가 dis보다 작아지지 않도록
-//c개의 공유기를 설치할 수 있는가 확인
-bool check(int dis) {
-	int pos = house[0]; //가장 최근에 설치한 공유기 위치
-	int cnt = 1; //현재까지 설치한 공유기 수
+int n;
+vector<vector<int>> board;
 
-	for (int i = 1; i < n; ++i) {
-		if ((house[i] - pos) >= dis) {
-			pos = house[i];
-			cnt++;
-		}
-		else continue;
+void cnt(int r, int c, int size) {
+	if (size == 1) {
+		if (board[r][c] == CASE1) case1Cnt++;
+		else if (board[r][c] == CASE2) case2Cnt++;
+		else if (board[r][c] == CASE3) case3Cnt++;
+		return;
 	}
-	return cnt >= c;
+
+	bool allSame = true;
+	for (int i = r; i < r + size; ++i) {
+		for (int j = c; j < c + size; ++j) {
+			if (board[i][j] != board[r][c]) {
+				allSame = false;
+				break;
+			}
+		}
+		if (!allSame) break;
+	}
+
+	if (allSame) {
+		if (board[r][c] == CASE1) case1Cnt++;
+		else if (board[r][c] == CASE2) case2Cnt++;
+		else if (board[r][c] == CASE3) case3Cnt++;
+		return;
+	}
+
+	int nextSize = size / 3;
+	cnt(r, c, nextSize); cnt(r, c + nextSize, nextSize); cnt(r, c + (nextSize*2), nextSize);
+	cnt(r + nextSize, c, nextSize); cnt(r + nextSize, c + nextSize, nextSize); cnt(r+ nextSize, c + (nextSize * 2), nextSize);
+	cnt(r + (nextSize * 2), c, nextSize); cnt(r + (nextSize * 2), c + nextSize, nextSize); cnt(r + (nextSize * 2), c + (nextSize * 2), nextSize);
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	cin >> n >> c;
+	cin >> n;
 	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
-		house.push_back(input);
-	}
-	sort(house.begin(), house.end());
-
-	//가능한 dis의 최댓값 이분 탐색으로 구하기
-	int maxDis = house.back();
-	int minDis = 1;
-	while (minDis < maxDis) {
-		int midDis = (maxDis + minDis + 1) / 2;
-		if (check(midDis)) minDis = midDis;
-		else maxDis = midDis - 1;
+		vector<int> row;
+		for (int j = 0; j < n; ++j) {
+			int input;
+			cin >> input;
+			row.push_back(input);
+		}
+		board.push_back(row);
 	}
 
-	cout << maxDis;
+	cnt(0, 0, n);
+
+	cout << case1Cnt << "\n";
+	cout << case2Cnt << "\n";
+	cout << case3Cnt;
 	return 0;
 }
