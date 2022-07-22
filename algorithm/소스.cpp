@@ -1,70 +1,42 @@
-#include <algorithm>
+#include<algorithm>
 #include <vector>
 #include <iostream>
 using namespace std;
 
-const int CASE1 = -1;
-const int CASE2 = 0;
-const int CASE3 = 1;
-
-int case1Cnt = 0;
-int case2Cnt = 0;
-int case3Cnt = 0;
+typedef long long ll;
 
 int n;
-vector<vector<int>> board;
+ll m;
+vector<ll> trees;
 
-void cnt(int r, int c, int size) {
-	if (size == 1) {
-		if (board[r][c] == CASE1) case1Cnt++;
-		else if (board[r][c] == CASE2) case2Cnt++;
-		else if (board[r][c] == CASE3) case3Cnt++;
-		return;
+//높이를 h로 지정했을 때 m미터 이상의 나무를 가져갈 수 있는가
+bool check(ll h) {
+	ll takeTree = 0;
+	for (int i = 0; i < n; ++i) {
+		if (trees[i] > h) takeTree += (trees[i] - h);
 	}
-
-	bool allSame = true;
-	for (int i = r; i < r + size; ++i) {
-		for (int j = c; j < c + size; ++j) {
-			if (board[i][j] != board[r][c]) {
-				allSame = false;
-				break;
-			}
-		}
-		if (!allSame) break;
-	}
-
-	if (allSame) {
-		if (board[r][c] == CASE1) case1Cnt++;
-		else if (board[r][c] == CASE2) case2Cnt++;
-		else if (board[r][c] == CASE3) case3Cnt++;
-		return;
-	}
-
-	int nextSize = size / 3;
-	cnt(r, c, nextSize); cnt(r, c + nextSize, nextSize); cnt(r, c + (nextSize*2), nextSize);
-	cnt(r + nextSize, c, nextSize); cnt(r + nextSize, c + nextSize, nextSize); cnt(r+ nextSize, c + (nextSize * 2), nextSize);
-	cnt(r + (nextSize * 2), c, nextSize); cnt(r + (nextSize * 2), c + nextSize, nextSize); cnt(r + (nextSize * 2), c + (nextSize * 2), nextSize);
+	return takeTree >= m;
 }
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL); cout.tie(NULL);
 
-	cin >> n;
+	cin >> n >> m;
 	for (int i = 0; i < n; ++i) {
-		vector<int> row;
-		for (int j = 0; j < n; ++j) {
-			int input;
-			cin >> input;
-			row.push_back(input);
-		}
-		board.push_back(row);
+		ll input;
+		cin >> input;
+		trees.push_back(input);
 	}
 
-	cnt(0, 0, n);
+	ll high = 1000000000;
+	ll low = 0LL;
+	while (low < high) {
+		ll mid = (high + low + 1) / 2;
+		if (check(mid)) low = mid;
+		else high = mid - 1;
+	}
 
-	cout << case1Cnt << "\n";
-	cout << case2Cnt << "\n";
-	cout << case3Cnt;
+	cout << high;
 	return 0;
 }
