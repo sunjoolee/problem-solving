@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <vector>
-#include <math.h>
 #include <iostream>
 using namespace std;
 
@@ -9,38 +8,40 @@ int main() {
 	cin.tie(NULL); cout.tie(NULL);
 
 	int n;
-
-	vector<int> vecS;
-	vector<int> vecB;
-	
 	cin >> n;
+
+	//row[i]: i번째 사람의 키
+	vector<int> row; 
+	
+	//cntVec[x]: 키가 x인 사람의 왼쪽에 x보다 키카 큰 사람이 몇명 있는지
+	vector<int> cntVec; 
+	
 	for (int i = 0; i < n; ++i) {
-		int inputS, inputB;
-		cin >> inputS >> inputB;
-		vecS.push_back(inputS);
-		vecB.push_back(inputB);
+		int input;
+		cin >> input;
+		cntVec.push_back(input);
+		//row 초기화
+		row.push_back(i);
 	}
 
-	int s; //요리의 신맛(곱)
-	int b; //요리의 쓴맛 (합)
-	int ans = 1000000000;
-	
-	int fullSet = (1<<n) - 1; 
-	for (int set = 1; set <= fullSet; set++) {
-		s = -1;
-		b = -1;
-		for (int food = 0; food < n; ++food) {
-			if (set & (1 << food)) {
-				if (s == -1) s = vecS[food];
-				else s *= vecS[food];
-
-				if (b == -1) b = vecB[food];
-				else b += vecB[food];
+	do {
+		bool correctRow = true;
+		for (int i = 0; i < n; ++i) {
+			int cnt = 0;
+			for (int left = 0; left < i; ++left) {
+				if (row[left] > row[i]) cnt++;
+			}
+			if (cntVec[row[i]] != cnt) {
+				correctRow = false;
+				break;
 			}
 		}
-		ans = min(ans, abs(s - b));
+		if (correctRow) break;
+	} while (next_permutation(row.begin(), row.end()));
+
+	for (int i = 0; i < n; ++i) {
+		cout << row[i] + 1<< " ";
 	}
 
-	cout << ans;
 	return 0;
 }
