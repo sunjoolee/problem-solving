@@ -3,8 +3,14 @@
 #include <iostream>
 using namespace std;
 
-bool cmp(int x, int y) {
-	return x > y;
+bool cmp(pair<int, int> a, pair<int, int> b) {
+	//회의 끝나는 시간 빠른 순으로 정렬
+	if(a.second < b.second) return true;
+	//회의 끝나는 시간 같은 경우
+	//회의 시작하는 시간 빠른 순으로 정렬
+	if (a.second == b.second) return a.first < b.first;
+
+	return false;
 }
 
 int main() {
@@ -14,28 +20,22 @@ int main() {
 	int n;
 	cin >> n;
 
-	vector<int> A;
+	vector<pair<int, int>> meeting;
 	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
-		A.push_back(input);
+		int start, end;
+		cin >> start >> end;
+		meeting.push_back({ start, end });
 	}
-	//A 오름차순 정렬
-	sort(A.begin(), A.end());
+	sort(meeting.begin(), meeting.end(), cmp);
 
-	vector<int> B;
+	int cnt = 0;
+	int meetingEnd = 0;
 	for (int i = 0; i < n; ++i) {
-		int input;
-		cin >> input;
-		B.push_back(input);
+		if (meetingEnd <= meeting[i].first) {
+			cnt++;
+			meetingEnd = meeting[i].second;
+		}
 	}
-	//B 내림차순 정렬
-	sort(B.begin(), B.end(), cmp);
-
-	int res = 0;
-	for (int i = 0; i < n; ++i) {
-		res += (A[i] * B[i]);
-	}
-	cout << res;
+	cout << cnt;
 	return 0;
 }
